@@ -1,0 +1,37 @@
+# Build output
+bin/
+obj/
+out/
+[Bb]in/
+[Oo]bj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+
+# .NET / VS
+*.tlog
+*.lastbuildstate
+*.pdb
+*.dll
+*.exe
+*.cache
+publish/
+
+# Rider / VS Code
+.idea/
+.vscode/
+
+# OS
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
+
+# AI-agent working files — never commit
+CLAUDE.md
+CODEX_CHANGELOG.md
+.claude/
+.codex/
+AGENTS.md

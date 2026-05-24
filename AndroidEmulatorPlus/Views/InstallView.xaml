@@ -1,0 +1,61 @@
+<UserControl x:Class="AndroidEmulatorPlus.Views.InstallView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="clr-namespace:AndroidEmulatorPlus.Views">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="32,24">
+        <StackPanel MaxWidth="900" HorizontalAlignment="Left">
+            <TextBlock Style="{StaticResource HeaderText}" Text="Install / SDK"/>
+            <TextBlock Style="{StaticResource SubheaderText}" Text="Detect Android SDK + emulator, or install the command-line tools if you're starting fresh."/>
+
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource SectionHeader}" Text="Current state"/>
+                    <Grid Margin="0,4">
+                        <Grid.RowDefinitions>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="160"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="SDK Root" Grid.Row="0" Grid.Column="0" Foreground="{StaticResource SubtextBrush}"/>
+                        <TextBlock Text="{Binding SdkPathText}" Grid.Row="0" Grid.Column="1"/>
+                        <TextBlock Text="platform-tools" Grid.Row="1" Grid.Column="0" Foreground="{StaticResource SubtextBrush}" Margin="0,6,0,0"/>
+                        <TextBlock Text="{Binding HasPlatformTools, Converter={x:Static views:BoolStatusConverter.Instance}}" Grid.Row="1" Grid.Column="1" Margin="0,6,0,0"/>
+                        <TextBlock Text="emulator" Grid.Row="2" Grid.Column="0" Foreground="{StaticResource SubtextBrush}" Margin="0,6,0,0"/>
+                        <TextBlock Text="{Binding HasEmulator, Converter={x:Static views:BoolStatusConverter.Instance}}" Grid.Row="2" Grid.Column="1" Margin="0,6,0,0"/>
+                        <TextBlock Text="cmdline-tools" Grid.Row="3" Grid.Column="0" Foreground="{StaticResource SubtextBrush}" Margin="0,6,0,0"/>
+                        <TextBlock Text="{Binding HasCmdlineTools, Converter={x:Static views:BoolStatusConverter.Instance}}" Grid.Row="3" Grid.Column="1" Margin="0,6,0,0"/>
+                        <TextBlock Text="Status" Grid.Row="4" Grid.Column="0" Foreground="{StaticResource SubtextBrush}" Margin="0,6,0,0"/>
+                        <TextBlock Text="{Binding StatusText}" Grid.Row="4" Grid.Column="1" Margin="0,6,0,0" Foreground="{StaticResource LavenderBrush}"/>
+                    </Grid>
+                    <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
+                        <Button Content="Refresh" Style="{StaticResource FlatButton}" Command="{Binding RefreshCommand}"/>
+                        <Button Content="Open SDK Folder" Style="{StaticResource FlatButton}" Command="{Binding OpenSdkFolderCommand}" Margin="8,0,0,0"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource SectionHeader}" Text="If nothing is installed"/>
+                    <TextBlock Foreground="{StaticResource SubtextBrush}" TextWrapping="Wrap">
+                        Option 1 — install just the command-line tools (~150 MB). Then use the AVDs tab to pull a system image and create an emulator.
+                    </TextBlock>
+                    <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                        <Button Content="Download command-line tools" Style="{StaticResource PrimaryButton}" Command="{Binding DownloadCmdlineToolsCommand}" IsEnabled="{Binding IsBusy, Converter={x:Static views:NotBoolToVisibilityConverter.Instance}, ConverterParameter=invert}"/>
+                        <TextBlock Text="{Binding Step}" Foreground="{StaticResource OverlayBrush}" Margin="12,0,0,0" VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <TextBlock Foreground="{StaticResource SubtextBrush}" Margin="0,18,0,0" TextWrapping="Wrap">
+                        Option 2 — install Android Studio (~1.2 GB). Includes the Device Manager UI plus all SDK components.
+                    </TextBlock>
+                    <Button Content="Open developer.android.com/studio" Style="{StaticResource FlatButton}" Command="{Binding OpenStudioDownloadPageCommand}" Margin="0,10,0,0" HorizontalAlignment="Left"/>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

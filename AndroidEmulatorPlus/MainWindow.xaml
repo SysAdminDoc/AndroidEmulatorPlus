@@ -1,0 +1,156 @@
+<Window x:Class="AndroidEmulatorPlus.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="clr-namespace:AndroidEmulatorPlus.Views"
+        xmlns:vm="clr-namespace:AndroidEmulatorPlus.ViewModels"
+        Title="AndroidEmulatorPlus v0.1.0"
+        Width="1280" Height="820"
+        MinWidth="980" MinHeight="640"
+        WindowStartupLocation="CenterScreen">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="48"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="200"/>
+        </Grid.RowDefinitions>
+
+        <!-- Top bar -->
+        <Border Grid.Row="0" Background="{StaticResource MantleBrush}" BorderBrush="{StaticResource SurfaceBrush}" BorderThickness="0,0,0,1">
+            <Grid Margin="16,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="AndroidEmulatorPlus" FontWeight="SemiBold" FontSize="15"
+                               Foreground="{StaticResource LavenderBrush}"/>
+                    <TextBlock Text="v0.1.0" Margin="8,0,0,0" Foreground="{StaticResource OverlayBrush}" VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <Border Grid.Column="1" Style="{StaticResource StatusPill}" Margin="4">
+                    <TextBlock Text="{Binding SdkStatusText}" Foreground="{StaticResource SubtextBrush}" FontSize="12"/>
+                </Border>
+                <Border Grid.Column="2" Style="{StaticResource StatusPill}" Margin="4" Background="{StaticResource SurfaceBrush}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="📱" FontSize="12" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding PhoneStatusText}" Margin="6,0,0,0" Foreground="{StaticResource SubtextBrush}" FontSize="12"/>
+                    </StackPanel>
+                </Border>
+                <Border Grid.Column="3" Style="{StaticResource StatusPill}" Margin="4" Background="{StaticResource SurfaceBrush}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="💻" FontSize="12" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding EmulatorStatusText}" Margin="6,0,0,0" Foreground="{StaticResource SubtextBrush}" FontSize="12"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- Main: sidebar + content -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="200"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Sidebar -->
+            <Border Background="{StaticResource MantleBrush}" BorderBrush="{StaticResource SurfaceBrush}" BorderThickness="0,0,1,0">
+                <StackPanel Margin="0,12">
+                    <TextBlock Text="WORKFLOW" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource OverlayBrush}" Margin="20,4,0,8"/>
+                    <RadioButton Style="{StaticResource SidebarButton}" Content="① Install / SDK"
+                                 IsChecked="{Binding ActiveSection, Converter={x:Static views:EqualsConverter.Instance}, ConverterParameter=Install, Mode=OneWay}"
+                                 Command="{Binding NavigateCommand}" CommandParameter="Install"/>
+                    <RadioButton Style="{StaticResource SidebarButton}" Content="② AVDs"
+                                 IsChecked="{Binding ActiveSection, Converter={x:Static views:EqualsConverter.Instance}, ConverterParameter=Avd, Mode=OneWay}"
+                                 Command="{Binding NavigateCommand}" CommandParameter="Avd"/>
+                    <RadioButton Style="{StaticResource SidebarButton}" Content="③ Root"
+                                 IsChecked="{Binding ActiveSection, Converter={x:Static views:EqualsConverter.Instance}, ConverterParameter=Root, Mode=OneWay}"
+                                 Command="{Binding NavigateCommand}" CommandParameter="Root"/>
+                    <RadioButton Style="{StaticResource SidebarButton}" Content="④ Migrate from Phone"
+                                 IsChecked="{Binding ActiveSection, Converter={x:Static views:EqualsConverter.Instance}, ConverterParameter=Migrate, Mode=OneWay}"
+                                 Command="{Binding NavigateCommand}" CommandParameter="Migrate"/>
+                    <RadioButton Style="{StaticResource SidebarButton}" Content="⑤ Apps / Debloat"
+                                 IsChecked="{Binding ActiveSection, Converter={x:Static views:EqualsConverter.Instance}, ConverterParameter=Apps, Mode=OneWay}"
+                                 Command="{Binding NavigateCommand}" CommandParameter="Apps"/>
+                    <RadioButton Style="{StaticResource SidebarButton}" Content="⑥ Configure"
+                                 IsChecked="{Binding ActiveSection, Converter={x:Static views:EqualsConverter.Instance}, ConverterParameter=Config, Mode=OneWay}"
+                                 Command="{Binding NavigateCommand}" CommandParameter="Config"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Content -->
+            <Grid Grid.Column="1" Background="{StaticResource BaseBrush}">
+                <views:InstallView DataContext="{Binding InstallVm}"
+                                   Visibility="{Binding DataContext.ActiveSection, RelativeSource={RelativeSource AncestorType=Window}, Converter={x:Static views:VisibleIfEqualConverter.Instance}, ConverterParameter=Install}"/>
+                <views:AvdView DataContext="{Binding AvdVm}"
+                               Visibility="{Binding DataContext.ActiveSection, RelativeSource={RelativeSource AncestorType=Window}, Converter={x:Static views:VisibleIfEqualConverter.Instance}, ConverterParameter=Avd}"/>
+                <views:RootView DataContext="{Binding RootVm}"
+                                Visibility="{Binding DataContext.ActiveSection, RelativeSource={RelativeSource AncestorType=Window}, Converter={x:Static views:VisibleIfEqualConverter.Instance}, ConverterParameter=Root}"/>
+                <views:MigrateView DataContext="{Binding MigrateVm}"
+                                   Visibility="{Binding DataContext.ActiveSection, RelativeSource={RelativeSource AncestorType=Window}, Converter={x:Static views:VisibleIfEqualConverter.Instance}, ConverterParameter=Migrate}"/>
+                <views:AppsView DataContext="{Binding AppsVm}"
+                                Visibility="{Binding DataContext.ActiveSection, RelativeSource={RelativeSource AncestorType=Window}, Converter={x:Static views:VisibleIfEqualConverter.Instance}, ConverterParameter=Apps}"/>
+                <views:ConfigView DataContext="{Binding ConfigVm}"
+                                  Visibility="{Binding DataContext.ActiveSection, RelativeSource={RelativeSource AncestorType=Window}, Converter={x:Static views:VisibleIfEqualConverter.Instance}, ConverterParameter=Config}"/>
+            </Grid>
+        </Grid>
+
+        <!-- Log panel -->
+        <GridSplitter Grid.Row="1" Height="6" HorizontalAlignment="Stretch" VerticalAlignment="Bottom"
+                      Background="{StaticResource SurfaceBrush}" />
+        <Border Grid.Row="2" Background="{StaticResource MantleBrush}" BorderBrush="{StaticResource SurfaceBrush}" BorderThickness="0,1,0,0">
+            <Grid Margin="12,8">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <Grid Grid.Row="0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Log" FontWeight="SemiBold" Foreground="{StaticResource MauveBrush}"/>
+                    <Button Grid.Column="1" Content="Clear" Style="{StaticResource FlatButton}" Click="ClearLog_Click" Padding="10,4" MinHeight="0" MinWidth="0"/>
+                </Grid>
+                <Border Grid.Row="1" Background="{StaticResource CrustBrush}" CornerRadius="6" Padding="8" Margin="0,6,0,0">
+                    <ItemsControl ItemsSource="{Binding Log.Entries}" x:Name="LogList">
+                        <ItemsControl.Template>
+                            <ControlTemplate>
+                                <ScrollViewer x:Name="LogScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                                    <ItemsPresenter/>
+                                </ScrollViewer>
+                            </ControlTemplate>
+                        </ItemsControl.Template>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Display}" FontFamily="Cascadia Mono, Consolas, monospace" FontSize="12"
+                                           TextWrapping="NoWrap">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="{StaticResource SubtextBrush}"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Level}" Value="Success">
+                                                    <Setter Property="Foreground" Value="{StaticResource GreenBrush}"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Level}" Value="Warning">
+                                                    <Setter Property="Foreground" Value="{StaticResource YellowBrush}"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Level}" Value="Error">
+                                                    <Setter Property="Foreground" Value="{StaticResource RedBrush}"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Level}" Value="Detail">
+                                                    <Setter Property="Foreground" Value="{StaticResource OverlayBrush}"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Border>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

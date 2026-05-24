@@ -1,0 +1,105 @@
+using System.Diagnostics;
+using System.IO;
+using System.IO.Compression;
+using AndroidEmulatorPlus.Services;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+
+namespace AndroidEmulatorPlus.ViewModels;
+
+public sealed partial class InstallViewModel : ObservableObject
+{
+    private readonly SdkLocator _sdk;
+    private readonly DownloadService _dl;
+    private readonly LogService _log;
+
+    [ObservableProperty] private string _statusText = "";
+    [ObservableProperty] private string _sdkPathText = "";
+    [ObservableProperty] private bool _hasPlatformTools;
+    [ObservableProperty] private bool _hasEmulator;
+    [ObservableProperty] private bool _hasCmdlineTools;
+    [ObservableProperty] private bool _isBusy;
+    [ObservableProperty] private string _step = "";
+
+    public InstallViewModel(SdkLocator sdk, DownloadService dl, LogService log)
+    {
+        _sdk = sdk;
+        _dl = dl;
+        _log = log;
+    }
+
+    [RelayCommand]
+    private void Refresh()
+    {
+        _sdk.Refresh();
+        if (_sdk.SdkRoot is null)
+        {
+            StatusText = "SDK not located.";
+            SdkPathText = "(no SDK detected)";
+            HasPlatformTools = HasEmulator = HasCmdlineTools = false;
+            return;
+        }
+        SdkPathText = _sdk.SdkRoot;
+        HasPlatformTools = _sdk.AdbExe != null;
+        HasEmulator = _sdk.EmulatorExe != null;
+        HasCmdlineTools = _sdk.SdkManagerBat != null;
+        StatusText = _sdk.IsReady ? "SDK looks good." : "SDK is missing pieces.";
+    }
+
+    [RelayCommand]
+    private async Task DownloadCmdlineToolsAsync()
+    {
+        IsBusy = true;
+        Step = "Downloading command-line tools…";
+        try
+        {
+            var sdkRoot = _sdk.SdkRoot
+                ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Android", "Sdk");
+            Directory.CreateDirectory(sdkRoot);
+
+            // Latest stable Android command-line tools URL is published on developer.android.com.
+            const string url = "https://dl.google.com/android/repository/commandlinetools-win-13114758_latest.zip";
+            var zip = Path.Combine(Path.GetTempPath(), "android-cmdline-tools.zip");
+            await _dl.DownloadAsync(url, zip);
+
+            Step = "Extracting…";
+            var staging = Path.Combine(sdkRoot, "cmdline-tools-staging");
+            if (Directory.Exists(staging)) Directory.Delete(staging, true);
+            ZipFile.ExtractToDirectory(zip, staging);
+
+            // Move to the canonical layout: cmdline-tools/latest
+            var latestDir = Path.Combine(sdkRoot, "cmdline-tools", "latest");
+            Directory.CreateDirectory(Path.GetDirectoryName(latestDir)!);
+            if (Directory.Exists(latestDir)) Directory.Delete(latestDir, true);
+            var unzippedRoot = Path.Combine(staging, "cmdline-tools");
+            Directory.Move(unzippedRoot, latestDir);
+            try { Directory.Delete(staging, true); } catch { }
+            try { File.Delete(zip); } catch { }
+
+            _log.Success($"Installed command-line tools at {latestDir}");
+            Refresh();
+        }
+        catch (Exception ex)
+        {
+            _log.Error("cmdline-tools install failed: " + ex.Message);
+        }
+        finally
+        {
+            IsBusy = false;
+            Step = "";
+        }
+    }
+
+    [RelayCommand]
+    private void OpenStudioDownloadPage()
+    {
+        Process.Start(new ProcessStartInfo("https://developer.android.com/studio") { UseShellExecute = true });
+    }
+
+    [RelayCommand]
+    private void OpenSdkFolder()
+    {
+        if (_sdk.SdkRoot is null || !Directory.Exists(_sdk.SdkRoot)) return;
+        Process.Start(new ProcessStartInfo(_sdk.SdkRoot) { UseShellExecute = true });
+    }
+}

@@ -1,0 +1,40 @@
+<UserControl x:Class="AndroidEmulatorPlus.Views.RootView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="32,24">
+        <StackPanel MaxWidth="900" HorizontalAlignment="Left">
+            <TextBlock Style="{StaticResource HeaderText}" Text="Root via Magisk"/>
+            <TextBlock Style="{StaticResource SubheaderText}" TextWrapping="Wrap">
+                Patches the system image's ramdisk with Magisk (via rootAVD). Keeps Google Play working.
+                The emulator must be running when you press Root so rootAVD can shell into it.
+            </TextBlock>
+
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource SectionHeader}" Text="Target AVD"/>
+                    <ComboBox ItemsSource="{Binding Avds}" SelectedItem="{Binding SelectedAvd}" DisplayMemberPath="Name"/>
+                    <TextBlock Text="{Binding Status}" Margin="0,12,0,0" Foreground="{StaticResource LavenderBrush}"/>
+                    <TextBlock Text="{Binding Step}" Margin="0,4,0,0" Foreground="{StaticResource OverlayBrush}"/>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource SectionHeader}" Text="Actions"/>
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="Root with Latest Magisk" Style="{StaticResource PrimaryButton}" Command="{Binding RootCommand}" IsEnabled="{Binding IsBusy, Converter={x:Static views:NotBoolToVisibilityConverter.Instance}, ConverterParameter=invert}" xmlns:views="clr-namespace:AndroidEmulatorPlus.Views"/>
+                        <Button Content="Verify + Persist Policy" Style="{StaticResource FlatButton}" Command="{Binding VerifyCommand}" Margin="8,0,0,0"/>
+                        <Button Content="Un-Root (Restore Ramdisk)" Style="{StaticResource DangerButton}" Command="{Binding UnRootCommand}" Margin="8,0,0,0"/>
+                    </StackPanel>
+                    <TextBlock Foreground="{StaticResource SubtextBrush}" Margin="0,14,0,0" TextWrapping="Wrap">
+                        Workflow:  ① Launch the AVD from the AVDs tab.  ② Press "Root with Latest Magisk".
+                        ③ Cold-boot the AVD (AVDs tab → Cold Boot).  ④ Press "Verify + Persist Policy".
+                    </TextBlock>
+                    <TextBlock Foreground="{StaticResource OverlayBrush}" Margin="0,10,0,0" TextWrapping="Wrap" FontSize="12">
+                        Backups (.original) of the stock ramdisk are kept inside the system-image folder. Un-Root copies them back.
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

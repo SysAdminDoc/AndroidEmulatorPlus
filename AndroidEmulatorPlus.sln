@@ -1,0 +1,16 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# AndroidEmulatorPlus
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AndroidEmulatorPlus", "AndroidEmulatorPlus\AndroidEmulatorPlus.csproj", "{6F2B1A9A-1D5E-4F2C-9B6E-7A8C3D2E1F90}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6F2B1A9A-1D5E-4F2C-9B6E-7A8C3D2E1F90}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6F2B1A9A-1D5E-4F2C-9B6E-7A8C3D2E1F90}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6F2B1A9A-1D5E-4F2C-9B6E-7A8C3D2E1F90}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6F2B1A9A-1D5E-4F2C-9B6E-7A8C3D2E1F90}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

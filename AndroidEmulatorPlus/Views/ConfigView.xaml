@@ -1,0 +1,82 @@
+<UserControl x:Class="AndroidEmulatorPlus.Views.ConfigView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="32,24">
+        <StackPanel MaxWidth="900" HorizontalAlignment="Left">
+            <TextBlock Style="{StaticResource HeaderText}" Text="Configure"/>
+            <TextBlock Style="{StaticResource SubheaderText}" TextWrapping="Wrap">
+                Edit the AVD's hardware profile and disk size. Disk grow requires a wipe to expand the partition's filesystem.
+            </TextBlock>
+
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource SectionHeader}" Text="Target AVD"/>
+                    <ComboBox ItemsSource="{Binding Avds}" SelectedItem="{Binding Selected}" DisplayMemberPath="Name"/>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource SectionHeader}" Text="Hardware"/>
+                    <Grid Margin="0,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="120"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="80"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Text="RAM (MB)" VerticalAlignment="Center" Foreground="{StaticResource SubtextBrush}"/>
+                        <Slider Grid.Column="1" Minimum="1024" Maximum="16384" SmallChange="256" LargeChange="1024" Value="{Binding RamMb}" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="2" Text="{Binding RamMb}" VerticalAlignment="Center" HorizontalAlignment="Right"/>
+
+                        <TextBlock Grid.Row="1" Text="CPU cores" VerticalAlignment="Center" Foreground="{StaticResource SubtextBrush}" Margin="0,8,0,0"/>
+                        <Slider Grid.Row="1" Grid.Column="1" Minimum="1" Maximum="16" Value="{Binding Cores}" VerticalAlignment="Center" Margin="0,8,0,0"/>
+                        <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding Cores}" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,8,0,0"/>
+
+                        <TextBlock Grid.Row="2" Text="Disk (GB)" VerticalAlignment="Center" Foreground="{StaticResource SubtextBrush}" Margin="0,8,0,0"/>
+                        <Slider Grid.Row="2" Grid.Column="1" Minimum="8" Maximum="256" Value="{Binding DiskGb}" VerticalAlignment="Center" Margin="0,8,0,0"/>
+                        <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding DiskGb}" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,8,0,0"/>
+
+                        <TextBlock Grid.Row="3" Text="Width" VerticalAlignment="Center" Foreground="{StaticResource SubtextBrush}" Margin="0,8,0,0"/>
+                        <TextBox  Grid.Row="3" Grid.Column="1" Text="{Binding ScreenW}" Margin="0,8,0,0"/>
+                        <TextBlock Grid.Row="4" Text="Height" VerticalAlignment="Center" Foreground="{StaticResource SubtextBrush}" Margin="0,8,0,0"/>
+                        <TextBox  Grid.Row="4" Grid.Column="1" Text="{Binding ScreenH}" Margin="0,8,0,0"/>
+                        <TextBlock Grid.Row="5" Text="DPI" VerticalAlignment="Center" Foreground="{StaticResource SubtextBrush}" Margin="0,8,0,0"/>
+                        <TextBox  Grid.Row="5" Grid.Column="1" Text="{Binding Dpi}" Margin="0,8,0,0"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource SectionHeader}" Text="Boot"/>
+                    <CheckBox Content="Fast boot (use saved snapshot)" IsChecked="{Binding FastBoot}"/>
+                    <CheckBox Content="Cold boot always" IsChecked="{Binding ColdBootAlways}"/>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource SectionHeader}" Text="Apply"/>
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="Save config" Style="{StaticResource PrimaryButton}" Command="{Binding ApplyCommand}"/>
+                        <Button Content="Resize disk only" Style="{StaticResource FlatButton}" Command="{Binding ResizeDiskCommand}" CommandParameter="resize" Margin="8,0,0,0"/>
+                        <Button Content="Resize + Wipe Data" Style="{StaticResource DangerButton}" Command="{Binding ResizeDiskCommand}" CommandParameter="wipe" Margin="8,0,0,0"/>
+                    </StackPanel>
+                    <TextBlock Foreground="{StaticResource OverlayBrush}" FontSize="12" Margin="0,8,0,0" TextWrapping="Wrap">
+                        Resize-only grows the qcow2 file but Android's ext4 won't auto-expand — apps still see the old partition size.
+                        Resize + Wipe Data deletes overlays so the partition recreates at the new size on next boot.
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
