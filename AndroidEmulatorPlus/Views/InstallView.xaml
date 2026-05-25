@@ -80,9 +80,11 @@
                         Option 1 — install just the command-line tools (~150 MB). Then use the AVDs tab to pull a system image and create an emulator.
                     </TextBlock>
                     <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                        <Button Content="Download command-line tools" Style="{StaticResource PrimaryButton}" Command="{Binding DownloadCmdlineToolsCommand}" IsEnabled="{Binding IsBusy, Converter={x:Static views:NotBoolToVisibilityConverter.Instance}, ConverterParameter=invert}"/>
+                        <Button Content="Download command-line tools" Style="{StaticResource PrimaryButton}" Command="{Binding DownloadCmdlineToolsCommand}" IsEnabled="{Binding IsBusy, Converter={x:Static views:NotBoolConverter.Instance}}"/>
                         <TextBlock Text="{Binding Step}" Foreground="{StaticResource OverlayBrush}" Margin="12,0,0,0" VerticalAlignment="Center"/>
                     </StackPanel>
+                    <TextBlock Text="{Binding CmdlineToolsNote}" Foreground="{StaticResource YellowBrush}" Margin="0,6,0,0" TextWrapping="Wrap" FontSize="12"
+                               Visibility="{Binding HasCmdlineToolsNote, Converter={x:Static views:BoolToVisibilityConverter.Instance}}"/>
                     <TextBlock Foreground="{StaticResource SubtextBrush}" Margin="0,18,0,0" TextWrapping="Wrap">
                         Option 2 — install Android Studio (~1.2 GB). Includes the Device Manager UI plus all SDK components.
                     </TextBlock>

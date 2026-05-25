@@ -22,7 +22,7 @@
                 <StackPanel>
                     <TextBlock Style="{StaticResource SectionHeader}" Text="Actions"/>
                     <StackPanel Orientation="Horizontal">
-                        <Button Content="Root with Latest Magisk" Style="{StaticResource PrimaryButton}" Command="{Binding RootCommand}" IsEnabled="{Binding IsBusy, Converter={x:Static views:NotBoolToVisibilityConverter.Instance}, ConverterParameter=invert}" xmlns:views="clr-namespace:AndroidEmulatorPlus.Views"/>
+                        <Button Content="Root with Latest Magisk" Style="{StaticResource PrimaryButton}" Command="{Binding RootCommand}" IsEnabled="{Binding IsBusy, Converter={x:Static views:NotBoolConverter.Instance}}" xmlns:views="clr-namespace:AndroidEmulatorPlus.Views"/>
                         <Button Content="Verify + Persist Policy" Style="{StaticResource FlatButton}" Command="{Binding VerifyCommand}" Margin="8,0,0,0"/>
                         <Button Content="Un-Root (Restore Ramdisk)" Style="{StaticResource DangerButton}" Command="{Binding UnRootCommand}" Margin="8,0,0,0"/>
                     </StackPanel>

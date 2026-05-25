@@ -40,3 +40,17 @@ public sealed class NotBoolToVisibilityConverter : IValueConverter
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         => throw new NotSupportedException();
 }
+
+/// <summary>
+/// Returns the logical negation of a bool. Used to disable buttons while a VM is busy
+/// (binding <c>IsEnabled</c> to a Visibility converter does not coerce and the button
+/// stays enabled — that was the v0.1.0 bug this converter fixes).
+/// </summary>
+public sealed class NotBoolConverter : IValueConverter
+{
+    public static readonly NotBoolConverter Instance = new();
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => value is not true;
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => value is not true;
+}

@@ -64,7 +64,8 @@ public sealed class LogService
                 if (_firstWrite)
                 {
                     File.AppendAllText(CurrentLogFile,
-                        $"\n=== Session start {DateTime.Now:O} (pid {Environment.ProcessId}) ===\n");
+                        $"\n=== Session start {DateTime.Now:O} (pid {Environment.ProcessId}) " +
+                        $"[rootAVD pin: {RootService.RootAvdPinnedRef}] ===\n");
                     _firstWrite = false;
                     PruneOldLogs();
                 }

@@ -18,7 +18,18 @@
         </StackPanel>
 
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-            <ItemsControl ItemsSource="{Binding Avds}">
+            <Grid>
+                <Border Style="{StaticResource Card}"
+                        Visibility="{Binding HasAvds, Converter={x:Static views:NotBoolToVisibilityConverter.Instance}}">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource SectionHeader}" Text="No AVDs yet"/>
+                        <TextBlock Foreground="{StaticResource SubtextBrush}" TextWrapping="Wrap">
+                            Create one using the form below. If the System image dropdown is empty, install a system image from the Install / SDK tab first (or use Android Studio's SDK Manager).
+                        </TextBlock>
+                    </StackPanel>
+                </Border>
+                <ItemsControl ItemsSource="{Binding Avds}"
+                              Visibility="{Binding HasAvds, Converter={x:Static views:BoolToVisibilityConverter.Instance}}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
                         <Border Style="{StaticResource Card}">
@@ -76,6 +87,7 @@
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
+            </Grid>
         </ScrollViewer>
 
         <Border Grid.Row="2" Style="{StaticResource Card}" Margin="0,12,0,0">

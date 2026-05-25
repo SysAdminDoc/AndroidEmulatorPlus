@@ -20,6 +20,7 @@ public sealed partial class AvdViewModel : ObservableObject
     public ObservableCollection<Avd> Avds { get; } = new();
     [ObservableProperty] private Avd? _selected;
     [ObservableProperty] private bool _isBusy;
+    [ObservableProperty] private bool _hasAvds;
 
     // Create form
     [ObservableProperty] private string _newName = "MyEmulator";
@@ -52,13 +53,39 @@ public sealed partial class AvdViewModel : ObservableObject
         {
             Avds.Clear();
             foreach (var a in _avds.List()) Avds.Add(a);
+            HasAvds = Avds.Count > 0;
             AvailableImages.Clear();
-            foreach (var img in await _avds.ListSystemImagesAsync())
+            // Order by parsed API level descending, then by variant (playstore > google_apis > default).
+            // Alphabetical order put android-9 before android-25 and defaulted Create AVD to API 9.
+            foreach (var img in (await _avds.ListSystemImagesAsync()).OrderByDescending(SystemImageSortKey))
                 AvailableImages.Add(img);
-            NewImage ??= AvailableImages.LastOrDefault();
+            NewImage ??= AvailableImages.FirstOrDefault();
             await RefreshRunningStateAsync();
         }
         finally { IsBusy = false; }
+    }
+
+    /// <summary>
+    /// Sort key for `system-images;android-NN;variant;abi` strings. Higher = pick first.
+    /// </summary>
+    private static (int Api, int VariantRank, string Raw) SystemImageSortKey(string img)
+    {
+        var parts = img.Split(';');
+        int api = 0;
+        if (parts.Length > 1)
+        {
+            var m = System.Text.RegularExpressions.Regex.Match(parts[1], @"\d+");
+            if (m.Success) int.TryParse(m.Value, out api);
+        }
+        int rank = 0;
+        if (parts.Length > 2)
+        {
+            var v = parts[2].ToLowerInvariant();
+            if (v.Contains("playstore")) rank = 3;
+            else if (v.Contains("google_apis")) rank = 2;
+            else if (v.Contains("default")) rank = 1;
+        }
+        return (api, rank, img);
     }
 
     /// <summary>For each currently-attached emulator, resolve which AVD it is and tag the row.</summary>

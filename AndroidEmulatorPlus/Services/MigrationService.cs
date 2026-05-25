@@ -3,8 +3,6 @@ using AndroidEmulatorPlus.Helpers;
 
 namespace AndroidEmulatorPlus.Services;
 
-public sealed record TransferOptions(bool Apk, bool InternalData, bool ExternalData, bool ForceStop);
-
 public sealed record TransferResult(string Package, bool Success, long SizeBytes, string Detail);
 
 /// <summary>Port of the bash transfer pipeline: APK install-multiple + tar /data/data + optional ext storage.</summary>

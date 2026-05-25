@@ -146,7 +146,7 @@
                                                     <Setter Property="Foreground" Value="{StaticResource RedBrush}"/>
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding Level}" Value="Detail">
-                                                    <Setter Property="Foreground" Value="{StaticResource OverlayBrush}"/>
+                                                    <Setter Property="Foreground" Value="{StaticResource SubtextBrush}"/>
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>

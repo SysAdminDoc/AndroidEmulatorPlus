@@ -9,7 +9,7 @@ public sealed class RootService
 {
     // Pin rootAVD to a verified revision. master can introduce breaking changes
     // that would silently brick this app's root flow. Bump after manual smoke-test.
-    private const string RootAvdPinnedRef = "master";
+    public const string RootAvdPinnedRef = "master";
 
     private static readonly TimeSpan PatchTimeout = TimeSpan.FromMinutes(10);
 

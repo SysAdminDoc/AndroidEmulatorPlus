@@ -25,6 +25,8 @@ public sealed partial class InstallViewModel : ObservableObject
     [ObservableProperty] private bool _hasDiagnostics;
     [ObservableProperty] private string _accelText = "Not checked.";
     [ObservableProperty] private bool _accelOk;
+    [ObservableProperty] private string _cmdlineToolsNote = "";
+    [ObservableProperty] private bool _hasCmdlineToolsNote;
 
     private static string DiagnosticsRoot => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -126,11 +128,22 @@ public sealed partial class InstallViewModel : ObservableObject
 
             // Scrape developer.android.com/studio for the current Windows build; falls back
             // to a stable known-good URL if the scrape fails.
-            var url = await _dl.LatestCmdlineToolsWindowsUrlAsync();
-            _log.Info($"Using cmdline-tools URL: {url}");
+            var res = await _dl.LatestCmdlineToolsWindowsUrlAsync();
+            _log.Info($"Using cmdline-tools URL: {res.Url}");
+            if (res.IsFallback)
+            {
+                HasCmdlineToolsNote = true;
+                CmdlineToolsNote = $"⚠ Using fallback cmdline-tools URL ({res.Reason ?? "scrape failed"}). " +
+                    "Build number may be older than what's published today.";
+            }
+            else
+            {
+                HasCmdlineToolsNote = false;
+                CmdlineToolsNote = "";
+            }
             Step = "Downloading command-line tools…";
             var zip = Path.Combine(Path.GetTempPath(), "android-cmdline-tools.zip");
-            await _dl.DownloadAsync(url, zip);
+            await _dl.DownloadAsync(url: res.Url, dest: zip);
 
             Step = "Extracting…";
             var staging = Path.Combine(sdkRoot, "cmdline-tools-staging");

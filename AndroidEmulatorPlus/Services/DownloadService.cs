@@ -70,15 +70,18 @@ public sealed class DownloadService : IDisposable
         return null;
     }
 
-    private const string CmdlineToolsFallbackUrl =
+    public const string CmdlineToolsFallbackUrl =
         "https://dl.google.com/android/repository/commandlinetools-win-13114758_latest.zip";
+
+    public sealed record CmdlineToolsResolution(string Url, bool IsFallback, string? Reason);
 
     /// <summary>
     /// Scrapes developer.android.com/studio for the current Windows command-line-tools
     /// download URL. Returns a stable fallback URL if the scrape fails so first-launch
     /// installation can still proceed (at the cost of a slightly older build number).
+    /// The returned record's <c>IsFallback</c> flag lets the UI surface this state.
     /// </summary>
-    public async Task<string> LatestCmdlineToolsWindowsUrlAsync(CancellationToken ct = default)
+    public async Task<CmdlineToolsResolution> LatestCmdlineToolsWindowsUrlAsync(CancellationToken ct = default)
     {
         try
         {
@@ -87,14 +90,15 @@ public sealed class DownloadService : IDisposable
                 @"https://dl\.google\.com/android/repository/commandlinetools-win-\d+_latest\.zip",
                 System.Text.RegularExpressions.RegexOptions.IgnoreCase);
             var match = rx.Match(html);
-            if (match.Success) return match.Value;
+            if (match.Success) return new CmdlineToolsResolution(match.Value, IsFallback: false, Reason: null);
             _log.Warning("Could not parse cmdline-tools URL from developer.android.com — using fallback.");
+            return new CmdlineToolsResolution(CmdlineToolsFallbackUrl, IsFallback: true, Reason: "URL not found in studio page");
         }
         catch (Exception ex)
         {
             _log.Warning($"cmdline-tools URL lookup failed: {ex.Message} — using fallback.");
+            return new CmdlineToolsResolution(CmdlineToolsFallbackUrl, IsFallback: true, Reason: ex.Message);
         }
-        return CmdlineToolsFallbackUrl;
     }
 
     public void Dispose() => _http.Dispose();

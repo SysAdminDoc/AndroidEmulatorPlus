@@ -65,6 +65,19 @@ dotnet publish AndroidEmulatorPlus/AndroidEmulatorPlus.csproj -c Release -r win-
 7. ⑥ Configure →  bump RAM/disk if needed
 ```
 
+## Privacy & network
+
+The app only reaches out to:
+
+- `https://dl.google.com/android/repository/…` — Android command-line tools ZIP.
+- `https://developer.android.com/studio` — to discover the current cmdline-tools URL.
+- `https://api.github.com/repos/topjohnwu/Magisk/…` — to discover the latest Magisk release.
+- `https://gitlab.com/newbit/rootAVD.git` — `git clone` of the patcher.
+
+All traffic is HTTPS. No telemetry is sent, no accounts are required, and no data
+ever leaves your machine. Crash details (unhandled exceptions only) are written
+locally to `%LOCALAPPDATA%\AndroidEmulatorPlus\crash.log`.
+
 ## Acknowledgements
 
 - [rootAVD](https://gitlab.com/newbit/rootAVD) by NewBit — the actual Magisk ramdisk patcher.
