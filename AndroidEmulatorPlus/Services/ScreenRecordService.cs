@@ -79,6 +79,8 @@ public sealed class ScreenRecordService : IDisposable
             _log.Warning("Not recording.");
             return null;
         }
+        var remotePath = _remotePath;
+        var serial = _serial;
 
         // adb shell screenrecord traps SIGINT to flush. Sending Ctrl+C on Windows is
         // unreliable; the safest stop is killing the adb-shell process tree.
@@ -87,25 +89,37 @@ public sealed class ScreenRecordService : IDisposable
         try { _proc.Kill(entireProcessTree: true); } catch { }
         _proc = null;
 
-        // Give the device a moment to finalize the MP4 box.
-        await Task.Delay(1500, ct);
-
-        Directory.CreateDirectory(destDir);
-        var local = Path.Combine(destDir, Path.GetFileName(_remotePath));
-        var pull = await _adb.PullAsync(_serial, _remotePath, local, ct);
-        try { await _adb.ShellAsync(_serial, $"rm -f {_remotePath}", ct); } catch { }
-
-        if (!pull.Success || !File.Exists(local))
+        try
         {
-            _log.Error("screenrecord pull failed: " + pull.Combined.Trim());
-            return null;
-        }
+            // Give the device a moment to finalize the MP4 box.
+            await Task.Delay(1500, ct);
 
-        var size = new FileInfo(local).Length;
-        _log.Success($"Recording saved: {local} ({size / 1024} KB)");
-        _remotePath = null;
-        _serial = null;
-        return local;
+            try { Directory.CreateDirectory(destDir); }
+            catch (Exception ex)
+            {
+                _log.Error("recording output folder unavailable: " + ex.Message);
+                return null;
+            }
+
+            var local = Path.Combine(destDir, Path.GetFileName(remotePath));
+            var pull = await _adb.PullAsync(serial, remotePath, local, ct);
+
+            if (!pull.Success || !File.Exists(local))
+            {
+                _log.Error("screenrecord pull failed: " + pull.Combined.Trim());
+                return null;
+            }
+
+            var size = new FileInfo(local).Length;
+            _log.Success($"Recording saved: {local} ({size / 1024} KB)");
+            return local;
+        }
+        finally
+        {
+            try { await _adb.ShellAsync(serial, $"rm -f {AdbService.ShellQuote(remotePath)}"); } catch { }
+            _remotePath = null;
+            _serial = null;
+        }
     }
 
     public void Dispose()

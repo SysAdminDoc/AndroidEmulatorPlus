@@ -59,13 +59,38 @@ public sealed class SettingsService
         {
             if (!File.Exists(Path)) { Current = new AppSettings(); return; }
             var s = JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(Path));
-            Current = s ?? new AppSettings();
+            Current = Normalize(s ?? new AppSettings());
         }
         catch (Exception ex)
         {
             _log.Warning($"settings.json read failed ({ex.Message}); falling back to defaults.");
             Current = new AppSettings();
         }
+    }
+
+    private static AppSettings Normalize(AppSettings settings)
+    {
+        settings.Theme = settings.Theme?.Equals("latte", StringComparison.OrdinalIgnoreCase) == true
+            ? "latte"
+            : "mocha";
+        settings.SdkRootOverride = NullIfWhiteSpace(settings.SdkRootOverride);
+        settings.MediaDir = NullIfWhiteSpace(settings.MediaDir);
+        settings.HttpProxy = NormalizeProxy(settings.HttpProxy);
+        return settings;
+    }
+
+    private static string? NullIfWhiteSpace(string? value)
+        => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    private static string? NormalizeProxy(string? value)
+    {
+        value = NullIfWhiteSpace(value);
+        if (value is null) return null;
+        if (!Uri.TryCreate(value, UriKind.Absolute, out var uri)) return null;
+        return uri.Scheme.Equals(Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase)
+               || uri.Scheme.Equals(Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase)
+            ? uri.ToString()
+            : null;
     }
 
     public void Save()
@@ -78,6 +103,7 @@ public sealed class SettingsService
             // any view binds, and a crash mid-write would corrupt it. Write to a
             // sibling .tmp first and rename into place.
             var tmp = Path + ".tmp";
+            Current = Normalize(Current);
             var payload = JsonSerializer.Serialize(Current, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(tmp, payload);
             if (File.Exists(Path)) File.Replace(tmp, Path, destinationBackupFileName: null);

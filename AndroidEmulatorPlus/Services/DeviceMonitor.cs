@@ -51,6 +51,8 @@ public sealed class DeviceMonitor
                     Current = devs;
                     if (Application.Current?.Dispatcher is { } d)
                         _ = d.BeginInvoke(() => Changed?.Invoke(Current));
+                    else
+                        Changed?.Invoke(Current);
                 }
             }
             catch { }

@@ -6,6 +6,8 @@ All notable changes to this project will be documented here. Format follows [Kee
 
 ### Added
 
+- Focused hardening tests for shell quoting/package validation, AVD/snapshot name
+  validation, Magisk module zip validation, and app-data tar import validation.
 - Repository-level `global.json` pins builds to .NET 9 with feature-band
   roll-forward, matching the `net9.0-windows` target and CI setup.
 - Quote-aware free-form Console command parsing. `adb emu` commands such as
@@ -60,6 +62,21 @@ All notable changes to this project will be documented here. Format follows [Kee
 
 ### Changed
 
+- `SdkLocator` now autodetects the app-managed Android SDK cache at
+  `%USERPROFILE%\.cache\android-sdk`.
+- `ProcessRunner` now waits for async stdout/stderr handlers to drain after the
+  child exits, preventing truncated tail output from `adb`, `apksigner`,
+  `sdkmanager`, and rootAVD commands.
+- Settings loaded from `settings.json` are normalized defensively: invalid theme
+  names fall back to Mocha, blank paths collapse to null, and proxies must be
+  absolute `http://` or `https://` URLs. The Settings dialog now blocks invalid
+  proxy input before saving.
+- AVD, snapshot, package, and Magisk module identifiers are validated in service
+  code, not just in UI prompts. Config values written to `config.ini` are clamped
+  to practical ranges, and disk resize rejects malformed size strings.
+- Apps and Migrate refreshes now cancel/stale-guard overlapping list refreshes;
+  filtered list bindings are notified after refresh so active filters no longer
+  show stale rows.
 - `ProcessRunner` now throws `TimeoutException` for internal timeouts while
   preserving `OperationCanceledException` for user cancellation. SDK manager,
   AVD creation, rootAVD, and adb pairing log timeout vs cancellation separately.
@@ -81,6 +98,19 @@ All notable changes to this project will be documented here. Format follows [Kee
 
 ### Fixed
 
+- Signature verification for `.apks` / `.xapk` / `.apkm` bundles now inspects
+  every extracted split APK and rejects bundles with a bad or mismatched split
+  certificate. Previously only the base APK was checked.
+- Magisk module catalog installs now resolve GitHub `releases/latest` URLs to a
+  real `.zip` release asset before downloading. Previously those catalog entries
+  could download HTML and hand it to `magisk --install-module`.
+- Downloads are written to a `.download` sibling and atomically moved into place,
+  so cancelled or failed downloads no longer leave a corrupt destination file.
+- Migration refreshes and background `allowBackup` probes no longer mutate the
+  package list while a transfer is running. Each package also gets a just-in-time
+  `allowBackup` check before internal data migration.
+- Screen recording stop now clears its internal state and attempts remote cleanup
+  even when the local media output directory is unavailable.
 - `AppsView.xaml` and `RootView.xaml` now declare the shared converter namespace
   at the root, fixing XAML compile failures in the Apps and Root views.
 - `AvdService.WriteIni` treats incoming update keys case-insensitively, matching
@@ -99,6 +129,17 @@ All notable changes to this project will be documented here. Format follows [Kee
 
 ### Security (supply chain)
 
+- ADB shell commands that incorporate package names, module IDs, clipboard text,
+  or remote paths now use a shared shell-quoting helper plus identifier
+  validation where appropriate.
+- App-data import and phone-to-emulator migration now validate tar archives
+  locally before root-side extraction, rejecting absolute paths, `..` traversal,
+  entries outside the declared package, symlinks, hardlinks, and device/FIFO
+  entries.
+- Magisk module zips are validated before pushing to the emulator: archive paths
+  must be relative/non-traversing and `module.prop` must exist at archive root.
+- Magisk catalog entries are filtered to safe module IDs and absolute HTTPS
+  download URLs before being shown or installed.
 - `Resources/known-hashes.json` populated with computed SHA-256 for
   `Magisk-v30.7.apk` (cross-checked against GitHub Releases API per-asset
   `digest` field) and the current `commandlinetools-win-14742923_latest.zip`.

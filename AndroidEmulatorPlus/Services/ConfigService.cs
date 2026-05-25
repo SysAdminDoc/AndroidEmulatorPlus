@@ -1,4 +1,5 @@
 using System.IO;
+using System.Text.RegularExpressions;
 using AndroidEmulatorPlus.Models;
 
 namespace AndroidEmulatorPlus.Services;
@@ -23,6 +24,11 @@ public sealed class ConfigService
 
     public async Task<bool> ResizeDiskAsync(Avd avd, string size, bool wipeData, CancellationToken ct)
     {
+        if (!Regex.IsMatch(size, @"^[1-9][0-9]{0,3}G$", RegexOptions.IgnoreCase))
+        {
+            _log.Error("Invalid disk size. Use a positive whole number of GB, for example 32G.");
+            return false;
+        }
         var dir = Path.GetDirectoryName(avd.ConfigPath)!;
         var qcow2 = Path.Combine(dir, "userdata-qemu.img.qcow2");
         if (!File.Exists(qcow2))

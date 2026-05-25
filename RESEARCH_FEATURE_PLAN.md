@@ -24,6 +24,10 @@ Current planning status:
 - Remaining work is release smoke/tagging, screenshot capture, installer
   packaging, and the large R-07 Avalonia port.
 - This file is retained as historical research/evidence only.
+- Postscript from the follow-up hardening pass on 2026-05-25: local .NET/Java/SDK
+  setup is now verified, build/test pass locally, and the active status is in
+  `ROADMAP.md`. The "Verification gaps" section below is historical context from
+  the earlier pass, not the current machine state.
 
 ---
 

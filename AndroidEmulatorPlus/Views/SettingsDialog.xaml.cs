@@ -53,9 +53,18 @@ public partial class SettingsDialog : Window
     {
         var newTheme = (ThemeBox.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "mocha";
         var themeChanged = !string.Equals(newTheme, _settings.Current.Theme, System.StringComparison.OrdinalIgnoreCase);
+        var proxy = string.IsNullOrWhiteSpace(ProxyBox.Text) ? null : ProxyBox.Text.Trim();
+        if (proxy is not null
+            && (!Uri.TryCreate(proxy, UriKind.Absolute, out var proxyUri)
+                || (proxyUri.Scheme != Uri.UriSchemeHttp && proxyUri.Scheme != Uri.UriSchemeHttps)))
+        {
+            MessageBox.Show(this, "HTTP proxy must be an absolute http:// or https:// URL.", "Invalid proxy",
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
         _settings.Current.SdkRootOverride = string.IsNullOrWhiteSpace(SdkRootBox.Text) ? null : SdkRootBox.Text.Trim();
         _settings.Current.MediaDir = string.IsNullOrWhiteSpace(MediaDirBox.Text) ? null : MediaDirBox.Text.Trim();
-        _settings.Current.HttpProxy = string.IsNullOrWhiteSpace(ProxyBox.Text) ? null : ProxyBox.Text.Trim();
+        _settings.Current.HttpProxy = proxy;
         _settings.Current.AutoScrcpy = AutoScrcpyBox.IsChecked == true;
         _settings.Save();
         // C-12: live theme swap via ThemeService (also persists the chosen theme).

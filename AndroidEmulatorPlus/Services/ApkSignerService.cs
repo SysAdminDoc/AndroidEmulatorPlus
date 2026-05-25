@@ -66,7 +66,8 @@ public sealed class ApkSignerService
     /// </summary>
     public async Task<string?> InstalledCertShaAsync(AdbService adb, string serial, string pkg, CancellationToken ct = default)
     {
-        var r = await adb.ShellAsync(serial, $"pm dump {pkg}", ct);
+        if (!AdbService.IsSafeAndroidPackageName(pkg)) return null;
+        var r = await adb.ShellAsync(serial, $"pm dump {AdbService.ShellQuote(pkg)}", ct);
         if (!r.Success) return null;
         // `pm dump` includes a line like:
         //   signatures=PackageSignatures{… [signatures-sha256=<hex>] }

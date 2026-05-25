@@ -198,7 +198,7 @@ public sealed partial class AvdViewModel : ObservableObject
                 var t = (text ?? "").Trim();
                 if (string.IsNullOrEmpty(t)) return "Name cannot be empty.";
                 if (t == avd.Name) return "Pick a different name.";
-                if (!System.Text.RegularExpressions.Regex.IsMatch(t, @"^[A-Za-z0-9._-]+$"))
+                if (!AvdService.IsSafeAvdName(t))
                     return "Only letters, digits, '.', '_' and '-' are allowed.";
                 if (existing.Contains(t)) return $"An AVD named '{t}' already exists.";
                 return null;
@@ -311,7 +311,7 @@ public sealed partial class AvdViewModel : ObservableObject
                 var t = (text ?? "").Trim();
                 if (string.IsNullOrEmpty(t)) return "Name cannot be empty.";
                 if (t == avd.Name) return "Pick a different name.";
-                if (!System.Text.RegularExpressions.Regex.IsMatch(t, @"^[A-Za-z0-9._-]+$"))
+                if (!AvdService.IsSafeAvdName(t))
                     return "Only letters, digits, '.', '_' and '-' are allowed.";
                 if (existing.Contains(t)) return $"An AVD named '{t}' already exists.";
                 return null;
@@ -335,6 +335,11 @@ public sealed partial class AvdViewModel : ObservableObject
         if (string.IsNullOrWhiteSpace(NewName) || string.IsNullOrWhiteSpace(NewImage))
         {
             _log.Warning("Pick a name and a system image first.");
+            return;
+        }
+        if (!AvdService.IsSafeAvdName(NewName.Trim()))
+        {
+            _log.Warning("AVD names may contain only letters, digits, '.', '_' and '-'.");
             return;
         }
         IsBusy = true;

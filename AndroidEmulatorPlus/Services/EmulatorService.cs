@@ -39,6 +39,8 @@ public sealed class EmulatorService
 
     public Process Launch(string avdName, LaunchOptions opt)
     {
+        if (!AvdService.IsSafeAvdName(avdName))
+            throw new InvalidOperationException("Invalid AVD name.");
         var args = new List<string> { "-avd", avdName };
         if (opt.ColdBoot) args.Add("-no-snapshot-load");
         if (opt.WipeData) args.Add("-wipe-data");

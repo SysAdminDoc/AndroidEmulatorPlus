@@ -36,6 +36,11 @@ public partial class SnapshotDialog : Window
         if (_serial is null) { StatusText.Text = "Launch the AVD first."; return; }
         var name = (SaveNameBox.Text ?? "").Trim();
         if (string.IsNullOrEmpty(name)) { StatusText.Text = "Enter a snapshot name."; return; }
+        if (!SnapshotService.IsSafeSnapshotName(name))
+        {
+            StatusText.Text = "Snapshot names may contain only letters, digits, spaces, '.', '_' and '-'.";
+            return;
+        }
         StatusText.Text = $"Saving snapshot '{name}'…";
         var ok = await _svc.SaveAsync(_serial, name);
         StatusText.Text = ok ? $"✓ Snapshot '{name}' saved." : "✗ Save failed — see log.";

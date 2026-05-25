@@ -1,4 +1,5 @@
 using System.IO;
+using System.Text.RegularExpressions;
 using AndroidEmulatorPlus.Helpers;
 using AndroidEmulatorPlus.Models;
 
@@ -31,9 +32,15 @@ public sealed class SnapshotService
         _log = log;
     }
 
+    public static bool IsSafeSnapshotName(string value)
+        => !string.IsNullOrWhiteSpace(value)
+           && value.Length <= 128
+           && Regex.IsMatch(value, @"^[A-Za-z0-9._ -]+$");
+
     public List<Snapshot> List(string avdName)
     {
         var list = new List<Snapshot>();
+        if (!AvdService.IsSafeAvdName(avdName)) return list;
         if (_sdk.AvdHome is null) return list;
         var snapsDir = Path.Combine(_sdk.AvdHome, avdName + ".avd", "snapshots");
         if (!Directory.Exists(snapsDir)) return list;
@@ -60,6 +67,7 @@ public sealed class SnapshotService
     /// </summary>
     public bool Delete(string avdName, string snapshotName)
     {
+        if (!AvdService.IsSafeAvdName(avdName) || !IsSafeSnapshotName(snapshotName)) return false;
         if (_sdk.AvdHome is null) return false;
         var dir = Path.Combine(_sdk.AvdHome, avdName + ".avd", "snapshots", snapshotName);
         if (!Directory.Exists(dir)) return false;
@@ -82,6 +90,11 @@ public sealed class SnapshotService
     /// </summary>
     public async Task<bool> SaveAsync(string serial, string snapshotName, CancellationToken ct = default)
     {
+        if (!IsSafeSnapshotName(snapshotName))
+        {
+            _log.Error("Snapshot save skipped: invalid snapshot name.");
+            return false;
+        }
         var r = await ProcessRunner.RunAsync(_sdk.AdbRequired,
             new[] { "-s", serial, "emu", "avd", "snapshot", "save", snapshotName },
             extraEnv: new Dictionary<string, string?>
@@ -97,6 +110,11 @@ public sealed class SnapshotService
     /// <summary>Loads a snapshot via <c>adb emu avd snapshot load &lt;name&gt;</c>.</summary>
     public async Task<bool> LoadAsync(string serial, string snapshotName, CancellationToken ct = default)
     {
+        if (!IsSafeSnapshotName(snapshotName))
+        {
+            _log.Error("Snapshot load skipped: invalid snapshot name.");
+            return false;
+        }
         var r = await ProcessRunner.RunAsync(_sdk.AdbRequired,
             new[] { "-s", serial, "emu", "avd", "snapshot", "load", snapshotName },
             extraEnv: new Dictionary<string, string?>

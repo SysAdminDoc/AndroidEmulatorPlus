@@ -24,8 +24,9 @@ Tag legend:
   `36.5.11`, API 35 Google Play x86_64, and API 36 Google Play x86_64 images are
   installed.
 - `global.json` pins repository builds to .NET 9 with feature-band roll-forward.
-- `dotnet build AndroidEmulatorPlus.sln -c Release` and `dotnet test` pass
-  locally.
+- `dotnet build AndroidEmulatorPlus.sln -c Release` and
+  `dotnet test AndroidEmulatorPlus.Tests\AndroidEmulatorPlus.Tests.csproj -c Release`
+  pass locally (76 tests).
 - Release smoke is blocked on this VMware guest: `emulator -accel-check` reports
   "Virtualization extension is not supported." The remaining C-01 smoke needs a
   host with nested virtualization/Hyper-V acceleration available.
@@ -55,6 +56,12 @@ Tag legend:
 
 ## Recently Completed
 
+- 2026-05-25: deep hardening pass for shell quoting and identifier validation,
+  bundle signature verification, Magisk latest-release downloads, module zip
+  validation, app-data tar import/migration safety, refresh race handling,
+  settings normalization, process-output draining, media cleanup, AVD/snapshot
+  name guards, config clamping, and focused regression tests. See
+  [CHANGELOG.md](CHANGELOG.md) for details.
 - 2026-05-25: v0.2.0 code-side release prep, rootAVD pinning, known-hash
   manifest, bundle base-APK ordering, proxy wiring, signer mismatch warning,
   no-backup migration preflight, application icon, Magisk module manager, test

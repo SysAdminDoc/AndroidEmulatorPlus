@@ -100,6 +100,7 @@ public sealed class SdkLocator
         {
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Android", "Sdk"),
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "AppData", "Local", "Android", "Sdk"),
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".cache", "android-sdk"),
             @"C:\Android\Sdk",
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Android", "Sdk"),
         };

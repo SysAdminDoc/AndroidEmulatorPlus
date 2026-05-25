@@ -1,5 +1,6 @@
 using AndroidEmulatorPlus.Helpers;
 using AndroidEmulatorPlus.Models;
+using System.Text.RegularExpressions;
 
 namespace AndroidEmulatorPlus.Services;
 
@@ -52,7 +53,20 @@ public sealed class AdbService
             extraEnv: NoPathConv, ct: ct);
 
     public Task<ProcessResult> RootShellAsync(string serial, string command, CancellationToken ct = default)
-        => ShellAsync(serial, $"/debug_ramdisk/su -c '{command.Replace("'", "'\\''")}'", ct);
+        => ShellAsync(serial, $"/debug_ramdisk/su -c {ShellQuote(command)}", ct);
+
+    public static string ShellQuote(string value)
+        => "'" + value.Replace("'", "'\\''") + "'";
+
+    public static bool IsSafeAndroidPackageName(string value)
+        => !string.IsNullOrWhiteSpace(value)
+           && value.Length <= 255
+           && Regex.IsMatch(value, @"^[A-Za-z0-9_]+(\.[A-Za-z0-9_]+)*$");
+
+    public static bool IsSafeMagiskModuleId(string value)
+        => !string.IsNullOrWhiteSpace(value)
+           && value.Length <= 128
+           && Regex.IsMatch(value, @"^[A-Za-z0-9._-]+$");
 
     public Task<ProcessResult> PullAsync(string serial, string remote, string local, CancellationToken ct = default)
         => ProcessRunner.RunAsync(_sdk.AdbRequired,
@@ -75,9 +89,11 @@ public sealed class AdbService
     }
 
     public Task<ProcessResult> UninstallAsync(string serial, string pkg, CancellationToken ct = default)
-        => ProcessRunner.RunAsync(_sdk.AdbRequired,
-            new[] { "-s", serial, "uninstall", pkg },
-            extraEnv: NoPathConv, ct: ct);
+        => IsSafeAndroidPackageName(pkg)
+            ? ProcessRunner.RunAsync(_sdk.AdbRequired,
+                new[] { "-s", serial, "uninstall", pkg },
+                extraEnv: NoPathConv, ct: ct)
+            : Task.FromResult(new ProcessResult(-1, "", "invalid package name"));
 
     public async Task<bool> WaitForBootAsync(string serial, TimeSpan timeout, CancellationToken ct = default)
     {
@@ -105,6 +121,7 @@ public sealed class AdbService
             .Select(l => l.Trim().Replace("\r", ""))
             .Where(l => l.StartsWith("package:"))
             .Select(l => l["package:".Length..])
+            .Where(IsSafeAndroidPackageName)
             .OrderBy(s => s)
             .ToList();
     }
@@ -115,12 +132,14 @@ public sealed class AdbService
     /// </summary>
     public async Task<HashSet<string>> ListPackagesFlagAsync(string serial, string flag, CancellationToken ct = default)
     {
+        if (flag is not ("" or "-3" or "-s" or "-d")) return new HashSet<string>(StringComparer.Ordinal);
         var cmd = string.IsNullOrEmpty(flag) ? "pm list packages" : $"pm list packages {flag}";
         var r = await ShellAsync(serial, cmd, ct);
         return new HashSet<string>(r.StdOut.Split('\n', StringSplitOptions.RemoveEmptyEntries)
             .Select(l => l.Trim().Replace("\r", ""))
             .Where(l => l.StartsWith("package:"))
-            .Select(l => l["package:".Length..]),
+            .Select(l => l["package:".Length..])
+            .Where(IsSafeAndroidPackageName),
             StringComparer.Ordinal);
     }
 
@@ -130,14 +149,16 @@ public sealed class AdbService
     /// </summary>
     public async Task<long> DataSizeAsync(string serial, string pkg, CancellationToken ct = default)
     {
-        var r = await RootShellAsync(serial, $"du -sb /data/data/{pkg} 2>/dev/null | awk '{{print $1}}'", ct);
+        if (!IsSafeAndroidPackageName(pkg)) return 0;
+        var r = await RootShellAsync(serial, $"du -sb {ShellQuote($"/data/data/{pkg}")} 2>/dev/null | awk '{{print $1}}'", ct);
         if (!r.Success) return 0;
         return long.TryParse(r.StdOut.Trim(), out var n) ? n : 0;
     }
 
     public async Task<List<string>> PackagePathsAsync(string serial, string pkg, CancellationToken ct = default)
     {
-        var r = await ShellAsync(serial, $"pm path {pkg}", ct);
+        if (!IsSafeAndroidPackageName(pkg)) return new();
+        var r = await ShellAsync(serial, $"pm path {ShellQuote(pkg)}", ct);
         return r.StdOut.Split('\n', StringSplitOptions.RemoveEmptyEntries)
             .Select(l => l.Trim().Replace("\r", ""))
             .Where(l => l.StartsWith("package:"))
@@ -203,7 +224,7 @@ public sealed class AdbService
     public async Task<bool> ScreenshotAsync(string serial, string destPath, CancellationToken ct = default)
     {
         var remote = $"/sdcard/aep-shot-{DateTime.Now:yyyyMMdd-HHmmss-fff}.png";
-        var cap = await ShellAsync(serial, $"screencap -p {remote}", ct);
+        var cap = await ShellAsync(serial, $"screencap -p {ShellQuote(remote)}", ct);
         if (!cap.Success) return false;
         try
         {
@@ -213,7 +234,7 @@ public sealed class AdbService
         }
         finally
         {
-            try { await ShellAsync(serial, $"rm -f {remote}", ct); } catch { }
+            try { await ShellAsync(serial, $"rm -f {ShellQuote(remote)}", ct); } catch { }
         }
         return System.IO.File.Exists(destPath);
     }

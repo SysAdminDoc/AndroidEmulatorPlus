@@ -33,21 +33,35 @@ public sealed class DownloadService : IDisposable
         IProgress<(long received, long? total)>? progress = null,
         CancellationToken ct = default)
     {
-        _log.Info($"Downloading {Path.GetFileName(dest)}…");
-        Directory.CreateDirectory(Path.GetDirectoryName(dest)!);
+        var destPath = Path.GetFullPath(dest);
+        _log.Info($"Downloading {Path.GetFileName(destPath)}…");
+        Directory.CreateDirectory(Path.GetDirectoryName(destPath)!);
+        var tmp = destPath + ".download";
+        try { File.Delete(tmp); } catch { }
         using var resp = await _http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, ct);
         resp.EnsureSuccessStatusCode();
         var total = resp.Content.Headers.ContentLength;
         await using var input = await resp.Content.ReadAsStreamAsync(ct);
-        await using var output = File.Create(dest);
-        var buf = new byte[81920];
-        long received = 0;
-        int n;
-        while ((n = await input.ReadAsync(buf, ct)) > 0)
+        try
         {
-            await output.WriteAsync(buf.AsMemory(0, n), ct);
-            received += n;
-            progress?.Report((received, total));
+            await using (var output = File.Create(tmp))
+            {
+                var buf = new byte[81920];
+                long received = 0;
+                int n;
+                while ((n = await input.ReadAsync(buf, ct)) > 0)
+                {
+                    await output.WriteAsync(buf.AsMemory(0, n), ct);
+                    received += n;
+                    progress?.Report((received, total));
+                }
+            }
+            File.Move(tmp, destPath, overwrite: true);
+        }
+        catch
+        {
+            try { File.Delete(tmp); } catch { }
+            throw;
         }
     }
 

@@ -72,6 +72,20 @@ public sealed partial class ConfigViewModel : ObservableObject
         ScreenPreset = ScreenPresets.FirstOrDefault(p => p.Matches(ScreenW, ScreenH, Dpi));
     }
 
+    private void NormalizeHardwareInputs()
+    {
+        RamMb = Clamp(RamMb, 512, 65536);
+        Cores = Clamp(Cores, 1, 64);
+        DiskGb = Clamp(DiskGb, 1, 4096);
+        ScreenW = Clamp(ScreenW, 240, 8192);
+        ScreenH = Clamp(ScreenH, 240, 8192);
+        Dpi = Clamp(Dpi, 80, 1000);
+        if (!GpuModes.Contains(GpuMode)) GpuMode = "host";
+    }
+
+    private static int Clamp(int value, int min, int max)
+        => Math.Min(Math.Max(value, min), max);
+
     partial void OnScreenPresetChanged(ScreenPreset? value)
     {
         if (value is null) return;
@@ -98,6 +112,7 @@ public sealed partial class ConfigViewModel : ObservableObject
     private void Apply()
     {
         if (Selected is null) return;
+        NormalizeHardwareInputs();
         var updates = new Dictionary<string, string>
         {
             ["hw.ramSize"] = RamMb.ToString(),
@@ -118,6 +133,7 @@ public sealed partial class ConfigViewModel : ObservableObject
     private async Task ResizeDiskAsync(string mode)
     {
         if (Selected is null) return;
+        NormalizeHardwareInputs();
         bool wipe = mode == "wipe";
         if (wipe)
         {

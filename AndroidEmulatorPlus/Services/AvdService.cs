@@ -1,4 +1,5 @@
 using System.IO;
+using System.Text.RegularExpressions;
 using AndroidEmulatorPlus.Helpers;
 using AndroidEmulatorPlus.Models;
 
@@ -16,6 +17,11 @@ public sealed class AvdService
         _log = log;
     }
 
+    public static bool IsSafeAvdName(string value)
+        => !string.IsNullOrWhiteSpace(value)
+           && value.Length <= 128
+           && Regex.IsMatch(value, @"^[A-Za-z0-9._-]+$");
+
     public List<Avd> List()
     {
         var list = new List<Avd>();
@@ -24,6 +30,7 @@ public sealed class AvdService
         foreach (var ini in Directory.GetFiles(_sdk.AvdHome, "*.ini"))
         {
             var name = Path.GetFileNameWithoutExtension(ini);
+            if (!IsSafeAvdName(name)) continue;
             var avdDir = Path.Combine(_sdk.AvdHome, name + ".avd");
             var configPath = Path.Combine(avdDir, "config.ini");
             if (!File.Exists(configPath)) continue;
@@ -96,6 +103,7 @@ public sealed class AvdService
 
     public async Task<ProcessResult> CreateAsync(string name, string sysImagePkg, string device = "pixel_7", CancellationToken ct = default)
     {
+        if (!IsSafeAvdName(name)) return new ProcessResult(-1, "", "invalid AVD name");
         if (_sdk.AvdManagerBat is null)
             throw new InvalidOperationException("avdmanager.bat not found. Install cmdline-tools first.");
         var args = new List<string>
@@ -122,6 +130,7 @@ public sealed class AvdService
 
     public Task<ProcessResult> DeleteAsync(string name, CancellationToken ct = default)
     {
+        if (!IsSafeAvdName(name)) return Task.FromResult(new ProcessResult(-1, "", "invalid AVD name"));
         if (_sdk.AvdManagerBat is null)
             throw new InvalidOperationException("avdmanager.bat not found.");
         return ProcessRunner.RunAsync("cmd.exe",
@@ -130,6 +139,8 @@ public sealed class AvdService
 
     public Task<ProcessResult> RenameAsync(string oldName, string newName, CancellationToken ct = default)
     {
+        if (!IsSafeAvdName(oldName) || !IsSafeAvdName(newName))
+            return Task.FromResult(new ProcessResult(-1, "", "invalid AVD name"));
         if (_sdk.AvdManagerBat is null)
             throw new InvalidOperationException("avdmanager.bat not found.");
         _log.Info($"Renaming AVD '{oldName}' → '{newName}'…");
@@ -145,6 +156,8 @@ public sealed class AvdService
     /// </summary>
     public void Duplicate(string sourceName, string newName)
     {
+        if (!IsSafeAvdName(sourceName) || !IsSafeAvdName(newName))
+            throw new InvalidOperationException("Invalid AVD name.");
         if (_sdk.AvdHome is null) throw new InvalidOperationException("AVD home unknown.");
         var srcDir = Path.Combine(_sdk.AvdHome, sourceName + ".avd");
         var srcIni = Path.Combine(_sdk.AvdHome, sourceName + ".ini");
@@ -205,13 +218,14 @@ public sealed class AvdService
     {
         Directory.CreateDirectory(dst);
         foreach (var dir in Directory.EnumerateDirectories(src, "*", SearchOption.AllDirectories))
-            Directory.CreateDirectory(dir.Replace(src, dst));
+            Directory.CreateDirectory(Path.Combine(dst, Path.GetRelativePath(src, dir)));
         foreach (var f in Directory.EnumerateFiles(src, "*", SearchOption.AllDirectories))
-            File.Copy(f, f.Replace(src, dst), overwrite: true);
+            File.Copy(f, Path.Combine(dst, Path.GetRelativePath(src, f)), overwrite: true);
     }
 
     public string? FolderFor(string avdName)
     {
+        if (!IsSafeAvdName(avdName)) return null;
         if (_sdk.AvdHome is null) return null;
         var dir = Path.Combine(_sdk.AvdHome, avdName + ".avd");
         return Directory.Exists(dir) ? dir : null;
@@ -220,6 +234,7 @@ public sealed class AvdService
     /// <summary>Writes a .cmd launcher to the user's Desktop. .lnk would need COM/Shell32 interop.</summary>
     public string CreateDesktopShortcut(string avdName)
     {
+        if (!IsSafeAvdName(avdName)) throw new InvalidOperationException("Invalid AVD name.");
         if (_sdk.EmulatorExe is null) throw new InvalidOperationException("emulator.exe not found.");
         var desktop = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
         var safeName = string.Concat(avdName.Where(c => !Path.GetInvalidFileNameChars().Contains(c)));

@@ -88,9 +88,11 @@ public sealed class BundleInstallerService
     }
 
     /// <summary>
-    /// R-08 / C-04: verify the APK's signature. Returns true if install should
-    /// proceed. <paramref name="onSignerMismatch"/> is invoked when the installed
-    /// package has a different cert; return true to proceed anyway.
+    /// R-08 / C-04: verify APK signatures before install. Bundles are inspected
+    /// split-by-split so a bad config APK cannot hide behind a valid base APK.
+    /// Returns true if install should proceed. <paramref name="onSignerMismatch"/>
+    /// is invoked when the installed package has a different cert; return true to
+    /// proceed anyway.
     /// </summary>
     private async Task<bool> VerifyAsync(string serial, string path, System.Func<string, string?, System.Threading.Tasks.Task<bool>>? onSignerMismatch)
     {
@@ -99,35 +101,59 @@ public sealed class BundleInstallerService
             _log.Warning("Sig verify skipped: apksigner.bat not found in SDK build-tools.");
             return true;
         }
-        string apkToInspect = path;
         var ext = Path.GetExtension(path).ToLowerInvariant();
         string? tempDir = null;
         try
         {
+            var apkPaths = new List<string> { path };
             if (ext is ".apks" or ".xapk" or ".apkm")
             {
                 tempDir = Path.Combine(Path.GetTempPath(), $"aep-verify-{System.Guid.NewGuid():N}");
                 Directory.CreateDirectory(tempDir);
                 System.IO.Compression.ZipFile.ExtractToDirectory(path, tempDir);
-                var apks = Directory.EnumerateFiles(tempDir, "*.apk", SearchOption.AllDirectories).ToList();
-                apkToInspect = AppService.OrderBaseFirst(apks).FirstOrDefault() ?? path;
+                apkPaths = AppService.OrderBaseFirst(
+                    Directory.EnumerateFiles(tempDir, "*.apk", SearchOption.AllDirectories));
+                if (apkPaths.Count == 0)
+                {
+                    _log.Error($"Signature verify failed for {Path.GetFileName(path)}: no APKs found inside bundle.");
+                    return false;
+                }
             }
 
-            var info = await _signer.InspectAsync(apkToInspect);
-            if (!info.Verified)
+            string? expectedSha = null;
+            string? baseSha = null;
+            foreach (var apk in apkPaths)
             {
-                _log.Error($"apksigner verify FAILED for {Path.GetFileName(path)}: {info.Raw.Trim()}");
-                return false;
-            }
-            if (info.Sha256 is null) return true;
+                var info = await _signer.InspectAsync(apk);
+                if (!info.Verified)
+                {
+                    _log.Error($"apksigner verify FAILED for {Path.GetFileName(apk)}: {info.Raw.Trim()}");
+                    return false;
+                }
 
-            _log.Detail($"signer cert SHA-256 {info.Sha256[..12]}…");
-            var pkg = await _signer.ReadPackageNameAsync(apkToInspect);
+                if (info.Sha256 is not null)
+                {
+                    expectedSha ??= info.Sha256;
+                    if (string.Equals(apk, apkPaths[0], System.StringComparison.OrdinalIgnoreCase))
+                        baseSha = info.Sha256;
+                    if (!string.Equals(expectedSha, info.Sha256, System.StringComparison.OrdinalIgnoreCase))
+                    {
+                        _log.Error($"Signature verify failed for {Path.GetFileName(path)}: split {Path.GetFileName(apk)} uses a different signing certificate.");
+                        return false;
+                    }
+                }
+            }
+
+            baseSha ??= expectedSha;
+            if (baseSha is null) return true;
+
+            _log.Detail($"signer cert SHA-256 {baseSha[..12]}…{(apkPaths.Count > 1 ? $" ({apkPaths.Count} split APKs verified)" : "")}");
+            var pkg = await _signer.ReadPackageNameAsync(apkPaths[0]);
             if (pkg is null) return true;
             var installedSha = await _signer.InstalledCertShaAsync(_adb, serial, pkg);
             if (installedSha is null) return true;
 
-            if (string.Equals(info.Sha256, installedSha, System.StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(baseSha, installedSha, System.StringComparison.OrdinalIgnoreCase))
             {
                 _log.Detail($"signer matches installed cert for {pkg}");
                 return true;
@@ -138,12 +164,12 @@ public sealed class BundleInstallerService
                 _log.Warning($"Signer mismatch for {pkg} — no UI prompt registered; allowing install.");
                 return true;
             }
-            return await onSignerMismatch(pkg, $"new={info.Sha256[..12]}…  installed={installedSha[..12]}…");
+            return await onSignerMismatch(pkg, $"new={baseSha[..12]}…  installed={installedSha[..12]}…");
         }
         catch (System.Exception ex)
         {
-            _log.Warning("Sig verify skipped: " + ex.Message);
-            return true;
+            _log.Error("Signature verify failed: " + ex.Message);
+            return false;
         }
         finally
         {

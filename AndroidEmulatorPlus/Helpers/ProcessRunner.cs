@@ -67,6 +67,7 @@ public static class ProcessRunner
         try
         {
             await proc.WaitForExitAsync(timeoutCts.Token);
+            proc.WaitForExit();
         }
         catch (OperationCanceledException) when (!ct.IsCancellationRequested && timeout.HasValue)
         {
@@ -131,6 +132,7 @@ public static class ProcessRunner
             var stdoutTask = proc.StandardOutput.ReadToEndAsync(linked.Token);
             var stderrTask = proc.StandardError.ReadToEndAsync(linked.Token);
             await proc.WaitForExitAsync(linked.Token);
+            proc.WaitForExit();
             return new ProcessResult(proc.ExitCode, await stdoutTask, await stderrTask);
         }
         catch (OperationCanceledException) when (!ct.IsCancellationRequested && timeout.HasValue)
@@ -184,6 +186,7 @@ public static class ProcessRunner
         try
         {
             await proc.WaitForExitAsync(linked.Token);
+            proc.WaitForExit();
         }
         catch (OperationCanceledException) when (!ct.IsCancellationRequested && timeout.HasValue)
         {

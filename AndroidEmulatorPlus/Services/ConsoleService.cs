@@ -133,7 +133,6 @@ public sealed class ConsoleService
     /// <summary>Sets the clipboard text via cmd clipboard set-primary (B-07).</summary>
     public Task<ProcessResult> ClipboardSetAsync(AdbService adb, string serial, string text, CancellationToken ct = default)
     {
-        var escaped = text.Replace("'", "'\\''");
-        return adb.ShellAsync(serial, $"cmd clipboard set-primary '{escaped}'", ct);
+        return adb.ShellAsync(serial, $"cmd clipboard set-primary {AdbService.ShellQuote(text)}", ct);
     }
 }

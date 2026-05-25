@@ -28,9 +28,10 @@ public sealed class MigrationService
     /// </summary>
     public async Task<bool> AllowsBackupAsync(string serial, string pkg, CancellationToken ct = default)
     {
+        if (!AdbService.IsSafeAndroidPackageName(pkg)) return true;
         try
         {
-            var r = await _adb.ShellAsync(serial, $"pm dump {pkg}", ct);
+            var r = await _adb.ShellAsync(serial, $"pm dump {Q(pkg)}", ct);
             if (!r.Success) return true; // assume yes when we can't tell
             // pm dump output lines that name the flag look like:
             //   flags=[ ALLOW_BACKUP ALLOW_CLEAR_USER_DATA HAS_CODE … ]
@@ -83,6 +84,8 @@ public sealed class MigrationService
 
     public async Task<TransferResult> TransferApkAsync(string phoneSerial, string emuSerial, string pkg, CancellationToken ct)
     {
+        if (!AdbService.IsSafeAndroidPackageName(pkg))
+            return new TransferResult(pkg, false, 0, "invalid package name");
         var work = Path.Combine(CacheRoot, pkg);
         Directory.CreateDirectory(work);
         try
@@ -112,6 +115,8 @@ public sealed class MigrationService
 
     public async Task<TransferResult> TransferInternalDataAsync(string phoneSerial, string emuSerial, string pkg, CancellationToken ct)
     {
+        if (!AdbService.IsSafeAndroidPackageName(pkg))
+            return new TransferResult(pkg, false, 0, "invalid package name");
         var tarOnPhone = $"/sdcard/{pkg}.tar";
         var tarOnEmu = $"/sdcard/{pkg}.tar";
         var local = Path.Combine(CacheRoot, $"{pkg}.tar");
@@ -121,48 +126,50 @@ public sealed class MigrationService
             // A-30: optionally force-stop on the phone before tarring so the DB isn't torn.
             if (ForceStopOnPhone)
             {
-                try { await _adb.ShellAsync(phoneSerial, $"am force-stop {pkg}", ct); } catch { }
+                try { await _adb.ShellAsync(phoneSerial, $"am force-stop {Q(pkg)}", ct); } catch { }
             }
 
             // A-29: pick the right tar pipeline for the phone's tar flavor.
             string tarCmd;
             if (await PhoneTarSupportsExcludeAsync(phoneSerial, ct))
             {
-                tarCmd = $"cd /data/data && tar --exclude={pkg}/cache --exclude={pkg}/code_cache --exclude={pkg}/no_backup -cf {tarOnPhone} {pkg} && chmod 666 {tarOnPhone}";
+                tarCmd = $"cd /data/data && tar --exclude={Q(pkg + "/cache")} --exclude={Q(pkg + "/code_cache")} --exclude={Q(pkg + "/no_backup")} -cf {Q(tarOnPhone)} {Q(pkg)} && chmod 666 {Q(tarOnPhone)}";
             }
             else
             {
                 // Older toybox tar lacks --exclude=; use find with -prune to skip cache dirs
                 // and feed the surviving paths via -T -.
-                tarCmd = $"cd /data/data && find {pkg} -type d \\( -name cache -o -name code_cache -o -name no_backup \\) -prune -o -print | tar -cf {tarOnPhone} -T - && chmod 666 {tarOnPhone}";
+                tarCmd = $"cd /data/data && find {Q(pkg)} -type d \\( -name cache -o -name code_cache -o -name no_backup \\) -prune -o -print | tar -cf {Q(tarOnPhone)} -T - && chmod 666 {Q(tarOnPhone)}";
             }
             var tar = await _adb.RootShellAsync(phoneSerial, tarCmd, ct);
             if (!tar.Success) return new TransferResult(pkg, false, 0, "tar failed");
 
-            var stat = await _adb.ShellAsync(phoneSerial, $"stat -c %s {tarOnPhone}", ct);
+            var stat = await _adb.ShellAsync(phoneSerial, $"stat -c %s {Q(tarOnPhone)}", ct);
             if (!long.TryParse(stat.StdOut.Trim(), out var size) || size < 1024)
             {
-                await _adb.RootShellAsync(phoneSerial, $"rm -f {tarOnPhone}", ct);
+                await _adb.RootShellAsync(phoneSerial, $"rm -f {Q(tarOnPhone)}", ct);
                 return new TransferResult(pkg, false, 0, "tar empty");
             }
 
             // pull / push
             var pull = await _adb.PullAsync(phoneSerial, tarOnPhone, local, ct);
             if (!pull.Success || !File.Exists(local)) return new TransferResult(pkg, false, size, "pull failed");
+            if (!AppService.TryValidateDataTarForImport(local, pkg, out var tarDetail))
+                return new TransferResult(pkg, false, size, "unsafe tar: " + tarDetail);
             var push = await _adb.PushAsync(emuSerial, local, tarOnEmu, ct);
             if (!push.Success) return new TransferResult(pkg, false, size, "push failed");
 
             // force-stop, get UID, untar, chown, restorecon
-            await _adb.ShellAsync(emuSerial, $"am force-stop {pkg}", ct);
-            var uidR = await _adb.RootShellAsync(emuSerial, $"stat -c %u /data/data/{pkg}", ct);
+            await _adb.ShellAsync(emuSerial, $"am force-stop {Q(pkg)}", ct);
+            var uidR = await _adb.RootShellAsync(emuSerial, $"stat -c %u {Q($"/data/data/{pkg}")}", ct);
             if (!int.TryParse(uidR.StdOut.Trim(), out var uid))
                 return new TransferResult(pkg, false, size, "no emu uid");
 
             var ex = await _adb.RootShellAsync(emuSerial,
-                $"cd /data/data && tar -xf {tarOnEmu} && chown -R {uid}:{uid} /data/data/{pkg} && restorecon -R /data/data/{pkg} && echo OK",
+                $"cd /data/data && tar -xf {Q(tarOnEmu)} && chown -R {uid}:{uid} {Q($"/data/data/{pkg}")} && restorecon -R {Q($"/data/data/{pkg}")} && echo OK",
                 ct);
-            await _adb.RootShellAsync(emuSerial, $"rm -f {tarOnEmu}", ct);
-            await _adb.RootShellAsync(phoneSerial, $"rm -f {tarOnPhone}", ct);
+            await _adb.RootShellAsync(emuSerial, $"rm -f {Q(tarOnEmu)}", ct);
+            await _adb.RootShellAsync(phoneSerial, $"rm -f {Q(tarOnPhone)}", ct);
 
             if (ex.Combined.Contains("OK"))
                 return new TransferResult(pkg, true, size, $"uid {uid}");
@@ -180,35 +187,39 @@ public sealed class MigrationService
     /// </summary>
     public async Task<TransferResult> TransferObbAsync(string phoneSerial, string emuSerial, string pkg, CancellationToken ct)
     {
+        if (!AdbService.IsSafeAndroidPackageName(pkg))
+            return new TransferResult(pkg, false, 0, "invalid package name");
         var tarOnPhone = $"/sdcard/{pkg}_obb.tar";
         var tarOnEmu = $"/sdcard/{pkg}_obb.tar";
         var local = Path.Combine(CacheRoot, $"{pkg}_obb.tar");
         Directory.CreateDirectory(CacheRoot);
 
         var exists = await _adb.RootShellAsync(phoneSerial,
-            $"[ -d /storage/emulated/0/Android/obb/{pkg} ] && echo yes", ct);
+            $"[ -d {Q($"/storage/emulated/0/Android/obb/{pkg}")} ] && echo yes", ct);
         if (!exists.StdOut.Contains("yes")) return new TransferResult(pkg, true, 0, "no obb dir");
 
         try
         {
             var tar = await _adb.RootShellAsync(phoneSerial,
-                $"cd /storage/emulated/0/Android/obb && tar -cf {tarOnPhone} {pkg} && chmod 666 {tarOnPhone}", ct);
+                $"cd /storage/emulated/0/Android/obb && tar -cf {Q(tarOnPhone)} {Q(pkg)} && chmod 666 {Q(tarOnPhone)}", ct);
             if (!tar.Success) return new TransferResult(pkg, false, 0, "obb tar failed");
-            var stat = await _adb.ShellAsync(phoneSerial, $"stat -c %s {tarOnPhone}", ct);
+            var stat = await _adb.ShellAsync(phoneSerial, $"stat -c %s {Q(tarOnPhone)}", ct);
             if (!long.TryParse(stat.StdOut.Trim(), out var size) || size < 1024)
             {
-                await _adb.RootShellAsync(phoneSerial, $"rm -f {tarOnPhone}", ct);
+                await _adb.RootShellAsync(phoneSerial, $"rm -f {Q(tarOnPhone)}", ct);
                 return new TransferResult(pkg, true, 0, "obb empty");
             }
             var pull = await _adb.PullAsync(phoneSerial, tarOnPhone, local, ct);
             if (!pull.Success) return new TransferResult(pkg, false, size, "obb pull failed");
+            if (!AppService.TryValidateDataTarForImport(local, pkg, out var tarDetail))
+                return new TransferResult(pkg, false, size, "unsafe obb tar: " + tarDetail);
             var push = await _adb.PushAsync(emuSerial, local, tarOnEmu, ct);
             if (!push.Success) return new TransferResult(pkg, false, size, "obb push failed");
 
             var ex = await _adb.ShellAsync(emuSerial,
-                $"mkdir -p /storage/emulated/0/Android/obb/{pkg} && cd /storage/emulated/0/Android/obb && tar -xf {tarOnEmu} && echo OK", ct);
-            await _adb.ShellAsync(emuSerial, $"rm -f {tarOnEmu}", ct);
-            await _adb.RootShellAsync(phoneSerial, $"rm -f {tarOnPhone}", ct);
+                $"mkdir -p {Q($"/storage/emulated/0/Android/obb/{pkg}")} && cd /storage/emulated/0/Android/obb && tar -xf {Q(tarOnEmu)} && echo OK", ct);
+            await _adb.ShellAsync(emuSerial, $"rm -f {Q(tarOnEmu)}", ct);
+            await _adb.RootShellAsync(phoneSerial, $"rm -f {Q(tarOnPhone)}", ct);
             if (ex.Combined.Contains("OK"))
                 return new TransferResult(pkg, true, size, "obb ok");
             return new TransferResult(pkg, false, size, "obb extract failed");
@@ -221,36 +232,40 @@ public sealed class MigrationService
 
     public async Task<TransferResult> TransferExternalDataAsync(string phoneSerial, string emuSerial, string pkg, CancellationToken ct)
     {
+        if (!AdbService.IsSafeAndroidPackageName(pkg))
+            return new TransferResult(pkg, false, 0, "invalid package name");
         var tarOnPhone = $"/sdcard/{pkg}_ext.tar";
         var tarOnEmu = $"/sdcard/{pkg}_ext.tar";
         var local = Path.Combine(CacheRoot, $"{pkg}_ext.tar");
         Directory.CreateDirectory(CacheRoot);
 
         var exists = await _adb.RootShellAsync(phoneSerial,
-            $"[ -d /storage/emulated/0/Android/data/{pkg} ] && echo yes", ct);
+            $"[ -d {Q($"/storage/emulated/0/Android/data/{pkg}")} ] && echo yes", ct);
         if (!exists.StdOut.Contains("yes")) return new TransferResult(pkg, true, 0, "no external dir");
 
         try
         {
             var tar = await _adb.RootShellAsync(phoneSerial,
-                $"cd /storage/emulated/0/Android/data && tar -cf {tarOnPhone} {pkg} && chmod 666 {tarOnPhone}", ct);
+                $"cd /storage/emulated/0/Android/data && tar -cf {Q(tarOnPhone)} {Q(pkg)} && chmod 666 {Q(tarOnPhone)}", ct);
             if (!tar.Success) return new TransferResult(pkg, false, 0, "ext tar failed");
-            var stat = await _adb.ShellAsync(phoneSerial, $"stat -c %s {tarOnPhone}", ct);
+            var stat = await _adb.ShellAsync(phoneSerial, $"stat -c %s {Q(tarOnPhone)}", ct);
             if (!long.TryParse(stat.StdOut.Trim(), out var size) || size < 1024)
             {
-                await _adb.RootShellAsync(phoneSerial, $"rm -f {tarOnPhone}", ct);
+                await _adb.RootShellAsync(phoneSerial, $"rm -f {Q(tarOnPhone)}", ct);
                 return new TransferResult(pkg, true, 0, "ext empty");
             }
             var pull = await _adb.PullAsync(phoneSerial, tarOnPhone, local, ct);
             if (!pull.Success) return new TransferResult(pkg, false, size, "ext pull failed");
+            if (!AppService.TryValidateDataTarForImport(local, pkg, out var tarDetail))
+                return new TransferResult(pkg, false, size, "unsafe ext tar: " + tarDetail);
             var push = await _adb.PushAsync(emuSerial, local, tarOnEmu, ct);
             if (!push.Success) return new TransferResult(pkg, false, size, "ext push failed");
 
             var ex = await _adb.RootShellAsync(emuSerial,
-                $"mkdir -p /storage/emulated/0/Android/data/{pkg} && cd /storage/emulated/0/Android/data && tar -xf {tarOnEmu} && echo OK",
+                $"mkdir -p {Q($"/storage/emulated/0/Android/data/{pkg}")} && cd /storage/emulated/0/Android/data && tar -xf {Q(tarOnEmu)} && echo OK",
                 ct);
-            await _adb.RootShellAsync(emuSerial, $"rm -f {tarOnEmu}", ct);
-            await _adb.RootShellAsync(phoneSerial, $"rm -f {tarOnPhone}", ct);
+            await _adb.RootShellAsync(emuSerial, $"rm -f {Q(tarOnEmu)}", ct);
+            await _adb.RootShellAsync(phoneSerial, $"rm -f {Q(tarOnPhone)}", ct);
             if (ex.Combined.Contains("OK"))
                 return new TransferResult(pkg, true, size, "ext ok");
             return new TransferResult(pkg, false, size, "ext extract failed");
@@ -275,4 +290,6 @@ public sealed class MigrationService
         }
         return "install failed";
     }
+
+    private static string Q(string value) => AdbService.ShellQuote(value);
 }

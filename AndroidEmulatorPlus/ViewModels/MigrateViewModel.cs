@@ -37,6 +37,8 @@ public sealed partial class MigrateViewModel : ObservableObject
     [ObservableProperty] private string _pairStatus = "";
 
     private CancellationTokenSource? _cts;
+    private CancellationTokenSource? _refreshCts;
+    private int _refreshGeneration;
 
     public MigrateViewModel(AdbService adb, MigrationService mig, DeviceMonitor monitor, LogService log, CacheDiagnosticsService cache)
     {
@@ -91,42 +93,87 @@ public sealed partial class MigrateViewModel : ObservableObject
     [RelayCommand]
     private async Task RefreshAsync()
     {
+        if (IsBusy)
+        {
+            _log.Detail("Migration refresh skipped while a transfer is running.");
+            return;
+        }
+
+        var generation = Interlocked.Increment(ref _refreshGeneration);
+        _refreshCts?.Cancel();
+        _refreshCts = new CancellationTokenSource();
+        var ct = _refreshCts.Token;
+
         var phone = _monitor.Current.FirstOrDefault(d => !d.IsEmulator);
         var emu = _monitor.Current.FirstOrDefault(d => d.IsEmulator);
 
-        if (phone is null) PhoneStatus = "no phone connected";
-        else
+        try
         {
-            var rooted = await _adb.IsRootedAsync(phone.Serial);
-            PhoneStatus = $"{phone.Display}{(rooted ? "  ✓ rooted" : "  ⚠ NOT rooted — data copy unavailable")}";
-        }
-
-        if (emu is null) EmuStatus = "no emulator running";
-        else
-        {
-            var rooted = await _adb.IsRootedAsync(emu.Serial);
-            EmuStatus = $"{emu.Serial}{(rooted ? "  ✓ rooted" : "  ⚠ NOT rooted — data restore unavailable")}";
-        }
-
-        if (phone is null) return;
-        Packages.Clear();
-        var list = await _adb.ListPackagesAsync(phone.Serial);
-        foreach (var p in list)
-            Packages.Add(new AndroidApp { Package = p, IsSelected = true });
-
-        // C-05: probe each package's allowBackup flag in the background. Sequential
-        // because `pm dump` is comparatively cheap and a thousand parallel adb
-        // shells flood the bridge. UI thread sees rows flip to ⚠ as the probe
-        // completes.
-        _ = Task.Run(async () =>
-        {
-            foreach (var app in Packages.ToList())
+            if (phone is null) PhoneStatus = "no phone connected";
+            else
             {
-                var ok = await _mig.AllowsBackupAsync(phone.Serial, app.Package);
-                if (!ok && System.Windows.Application.Current?.Dispatcher is { } d)
-                    _ = d.BeginInvoke(() => app.AllowBackup = false);
+                var rooted = await _adb.IsRootedAsync(phone.Serial, ct);
+                if (generation != _refreshGeneration) return;
+                PhoneStatus = $"{phone.Display}{(rooted ? "  ✓ rooted" : "  ⚠ NOT rooted — data copy unavailable")}";
             }
-        });
+
+            if (emu is null) EmuStatus = "no emulator running";
+            else
+            {
+                var rooted = await _adb.IsRootedAsync(emu.Serial, ct);
+                if (generation != _refreshGeneration) return;
+                EmuStatus = $"{emu.Serial}{(rooted ? "  ✓ rooted" : "  ⚠ NOT rooted — data restore unavailable")}";
+            }
+
+            if (phone is null) return;
+            var list = await _adb.ListPackagesAsync(phone.Serial, ct: ct);
+            if (generation != _refreshGeneration) return;
+
+            Packages.Clear();
+            foreach (var p in list)
+                Packages.Add(new AndroidApp { Package = p, IsSelected = true });
+            OnPropertyChanged(nameof(FilteredPackages));
+
+            // C-05: probe each package's allowBackup flag in the background.
+            // Sequential because `pm dump` is comparatively cheap and a thousand
+            // parallel adb shells flood the bridge. The generation guard prevents
+            // stale probes from mutating rows after a newer refresh.
+            var snapshot = Packages.ToList();
+            _ = Task.Run(() => ProbeAllowBackupAsync(phone.Serial, snapshot, generation, ct), ct);
+        }
+        catch (OperationCanceledException) { }
+    }
+
+    private async Task ProbeAllowBackupAsync(string serial, IReadOnlyList<AndroidApp> snapshot, int generation, CancellationToken ct)
+    {
+        try
+        {
+            foreach (var app in snapshot)
+            {
+                ct.ThrowIfCancellationRequested();
+                var ok = await _mig.AllowsBackupAsync(serial, app.Package, ct);
+                if (ok || generation != _refreshGeneration) continue;
+
+                if (System.Windows.Application.Current?.Dispatcher is { } d)
+                {
+                    _ = d.BeginInvoke(() =>
+                    {
+                        if (generation == _refreshGeneration)
+                            app.AllowBackup = false;
+                    });
+                }
+                else
+                {
+                    app.AllowBackup = false;
+                }
+            }
+        }
+        catch (OperationCanceledException) { }
+        catch (Exception ex)
+        {
+            if (generation == _refreshGeneration)
+                _log.Warning("allowBackup probe failed: " + ex.Message);
+        }
     }
 
     public IEnumerable<AndroidApp> FilteredPackages => string.IsNullOrWhiteSpace(Filter)
@@ -156,6 +203,7 @@ public sealed partial class MigrateViewModel : ObservableObject
         if (sel.Count == 0) { _log.Warning("Select at least one package."); return; }
 
         IsBusy = true;
+        _refreshCts?.Cancel();
         _cts = new CancellationTokenSource();
         var ct = _cts.Token;
         int ok = 0, fail = 0; long totalBytes = 0;
@@ -179,6 +227,11 @@ public sealed partial class MigrateViewModel : ObservableObject
 
                 if (DoInternal)
                 {
+                    if (p.AllowBackup && !ForceDataForNoBackup)
+                    {
+                        p.AllowBackup = await _mig.AllowsBackupAsync(phone.Serial, p.Package, ct);
+                    }
+
                     if (!p.AllowBackup && !ForceDataForNoBackup)
                     {
                         _log.Warning($"data skip {p.Package}: allowBackup=false (toggle 'Force-migrate no-backup apps' to override)");

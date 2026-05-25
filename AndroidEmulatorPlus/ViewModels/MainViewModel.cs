@@ -119,7 +119,13 @@ public sealed partial class MainViewModel : ObservableObject
         var dir = MediaDir;
         var dest = Path.Combine(dir, $"screenshot-{DateTime.Now:yyyyMMdd-HHmmss}.png");
         Log.Info($"Taking screenshot from {emu.Serial}…");
-        var ok = await _adb.ScreenshotAsync(emu.Serial, dest);
+        bool ok;
+        try { ok = await _adb.ScreenshotAsync(emu.Serial, dest); }
+        catch (Exception ex)
+        {
+            Log.Error("Screenshot failed: " + ex.Message);
+            return;
+        }
         if (ok)
         {
             Log.Success($"Saved: {dest}");
@@ -188,9 +194,14 @@ public sealed partial class MainViewModel : ObservableObject
         if (_record.IsRecording)
         {
             var dir = MediaDir;
-            var local = await _record.StopAsync(dir);
-            IsRecording = false;
-            RecordButtonText = "🎥 Record";
+            string? local = null;
+            try { local = await _record.StopAsync(dir); }
+            catch (Exception ex) { Log.Error("Recording stop failed: " + ex.Message); }
+            finally
+            {
+                IsRecording = false;
+                RecordButtonText = "🎥 Record";
+            }
             if (local is not null)
             {
                 try { Process.Start(new ProcessStartInfo(System.IO.Path.GetDirectoryName(local)!) { UseShellExecute = true }); }

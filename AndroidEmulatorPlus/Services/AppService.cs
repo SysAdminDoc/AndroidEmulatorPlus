@@ -1,5 +1,6 @@
 using System.IO;
 using System.IO.Compression;
+using System.Formats.Tar;
 using AndroidEmulatorPlus.Helpers;
 using AndroidEmulatorPlus.Models;
 
@@ -72,6 +73,11 @@ public sealed class AppService
         // .xapk and .apkm often ship a manifest.json with the package name. Try to read it
         // so the OBB push knows where to land.
         string? obbPkg = TryReadBundleManifestPackage(work);
+        if (obbPkg is not null && !AdbService.IsSafeAndroidPackageName(obbPkg))
+        {
+            _log.Warning($"Bundle declared an invalid package name for OBB push: {obbPkg}. Skipping OBB push.");
+            obbPkg = null;
+        }
 
         // Fallback: derive package name from any .obb filename of the form main.<ver>.<pkg>.obb.
         if (obbPkg is null && obbs.Count > 0)
@@ -141,8 +147,13 @@ public sealed class AppService
     /// <summary>Pushes a single OBB into <c>/sdcard/Android/obb/&lt;pkg&gt;/&lt;name&gt;</c>.</summary>
     public async Task<bool> PushObbAsync(string serial, string pkg, string localObb, CancellationToken ct = default)
     {
+        if (!AdbService.IsSafeAndroidPackageName(pkg))
+        {
+            _log.Error("OBB push skipped: invalid package name in bundle metadata.");
+            return false;
+        }
         var remoteDir = $"/sdcard/Android/obb/{pkg}";
-        await _adb.ShellAsync(serial, $"mkdir -p {remoteDir}", ct);
+        await _adb.ShellAsync(serial, $"mkdir -p {AdbService.ShellQuote(remoteDir)}", ct);
         var remote = $"{remoteDir}/{Path.GetFileName(localObb)}";
         var r = await _adb.PushAsync(serial, localObb, remote, ct);
         return r.Success;
@@ -190,16 +201,18 @@ public sealed class AppService
     /// </summary>
     public async Task<ProcessResult> UninstallForUser0Async(string serial, string pkg, CancellationToken ct = default)
     {
+        if (!AdbService.IsSafeAndroidPackageName(pkg)) return new ProcessResult(-1, "", "invalid package name");
         _log.Info($"Disabling {pkg} for user 0 (pm uninstall --user 0)…");
-        var r = await _adb.ShellAsync(serial, $"pm uninstall --user 0 {pkg}", ct);
+        var r = await _adb.ShellAsync(serial, $"pm uninstall --user 0 {AdbService.ShellQuote(pkg)}", ct);
         return r;
     }
 
     /// <summary>Reverse of <see cref="UninstallForUser0Async"/>: reinstalls the system APK for user 0.</summary>
     public async Task<ProcessResult> ReinstallExistingAsync(string serial, string pkg, CancellationToken ct = default)
     {
+        if (!AdbService.IsSafeAndroidPackageName(pkg)) return new ProcessResult(-1, "", "invalid package name");
         _log.Info($"Re-enabling {pkg} for user 0…");
-        return await _adb.ShellAsync(serial, $"cmd package install-existing {pkg}", ct);
+        return await _adb.ShellAsync(serial, $"cmd package install-existing {AdbService.ShellQuote(pkg)}", ct);
     }
 
     public Task<ProcessResult> InstallApkAsync(string serial, string apk, CancellationToken ct = default)
@@ -218,6 +231,11 @@ public sealed class AppService
     /// </summary>
     public async Task<bool> ExportAppDataAsync(string serial, string pkg, string destZip, CancellationToken ct = default)
     {
+        if (!AdbService.IsSafeAndroidPackageName(pkg))
+        {
+            _log.Error("Export skipped: invalid package name.");
+            return false;
+        }
         var staging = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "AndroidEmulatorPlus", "transfer", $"export-{Guid.NewGuid():N}");
@@ -226,14 +244,14 @@ public sealed class AppService
         try
         {
             var tar = await _adb.RootShellAsync(serial,
-                $"cd /data/data && tar -cf {remoteTar} {pkg} && chmod 666 {remoteTar}", ct);
+                $"cd /data/data && tar -cf {AdbService.ShellQuote(remoteTar)} {AdbService.ShellQuote(pkg)} && chmod 666 {AdbService.ShellQuote(remoteTar)}", ct);
             if (!tar.Success) { _log.Error("export tar failed: " + tar.Combined.Trim()); return false; }
             var localTar = Path.Combine(staging, $"{pkg}.tar");
             var pull = await _adb.PullAsync(serial, remoteTar, localTar, ct);
             if (!pull.Success || !File.Exists(localTar)) { _log.Error("export pull failed."); return false; }
 
             // Sidecar metadata so Import can restore against a different UID.
-            var uidR = await _adb.RootShellAsync(serial, $"stat -c %u /data/data/{pkg}", ct);
+            var uidR = await _adb.RootShellAsync(serial, $"stat -c %u {AdbService.ShellQuote($"/data/data/{pkg}")}", ct);
             var uid = int.TryParse(uidR.StdOut.Trim(), out var u) ? u : -1;
             var meta = $$"""
                 { "package": "{{pkg}}", "uid": {{uid}}, "exported": "{{DateTime.UtcNow:o}}", "version": 1 }
@@ -247,7 +265,7 @@ public sealed class AppService
         }
         finally
         {
-            try { await _adb.RootShellAsync(serial, $"rm -f {remoteTar}", ct); } catch { }
+            try { await _adb.RootShellAsync(serial, $"rm -f {AdbService.ShellQuote(remoteTar)}", ct); } catch { }
             try { Directory.Delete(staging, true); } catch { }
         }
     }
@@ -271,16 +289,24 @@ public sealed class AppService
             using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(metaPath));
             var pkg = doc.RootElement.GetProperty("package").GetString();
             if (string.IsNullOrEmpty(pkg)) { _log.Error("Import: package field missing."); return false; }
+            if (!AdbService.IsSafeAndroidPackageName(pkg)) { _log.Error("Import: invalid package field in metadata.json."); return false; }
 
-            var tar = Directory.EnumerateFiles(staging, "*.tar").FirstOrDefault();
-            if (tar is null) { _log.Error("Import: no tar inside zip."); return false; }
+            var tars = Directory.EnumerateFiles(staging, "*.tar").ToList();
+            if (tars.Count == 0) { _log.Error("Import: no tar inside zip."); return false; }
+            if (tars.Count > 1) { _log.Error("Import: expected exactly one tar inside zip."); return false; }
+            var tar = tars[0];
+            if (!TryValidateDataTarForImport(tar, pkg, out var tarDetail))
+            {
+                _log.Error("Import: unsafe tar archive: " + tarDetail);
+                return false;
+            }
 
             var remoteTar = $"/sdcard/aep-import-{pkg}.tar";
             var push = await _adb.PushAsync(serial, tar, remoteTar, ct);
             if (!push.Success) { _log.Error("Import push failed."); return false; }
 
-            await _adb.ShellAsync(serial, $"am force-stop {pkg}", ct);
-            var uidR = await _adb.RootShellAsync(serial, $"stat -c %u /data/data/{pkg}", ct);
+            await _adb.ShellAsync(serial, $"am force-stop {AdbService.ShellQuote(pkg)}", ct);
+            var uidR = await _adb.RootShellAsync(serial, $"stat -c %u {AdbService.ShellQuote($"/data/data/{pkg}")}", ct);
             if (!int.TryParse(uidR.StdOut.Trim(), out var uid))
             {
                 _log.Error($"Import: package {pkg} not installed on this emulator. Install the APK first.");
@@ -288,8 +314,8 @@ public sealed class AppService
             }
 
             var ex = await _adb.RootShellAsync(serial,
-                $"cd /data/data && tar -xf {remoteTar} && chown -R {uid}:{uid} /data/data/{pkg} && restorecon -R /data/data/{pkg} && echo OK", ct);
-            await _adb.RootShellAsync(serial, $"rm -f {remoteTar}", ct);
+                $"cd /data/data && tar -xf {AdbService.ShellQuote(remoteTar)} && chown -R {uid}:{uid} {AdbService.ShellQuote($"/data/data/{pkg}")} && restorecon -R {AdbService.ShellQuote($"/data/data/{pkg}")} && echo OK", ct);
+            await _adb.RootShellAsync(serial, $"rm -f {AdbService.ShellQuote(remoteTar)}", ct);
             if (!ex.Combined.Contains("OK"))
             {
                 _log.Error("Import extract failed: " + ex.Combined.Trim());
@@ -302,5 +328,76 @@ public sealed class AppService
         {
             try { Directory.Delete(staging, true); } catch { }
         }
+    }
+
+    public static bool TryValidateDataTarForImport(string tarPath, string pkg, out string detail)
+    {
+        if (!AdbService.IsSafeAndroidPackageName(pkg))
+        {
+            detail = "invalid package name";
+            return false;
+        }
+
+        try
+        {
+            using var fs = File.OpenRead(tarPath);
+            using var reader = new TarReader(fs, leaveOpen: false);
+            var sawEntry = false;
+            TarEntry? entry;
+            while ((entry = reader.GetNextEntry(copyData: false)) is not null)
+            {
+                sawEntry = true;
+                var name = NormalizeTarEntryName(entry.Name);
+                if (string.IsNullOrWhiteSpace(name))
+                {
+                    detail = "empty entry name";
+                    return false;
+                }
+                if (name.StartsWith("/", StringComparison.Ordinal) || name.Contains('\0'))
+                {
+                    detail = $"absolute or invalid path '{entry.Name}'";
+                    return false;
+                }
+
+                var parts = name.Split('/', StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Any(static part => part == ".."))
+                {
+                    detail = $"path traversal entry '{entry.Name}'";
+                    return false;
+                }
+                if (!name.Equals(pkg, StringComparison.Ordinal)
+                    && !name.StartsWith(pkg + "/", StringComparison.Ordinal))
+                {
+                    detail = $"entry '{entry.Name}' is outside package '{pkg}'";
+                    return false;
+                }
+
+                if (entry.EntryType is TarEntryType.SymbolicLink
+                    or TarEntryType.HardLink
+                    or TarEntryType.CharacterDevice
+                    or TarEntryType.BlockDevice
+                    or TarEntryType.Fifo)
+                {
+                    detail = $"unsupported unsafe entry type {entry.EntryType} at '{entry.Name}'";
+                    return false;
+                }
+            }
+
+            detail = sawEntry ? "ok" : "tar is empty";
+            return sawEntry;
+        }
+        catch (Exception ex)
+        {
+            detail = ex.Message;
+            return false;
+        }
+    }
+
+    private static string NormalizeTarEntryName(string name)
+    {
+        var normalized = name.Replace('\\', '/').Trim();
+        while (normalized.StartsWith("./", StringComparison.Ordinal))
+            normalized = normalized[2..];
+        return normalized.TrimEnd('/');
     }
 }

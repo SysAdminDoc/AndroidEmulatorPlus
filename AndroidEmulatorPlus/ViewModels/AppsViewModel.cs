@@ -38,6 +38,8 @@ public sealed partial class AppsViewModel : ObservableObject
     }
 
     [ObservableProperty] private bool _verifySignaturesBeforeInstall = true;
+    private CancellationTokenSource? _refreshCts;
+    private int _refreshGeneration;
 
     /// <summary>Applies a preset by id (used by ItemsControl button bindings).</summary>
     [RelayCommand]
@@ -54,14 +56,35 @@ public sealed partial class AppsViewModel : ObservableObject
     {
         var emu = _monitor.Current.FirstOrDefault(d => d.IsEmulator);
         if (emu is null) { _log.Warning("No emulator running."); return; }
+        var generation = Interlocked.Increment(ref _refreshGeneration);
+        _refreshCts?.Cancel();
+        var refreshCts = new CancellationTokenSource();
+        _refreshCts = refreshCts;
+        var ct = refreshCts.Token;
         IsBusy = true;
         try
         {
+            var list = await _apps.ListAsync(emu.Serial, includeSystem: IncludeSystem, includeDisabled: IncludeDisabled, ct: ct);
+            if (generation != _refreshGeneration) return;
             Apps.Clear();
-            foreach (var a in await _apps.ListAsync(emu.Serial, includeSystem: IncludeSystem, includeDisabled: IncludeDisabled))
+            foreach (var a in list)
                 Apps.Add(a);
+            OnPropertyChanged(nameof(FilteredApps));
         }
-        finally { IsBusy = false; }
+        catch (OperationCanceledException) { }
+        finally
+        {
+            if (generation == _refreshGeneration)
+            {
+                IsBusy = false;
+                _refreshCts?.Dispose();
+                _refreshCts = null;
+            }
+            else
+            {
+                refreshCts.Dispose();
+            }
+        }
     }
 
     partial void OnIncludeSystemChanged(bool value) => _ = RefreshAsync();
@@ -269,53 +292,6 @@ public sealed partial class AppsViewModel : ObservableObject
             await RefreshAsync();
         }
         finally { IsBusy = false; _cache.NotifyChanged(); }
-    }
-
-    /// <summary>
-    /// Extracts a .apks / .xapk / .apkm bundle and installs the inner splits via
-    /// <c>install-multiple</c>; any OBB files are pushed to
-    /// <c>/sdcard/Android/obb/&lt;pkg&gt;/</c>. Cleans up the extracted folder on exit.
-    /// </summary>
-    private async Task<bool> InstallBundleAsync(string serial, string bundlePath)
-    {
-        Services.AppService.BundleExtractResult? extracted = null;
-        try
-        {
-            try { extracted = _apps.ExtractBundle(bundlePath); }
-            catch (Exception ex) { _log.Error(ex.Message); return false; }
-
-            var inst = await _apps.InstallSplitApksAsync(serial, extracted.Apks);
-            if (!inst.Combined.Contains("Success"))
-            {
-                _log.Error("bundle install failed: " + inst.Combined.Trim());
-                return false;
-            }
-
-            if (extracted.ObbFiles.Count > 0)
-            {
-                if (string.IsNullOrEmpty(extracted.ObbPackage))
-                {
-                    _log.Warning($"{extracted.ObbFiles.Count} OBB(s) found but the bundle didn't declare a package name. Skipping OBB push.");
-                }
-                else
-                {
-                    int okObb = 0;
-                    foreach (var obb in extracted.ObbFiles)
-                    {
-                        if (await _apps.PushObbAsync(serial, extracted.ObbPackage, obb)) okObb++;
-                    }
-                    _log.Info($"OBB push: {okObb}/{extracted.ObbFiles.Count} ok.");
-                }
-            }
-            return true;
-        }
-        finally
-        {
-            if (extracted is not null)
-            {
-                try { System.IO.Directory.Delete(extracted.WorkDir, true); } catch { }
-            }
-        }
     }
 
     partial void OnFilterChanged(string value) => OnPropertyChanged(nameof(FilteredApps));

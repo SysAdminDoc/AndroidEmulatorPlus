@@ -50,8 +50,7 @@ public partial class MagiskModulesDialog : Window
     {
         if (_selected is null) { StatusText.Text = "Select a module first."; return; }
         StatusText.Text = $"Installing {_selected.Name}…";
-        var fname = $"{_selected.Id}.zip";
-        var ok = await _svc.InstallFromUrlAsync(_serial, _selected.DownloadUrl, fname);
+        var ok = await _svc.InstallCatalogEntryAsync(_serial, _selected);
         StatusText.Text = ok ? $"✓ {_selected.Name} installed. Cold-boot the emulator." : "✗ Install failed — see log.";
         if (ok) await RefreshInstalledAsync();
     }
