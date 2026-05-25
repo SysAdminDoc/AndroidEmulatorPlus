@@ -33,7 +33,7 @@ Build constraint: this VMware VM has no .NET SDK; changes here are best-effort a
 - [x] **P1 A-18** — Apps tab now offers Include system + Include disabled toggles and a `user`/`system`/`disabled` tag per row.
 - [ ] **P1 A-19** — Detect `allowBackup=false` per package and warn before attempting data migration.
 - [x] **P1 A-25** — Rename AVD popup in the AVD card overflow menu (new reusable `PromptDialog` with regex+collision validation).
-- [ ] **P1 A-36** — `.github/workflows/build.yml` that builds the project on `windows-latest` and uploads the published `.exe` as a release artifact.
+- [x] **P1 A-36** — `.github/workflows/build.yml`: dotnet restore/build/test on `windows-latest`; publishes framework-dependent + self-contained single-file artifacts; on tag push (`v*`) creates a GitHub Release with the self-contained ZIP attached.
 - [ ] **P1 B-10** — Centralize `CancellationTokenSource` plumbing across long-running viewmodels (umbrella for A-01 cancel).
 - [ ] **P1 B-11** — Multi-AVD `Process` tracking via `ConcurrentDictionary` (sub-task of A-33).
 
