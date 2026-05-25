@@ -1,4 +1,5 @@
 using System.IO;
+using System.Net;
 using System.Net.Http;
 using System.Text.Json;
 
@@ -9,11 +10,23 @@ public sealed class DownloadService : IDisposable
     private readonly LogService _log;
     private readonly HttpClient _http;
 
-    public DownloadService(LogService log)
+    public DownloadService(LogService log, SettingsService settings)
     {
         _log = log;
-        _http = new HttpClient(new HttpClientHandler { AllowAutoRedirect = true });
-        _http.DefaultRequestHeaders.UserAgent.ParseAdd("AndroidEmulatorPlus/0.1");
+        var handler = new HttpClientHandler { AllowAutoRedirect = true };
+        // C-03: honor SettingsService.HttpProxy. The value is plumbed at ctor time
+        // (singleton lifetime in DI), so changing the proxy in the Settings dialog
+        // takes effect on next launch — the dialog already warns about that.
+        var proxyUrl = settings.Current.HttpProxy;
+        if (!string.IsNullOrWhiteSpace(proxyUrl)
+            && Uri.TryCreate(proxyUrl, UriKind.Absolute, out var proxyUri))
+        {
+            handler.Proxy = new WebProxy(proxyUri) { UseDefaultCredentials = true };
+            handler.UseProxy = true;
+            _log.Info($"HTTP proxy configured: {proxyUri}");
+        }
+        _http = new HttpClient(handler);
+        _http.DefaultRequestHeaders.UserAgent.ParseAdd("AndroidEmulatorPlus/0.2");
     }
 
     public async Task DownloadAsync(string url, string dest,

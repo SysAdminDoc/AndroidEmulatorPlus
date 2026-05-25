@@ -49,9 +49,16 @@ public sealed class AppService
                 $"Failed to extract {Path.GetFileName(archivePath)}: {ex.Message}", ex);
         }
 
-        var apks = Directory.EnumerateFiles(work, "*.apk", SearchOption.AllDirectories)
-            .OrderBy(static p => p.Length) // smallest first; the base APK is typically smallest after splits
-            .ToList();
+        // C-02 ordering: the base APK must come first to `adb install-multiple`. The
+        // base owns AndroidManifest.xml and most resources, so it is usually the
+        // *largest* of the inner APKs (per-config splits trim down). The base
+        // filename is typically literally `base.apk` (SAI / bundletool convention)
+        // but third-party builders sometimes name it `<pkg>.apk`. Selection rule:
+        // 1. If an entry named `base.apk` exists, take it.
+        // 2. Otherwise treat the largest APK as the base.
+        // 3. Splits follow in any order.
+        var allApks = Directory.EnumerateFiles(work, "*.apk", SearchOption.AllDirectories).ToList();
+        var apks = OrderBaseFirst(allApks);
         var obbs = Directory.EnumerateFiles(work, "*.obb", SearchOption.AllDirectories)
             .ToList();
 
@@ -82,6 +89,25 @@ public sealed class AppService
 
         _log.Info($"Bundle extracted: {apks.Count} APK(s){(obbs.Count > 0 ? $", {obbs.Count} OBB(s) → {obbPkg ?? "<unknown package>"}" : "")}");
         return new BundleExtractResult(apks, obbs, obbPkg, work);
+    }
+
+    /// <summary>
+    /// Returns the inner APKs in base-first install-multiple order. Public for tests.
+    /// </summary>
+    public static List<string> OrderBaseFirst(IEnumerable<string> apkPaths)
+    {
+        var list = apkPaths.ToList();
+        if (list.Count <= 1) return list;
+        // 1. Prefer an entry literally named base.apk (case-insensitive).
+        var named = list.FirstOrDefault(p =>
+            Path.GetFileName(p).Equals("base.apk", StringComparison.OrdinalIgnoreCase));
+        // 2. Otherwise fall back to the largest file as the base candidate.
+        var fallback = named ?? list.OrderByDescending(static p =>
+        {
+            try { return new FileInfo(p).Length; } catch { return 0L; }
+        }).First();
+        var rest = list.Where(p => !string.Equals(p, fallback, StringComparison.OrdinalIgnoreCase));
+        return new[] { fallback }.Concat(rest).ToList();
     }
 
     /// <summary>

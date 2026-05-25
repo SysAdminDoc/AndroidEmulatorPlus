@@ -36,6 +36,23 @@ public sealed class ApkSignerService
         return new SignerInfo(verified, sha, r.Combined);
     }
 
+    /// <summary>
+    /// Returns the package name declared in the APK's AndroidManifest via
+    /// <c>aapt2 dump packagename &lt;apk&gt;</c>. Returns null when aapt2 isn't
+    /// available or the APK is malformed.
+    /// </summary>
+    public async Task<string?> ReadPackageNameAsync(string apkPath, CancellationToken ct = default)
+    {
+        if (_sdk.Aapt2Exe is null) return null;
+        var r = await ProcessRunner.RunAsync(_sdk.Aapt2Exe,
+            new[] { "dump", "packagename", apkPath },
+            timeout: TimeSpan.FromSeconds(20),
+            ct: ct);
+        if (!r.Success) return null;
+        var line = r.StdOut.Split('\n', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
+        return string.IsNullOrWhiteSpace(line) ? null : line.Trim();
+    }
+
     private static string? ExtractCertSha(string text)
     {
         var m = Regex.Match(text, @"Signer #?\d+ certificate SHA-256 digest:\s*([0-9a-fA-F]{64})");

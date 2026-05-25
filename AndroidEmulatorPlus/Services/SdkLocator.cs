@@ -13,6 +13,7 @@ public sealed class SdkLocator
     public string? SdkManagerBat { get; private set; }
     public string? AvdHome { get; private set; }
     public string? ApkSignerBat { get; private set; }
+    public string? Aapt2Exe { get; private set; }
 
     private readonly SettingsService? _settings;
 
@@ -60,11 +61,15 @@ public sealed class SdkLocator
             var buildToolsRoot = Path.Combine(SdkRoot, "build-tools");
             if (Directory.Exists(buildToolsRoot))
             {
-                ApkSignerBat = Directory.EnumerateDirectories(buildToolsRoot)
+                var versionDirs = Directory.EnumerateDirectories(buildToolsRoot)
+                    .OrderByDescending(d => Path.GetFileName(d), StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+                ApkSignerBat = versionDirs
                     .Select(d => Path.Combine(d, "apksigner.bat"))
-                    .Where(File.Exists)
-                    .OrderByDescending(p => Path.GetFileName(Path.GetDirectoryName(p)), StringComparer.OrdinalIgnoreCase)
-                    .FirstOrDefault();
+                    .FirstOrDefault(File.Exists);
+                Aapt2Exe = versionDirs
+                    .Select(d => Path.Combine(d, "aapt2.exe"))
+                    .FirstOrDefault(File.Exists);
             }
         }
 

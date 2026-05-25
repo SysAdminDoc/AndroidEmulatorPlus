@@ -203,10 +203,11 @@ public sealed partial class AppsViewModel : ObservableObject
     }
 
     /// <summary>
-    /// R-08: When enabled, verify the APK's signature with apksigner and warn if the
-    /// installed package has a different signing cert. The .apkm/.xapk/.apks bundle
-    /// formats are zip containers; we inspect the first inner .apk we find.
-    /// Returns true if install should proceed.
+    /// R-08 / C-04: When enabled, verify the APK's signature with apksigner.
+    /// If aapt2 is available, also resolve the package name and compare the
+    /// signer cert SHA against whatever cert the device already has for that
+    /// package — raise a ConfirmDialog when they differ (re-signed APK trying
+    /// to upgrade a Play-Store-installed app).
     /// </summary>
     private async Task<bool> VerifyBeforeInstallAsync(string serial, string path)
     {
@@ -226,8 +227,8 @@ public sealed partial class AppsViewModel : ObservableObject
                 tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"aep-verify-{Guid.NewGuid():N}");
                 System.IO.Directory.CreateDirectory(tempDir);
                 System.IO.Compression.ZipFile.ExtractToDirectory(path, tempDir);
-                apkToInspect = System.IO.Directory.EnumerateFiles(tempDir, "*.apk", System.IO.SearchOption.AllDirectories)
-                    .OrderBy(p => p.Length).FirstOrDefault() ?? path;
+                var apks = System.IO.Directory.EnumerateFiles(tempDir, "*.apk", System.IO.SearchOption.AllDirectories).ToList();
+                apkToInspect = Services.AppService.OrderBaseFirst(apks).FirstOrDefault() ?? path;
             }
 
             var info = await _signer.InspectAsync(apkToInspect);
@@ -236,15 +237,35 @@ public sealed partial class AppsViewModel : ObservableObject
                 _log.Error($"apksigner verify FAILED for {System.IO.Path.GetFileName(path)}: {info.Raw.Trim()}");
                 return false;
             }
-            if (info.Sha256 is not null)
+            if (info.Sha256 is null) return true;
+
+            _log.Detail($"signer cert SHA-256 {info.Sha256[..12]}…");
+
+            // C-04: cross-check against the installed cert. Requires aapt2 (to
+            // get the package name) and the package to be installed on the device.
+            var pkg = await _signer.ReadPackageNameAsync(apkToInspect);
+            if (pkg is null) return true; // aapt2 missing or APK malformed — skip cross-check
+
+            var installedSha = await _signer.InstalledCertShaAsync(_adb, serial, pkg);
+            if (installedSha is null) return true; // not currently installed — nothing to compare
+
+            if (string.Equals(info.Sha256, installedSha, System.StringComparison.OrdinalIgnoreCase))
             {
-                _log.Detail($"signer cert SHA-256 {info.Sha256[..12]}…");
-                // Compare against installed package, if it exists. We need the package
-                // name; apksigner doesn't print it, so use `aapt2 dump packagename` is
-                // ideal but not always present; fall back to skipping the cross-check.
-                // (Future work: pull package name from AndroidManifest via aapt2.)
+                _log.Detail($"signer matches installed cert for {pkg}");
+                return true;
             }
-            return true;
+
+            // Mismatch — confirm before proceeding. This is the canonical
+            // re-signed-APK / supply-chain warning.
+            var ok = Views.ConfirmDialog.Show(
+                owner: null,
+                header: $"⚠ Signer mismatch for '{pkg}'",
+                body: "The signing certificate of this APK does NOT match the certificate of the version already installed on the device. " +
+                      "Continuing will replace the installed app with one signed by a different developer — common for re-signed / patched APKs and a red flag for sideloads.",
+                detail: $"Package:    {pkg}\nNew cert:   {info.Sha256}\nInstalled:  {installedSha}",
+                confirmButtonText: "Install anyway");
+            if (!ok) _log.Warning($"Install of {pkg} skipped (signer mismatch).");
+            return ok;
         }
         catch (Exception ex)
         {

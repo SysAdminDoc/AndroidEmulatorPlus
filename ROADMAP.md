@@ -24,17 +24,19 @@ be `dotnet build`-verified on a host with the SDK before tagging a release.
   `Resources/known-hashes.json` with verified Magisk + cmdline-tools SHA-256s.
   Lock `RootService.RootAvdPinnedRef` to a verified rootAVD SHA (closes A-03).
   Tag `v0.2.0` to trigger the release workflow.
-- [ ] **P0 C-02** — Order base APK before splits in `AppService.ExtractBundle`.
-  Current `.OrderBy(p => p.Length)` puts the base APK last (it's larger than
-  per-config splits); some `install-multiple` validators reject that ordering.
+- [x] **P0 C-02** — `AppService.OrderBaseFirst` puts the literal `base.apk` (or the
+  largest entry) first; splits follow. Replaces the ascending-size sort that
+  put the base last.
 
 ## Phase 2 — Plug the loose ends
 
-- [ ] **P1 C-03** — Apply `SettingsService.HttpProxy` to `DownloadService`'s
-  `HttpClient`. The field is editable in Settings but currently ignored.
-- [ ] **P1 C-04** — Cross-check apksigner cert against the installed package's
-  cert via `pm dump <pkg>`; raise a ConfirmDialog on mismatch. The "warn on
-  re-signed APK" half of R-08 never landed.
+- [x] **P1 C-03** — `DownloadService` ctor reads `SettingsService.Current.HttpProxy`
+  and wires it into `HttpClientHandler.Proxy` with `UseDefaultCredentials = true`.
+  Applies on next launch (consistent with the theme picker).
+- [x] **P1 C-04** — `aapt2 dump packagename` resolves the package id; the
+  installed cert SHA (from `pm dump <pkg>`) is compared against the APK's
+  signer SHA; mismatch raises a typed ConfirmDialog showing both SHAs.
+  Skip-and-continue when aapt2 is missing or the package isn't installed.
 - [ ] **P1 C-05** — `allowBackup=false` pre-flight in the Migrate pipeline
   (was A-19). Mark affected rows ⚠; skip the internal-data leg by default.
 - [ ] **P1 C-06** — Application icon (`Assets/aep.ico`) + window icon + csproj
