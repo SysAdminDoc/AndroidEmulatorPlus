@@ -4,6 +4,76 @@ All notable changes to this project will be documented here. Format follows [Kee
 
 ## [Unreleased]
 
+### Added
+
+- `BundleInstallerService` (C-19) extracts the bundle-install + apksigner verify
+  pipeline out of `AppsViewModel`. Slimmer view-model; service stays UI-agnostic
+  via an `onSignerMismatch` callback.
+- Live theme switching (C-12). All 216 `StaticResource …Brush` references swept
+  to `DynamicResource`; new `ThemeService.Apply(theme)` swaps the palette
+  dictionary in place. SettingsDialog applies the change immediately — no
+  restart required.
+- Magisk module manager (C-07 / R-03). Curated catalog (Shamiko / LSPosed /
+  PlayIntegrityFork / Tricky Store / Zygisk Detach) backed by
+  `Resources/magisk-modules.json`. Lists installed modules via
+  `magisk module list` (fallback: walks `/data/adb/modules/`). Install /
+  Toggle / Remove (mark-on-reboot) flows. Surfaced via `Modules…` button on
+  the Root tab.
+- "Auto-launch scrcpy after AVD boots" toggle in Settings (C-16). New
+  `Settings.AutoScrcpy` flag; `MainViewModel.OnDevicesChanged` fires scrcpy
+  when a new emulator serial comes online.
+- `allowBackup=false` pre-flight (C-05). `MigrationService.AllowsBackupAsync`
+  probes `pm dump` for each package after the phone list loads; flagged rows
+  show a yellow ⚠ no-backup pill. The internal-data leg is skipped for them
+  unless "Force-migrate no-backup apps" is set.
+- Signer-mismatch warning (C-04). When apksigner verifies an APK and aapt2
+  resolves the package id, the cert SHA is compared against the installed
+  package's cert (via `pm dump`). Mismatch raises a ConfirmDialog listing both
+  SHAs.
+- HTTP proxy is now honored (C-03). `DownloadService` reads
+  `SettingsService.Current.HttpProxy` at ctor time and wires it into
+  `HttpClientHandler.Proxy` with `UseDefaultCredentials = true`. The Settings
+  field was persisted but ignored before.
+- "Show welcome wizard…" button on the Settings dialog (C-10). Flips
+  `HasSeenWizard=false` and re-opens the wizard.
+- Welcome wizard hides completed step cards by default (C-14); a "Show completed
+  steps" toggle reveals them.
+- Application icon at `Assets/aep.ico` (C-06). Multi-resolution
+  (16/24/32/48/64/128/256 px) Catppuccin-themed Android-robot motif. Wired via
+  `<ApplicationIcon>` in csproj + `Icon=` on MainWindow.
+- New tests (C-08): `OrderBaseFirstTests` (5 cases), `DuplicateAvdTests`
+  (.avd tree copy + ini rewrite + transient cleanup), `PresetServiceTests`
+  (id-based merge + embedded JSON schema), `AllowBackupParsingTests`
+  (4 known `pm dump` shapes).
+- `ProcessRunner.RunWithStdinAsync` and `StreamAsync` helpers (C-09).
+  `SdkmanagerService.AcceptLicenses`/`Install`, `AvdService.CreateAsync`,
+  `RootService.PatchAsync`/`DryRunAsync`, `AdbService.PairAsync`, and
+  `ScrcpyService.Launch` now route through them. The two remaining
+  `Process.Start` sites (`LogcatService`, `ScreenRecordService`) legitimately
+  hold the Process for explicit Stop control.
+
+### Changed
+
+- v0.2.0 → 0.2.0 version pinned across csproj (`<Version>` / `<FileVersion>` /
+  `<InformationalVersion>`), `MainWindow.xaml` Title + sidebar pill,
+  `MainViewModel` startup log line, README badge.
+- `CacheDiagnosticsService.Changed` event fires after Clear* and Apps tab
+  Export/Import; `MigrateViewModel` subscribes (C-11) so the cache card
+  auto-recalculates when other tabs write to `transfer/`.
+- `AppService.OrderBaseFirst` (C-02) orders inner APKs base-first for
+  `adb install-multiple`. Replaces the ascending-size sort that put the
+  base APK last.
+- Theme picker removed from the Install tab (C-15); Settings is the canonical
+  home now.
+- Apps tab "Compute sizes" iterates the full `Apps` collection, not just
+  `FilteredApps` (C-13).
+
+### Fixed
+
+- `SettingsService.Save` writes atomically (C-18): `settings.json.tmp` then
+  `File.Replace` into place. A crash mid-write can no longer corrupt the file
+  App.OnStartup reads before any view binds.
+
 ## [0.2.0] — 2026-05-25
 
 Major iteration on the v0.1.0 baseline. ~5000 lines, 8 tabs (added Logcat ⑦ and

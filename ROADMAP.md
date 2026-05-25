@@ -18,12 +18,16 @@ be `dotnet build`-verified on a host with the SDK before tagging a release.
 
 ## Phase 1 — Ship v0.2.0
 
-- [ ] **P0 C-01** — Cut v0.2.0 release. Bump version in csproj (`<Version>`, `<FileVersion>`,
-  `<InformationalVersion>`), MainWindow.xaml `Title=`, sidebar version pill,
-  MainViewModel startup log, README badge, CHANGELOG. Populate
-  `Resources/known-hashes.json` with verified Magisk + cmdline-tools SHA-256s.
-  Lock `RootService.RootAvdPinnedRef` to a verified rootAVD SHA (closes A-03).
-  Tag `v0.2.0` to trigger the release workflow.
+- [x] **P0 C-01** (code side) — Version bumped to 0.2.0 across csproj, MainWindow,
+  startup log, README badge, CHANGELOG. CHANGELOG `[0.2.0]` block carved.
+- [ ] **P0 C-01-release** — Outstanding maintainer steps (requires real Android
+  SDK + an emulator on a desktop):
+  1. Populate `Resources/known-hashes.json` with verified Magisk +
+     cmdline-tools SHA-256 entries (currently empty / placeholder).
+  2. Lock `RootService.RootAvdPinnedRef` to a verified rootAVD SHA
+     (closes A-03; verify `LISTONLY` entry-point too — see open Q).
+  3. Run the AndroidEmulatorPlus.Tests suite on a desktop with .NET 9 SDK.
+  4. `git tag v0.2.0 && git push --tags` to trigger the release workflow.
 - [x] **P0 C-02** — `AppService.OrderBaseFirst` puts the literal `base.apk` (or the
   largest entry) first; splits follow. Replaces the ascending-size sort that
   put the base last.
