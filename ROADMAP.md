@@ -58,7 +58,7 @@ Build constraint: this VMware VM has no .NET SDK; changes here are best-effort a
 - [x] **P2 B-04** — Embedded `Resources/bloat-presets.json` ships Google/Samsung/Pixel/Xiaomi/OnePlus presets. User overrides at `%LOCALAPPDATA%\AndroidEmulatorPlus\presets\bloat.json` replace by id or append new ids. AppsView now renders buttons via `ItemsControl`.
 - [x] **P2 B-05** — Compute sizes button on Apps tab fills the size column from `du -sb /data/data/<pkg>` (root required; graceful warning otherwise).
 - [x] **P2 B-06** — Expander on the Migrate tab pairs over Wi-Fi (`adb pair host:port + code`) and connects (`adb connect host:port`); both forms tolerate older platform-tools that prompt for the code via stdin.
-- [ ] **P2 B-09** — Settings flyout (SDK / cache / screenshot paths, theme, network proxy).
+- [x] **P2 B-09** — ⚙ Settings button on the top-bar opens a dialog: theme, SDK root override (autodetect when empty), media dir for screenshots/recordings, HTTP proxy. SdkLocator honors SdkRootOverride; MainViewModel's screenshot/record helpers honor MediaDir. Telemetry-off statement included on the card.
 - [x] **P2 B-13** — Apps tab gained a "Disable for user 0 (reversible)" uninstall mode (`pm uninstall --user 0`) + re-enable button (`cmd package install-existing`).
 
 ## Phase 4 — P3 / larger bets

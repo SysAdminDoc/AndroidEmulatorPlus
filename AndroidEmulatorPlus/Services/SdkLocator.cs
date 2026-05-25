@@ -14,8 +14,17 @@ public sealed class SdkLocator
     public string? AvdHome { get; private set; }
     public string? ApkSignerBat { get; private set; }
 
-    public SdkLocator()
+    private readonly SettingsService? _settings;
+
+    public SdkLocator() { Refresh(); }
+
+    /// <summary>
+    /// DI ctor: consults SettingsService for an explicit SDK root override before the
+    /// usual env+well-known-locations probe.
+    /// </summary>
+    public SdkLocator(SettingsService settings)
     {
+        _settings = settings;
         Refresh();
     }
 
@@ -23,7 +32,7 @@ public sealed class SdkLocator
 
     public void Refresh()
     {
-        SdkRoot = FindSdkRoot();
+        SdkRoot = FindSdkRoot(_settings);
         AdbExe = FindFile(
             Environment.ExpandEnvironmentVariables(@"%LOCALAPPDATA%\Microsoft\WinGet\Packages\Google.PlatformTools_Microsoft.Winget.Source_8wekyb3d8bbwe\platform-tools\adb.exe"),
             SdkRoot is null ? null : Path.Combine(SdkRoot, "platform-tools", "adb.exe"));
@@ -72,8 +81,12 @@ public sealed class SdkLocator
     private static string? FindFirstExisting(IEnumerable<string> paths)
         => paths.FirstOrDefault(File.Exists);
 
-    private static string? FindSdkRoot()
+    private static string? FindSdkRoot(SettingsService? settings)
     {
+        // User-supplied override beats every other lookup.
+        var ov = settings?.Current.SdkRootOverride;
+        if (!string.IsNullOrEmpty(ov) && Directory.Exists(ov)) return ov;
+
         var env = Environment.GetEnvironmentVariable("ANDROID_HOME")
                ?? Environment.GetEnvironmentVariable("ANDROID_SDK_ROOT");
         if (!string.IsNullOrEmpty(env) && Directory.Exists(env)) return env;

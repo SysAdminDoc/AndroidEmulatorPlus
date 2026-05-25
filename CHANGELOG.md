@@ -48,6 +48,7 @@ All notable changes to this project will be documented here. Format follows [Kee
 - Apps tab "Export data…" / "Import from ZIP…" buttons (R-05) round-trip `/data/data/<pkg>` between machines. Export writes a ZIP per selected app with the tar + a metadata.json (package, original UID, timestamp); Import re-maps to the emulator's current UID via `chown -R` + `restorecon -R`.
 - Migration phone-side tar now probes `tar --help` once per session and falls back to a `find … -prune | tar -T -` pipeline for tar builds that don't support `--exclude=` (older toybox, non-standard ROMs).
 - Migrate tab "Force-stop on source phone before tar" checkbox closes the running app on the phone immediately before tarring `/data/data`, so the SQLite DBs aren't captured mid-write.
+- New ⚙ Settings button on the top bar opens a dialog covering theme, SDK root override (autodetect when blank), media output dir (defaults to `~/Pictures/AndroidEmulatorPlus`), and HTTP proxy. SdkLocator honors the override; screenshot/record helpers write to the configured media dir. The card includes an explicit "no telemetry" statement.
 
 ### Changed
 

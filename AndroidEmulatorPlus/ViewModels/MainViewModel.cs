@@ -31,11 +31,12 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly DeviceMonitor _devices;
     private readonly AdbService _adb;
     private readonly ScreenRecordService _record;
+    private readonly SettingsService _settings;
 
     public MainViewModel(LogService log,
         AvdViewModel avd, RootViewModel root, MigrateViewModel mig,
         AppsViewModel apps, ConfigViewModel cfg, InstallViewModel install, LogcatViewModel logcat,
-        SdkLocator sdk, DeviceMonitor devices, AdbService adb, ScreenRecordService record)
+        SdkLocator sdk, DeviceMonitor devices, AdbService adb, ScreenRecordService record, SettingsService settings)
     {
         Log = log;
         AvdVm = avd;
@@ -49,9 +50,20 @@ public sealed partial class MainViewModel : ObservableObject
         _devices = devices;
         _adb = adb;
         _record = record;
+        _settings = settings;
         _devices.Changed += OnDevicesChanged;
         RefreshSdk();
         Log.Info("AndroidEmulatorPlus v0.1.0 ready.");
+    }
+
+    [RelayCommand]
+    private void OpenSettings()
+    {
+        var dlg = new Views.SettingsDialog(_settings)
+        {
+            Owner = System.Windows.Application.Current?.MainWindow,
+        };
+        dlg.ShowDialog();
     }
 
     private void OnDevicesChanged(IReadOnlyList<Device> devs)
@@ -63,14 +75,16 @@ public sealed partial class MainViewModel : ObservableObject
         HasEmulatorAttached = emu is not null && emu.IsOnline;
     }
 
+    private string MediaDir => !string.IsNullOrWhiteSpace(_settings.Current.MediaDir)
+        ? _settings.Current.MediaDir!
+        : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyPictures), "AndroidEmulatorPlus");
+
     [RelayCommand]
     private async Task ScreenshotAsync()
     {
         var emu = _devices.Current.FirstOrDefault(d => d.IsEmulator && d.IsOnline);
         if (emu is null) { Log.Warning("No emulator attached."); return; }
-        var dir = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
-            "AndroidEmulatorPlus");
+        var dir = MediaDir;
         var dest = Path.Combine(dir, $"screenshot-{DateTime.Now:yyyyMMdd-HHmmss}.png");
         Log.Info($"Taking screenshot from {emu.Serial}…");
         var ok = await _adb.ScreenshotAsync(emu.Serial, dest);
@@ -132,9 +146,7 @@ public sealed partial class MainViewModel : ObservableObject
     {
         if (_record.IsRecording)
         {
-            var dir = System.IO.Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
-                "AndroidEmulatorPlus");
+            var dir = MediaDir;
             var local = await _record.StopAsync(dir);
             IsRecording = false;
             RecordButtonText = "🎥 Record";

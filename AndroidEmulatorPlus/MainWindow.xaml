@@ -36,6 +36,7 @@
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock Text="AndroidEmulatorPlus" FontWeight="SemiBold" FontSize="15"
@@ -68,6 +69,10 @@
                         Command="{Binding RecordCommand}"
                         IsEnabled="{Binding HasEmulatorAttached}"
                         ToolTip="Start / stop screenrecord on the attached emulator (capped at 3 min by Android)"/>
+                <Button Grid.Column="6" Style="{StaticResource FlatButton}" Margin="8,4,0,4"
+                        Content="⚙ Settings" MinWidth="0" Padding="10,4"
+                        Command="{Binding OpenSettingsCommand}"
+                        ToolTip="Theme, paths, network proxy — persists to %LOCALAPPDATA%\AndroidEmulatorPlus\settings.json"/>
             </Grid>
         </Border>
 

@@ -1,0 +1,91 @@
+<Window x:Class="AndroidEmulatorPlus.Views.SettingsDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Settings"
+        Width="640" SizeToContent="Height"
+        WindowStyle="ToolWindow"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="{StaticResource BaseBrush}"
+        Foreground="{StaticResource TextBrush}">
+    <StackPanel Margin="24,18">
+        <TextBlock FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource LavenderBrush}" Text="Settings"/>
+        <TextBlock Foreground="{StaticResource SubtextBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,12">
+            Persisted to <Run FontFamily="Cascadia Mono">%LOCALAPPDATA%\AndroidEmulatorPlus\settings.json</Run>. Theme changes apply on next launch.
+        </TextBlock>
+
+        <Border Style="{StaticResource Card}">
+            <StackPanel>
+                <TextBlock Style="{StaticResource SectionHeader}" Text="Appearance"/>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="160"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Theme" Foreground="{StaticResource SubtextBrush}" VerticalAlignment="Center"/>
+                    <ComboBox Grid.Column="1" x:Name="ThemeBox">
+                        <ComboBoxItem Content="mocha"/>
+                        <ComboBoxItem Content="latte"/>
+                    </ComboBox>
+                </Grid>
+            </StackPanel>
+        </Border>
+
+        <Border Style="{StaticResource Card}">
+            <StackPanel>
+                <TextBlock Style="{StaticResource SectionHeader}" Text="Paths"/>
+                <Grid Margin="0,2">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="160"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Text="SDK root override" Foreground="{StaticResource SubtextBrush}" VerticalAlignment="Center"/>
+                    <TextBox Grid.Column="1" x:Name="SdkRootBox" Margin="0,0,4,0"/>
+                    <Button Grid.Column="2" Content="Browse…" Style="{StaticResource FlatButton}" Click="BrowseSdk_Click" MinWidth="0" Padding="10,4"/>
+
+                    <TextBlock Grid.Row="1" Text="Media dir (screenshots / recordings)" Foreground="{StaticResource SubtextBrush}" VerticalAlignment="Center" Margin="0,8,0,0"/>
+                    <TextBox Grid.Row="1" Grid.Column="1" x:Name="MediaDirBox" Margin="0,8,4,0"/>
+                    <Button Grid.Row="1" Grid.Column="2" Content="Browse…" Style="{StaticResource FlatButton}" Click="BrowseMedia_Click" MinWidth="0" Padding="10,4" Margin="0,8,0,0"/>
+                </Grid>
+                <TextBlock Foreground="{StaticResource OverlayBrush}" FontSize="11" Margin="0,8,0,0" TextWrapping="Wrap">
+                    Leave SDK root empty to autodetect via <Run FontFamily="Cascadia Mono">$ANDROID_HOME</Run> → <Run FontFamily="Cascadia Mono">%LOCALAPPDATA%\Android\Sdk</Run> → fallbacks.
+                </TextBlock>
+            </StackPanel>
+        </Border>
+
+        <Border Style="{StaticResource Card}">
+            <StackPanel>
+                <TextBlock Style="{StaticResource SectionHeader}" Text="Network"/>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="160"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="HTTP proxy" Foreground="{StaticResource SubtextBrush}" VerticalAlignment="Center"/>
+                    <TextBox Grid.Column="1" x:Name="ProxyBox"/>
+                </Grid>
+                <TextBlock Foreground="{StaticResource OverlayBrush}" FontSize="11" Margin="0,6,0,0" TextWrapping="Wrap">
+                    Format: <Run FontFamily="Cascadia Mono">http://host:port</Run>. Empty = direct. Applied on next launch.
+                </TextBlock>
+            </StackPanel>
+        </Border>
+
+        <Border Style="{StaticResource Card}">
+            <StackPanel>
+                <TextBlock Style="{StaticResource SectionHeader}" Text="Telemetry"/>
+                <TextBlock Foreground="{StaticResource GreenBrush}" Text="No telemetry is sent. Crash details (unhandled exceptions) are written locally to crash.log only." TextWrapping="Wrap"/>
+            </StackPanel>
+        </Border>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
+            <Button Content="Open settings.json" Style="{StaticResource FlatButton}" Click="OpenJson_Click"/>
+            <Button Content="Cancel" Style="{StaticResource FlatButton}" Margin="10,0,0,0" Click="Cancel_Click" IsCancel="True"/>
+            <Button Content="Save" Style="{StaticResource PrimaryButton}" Margin="10,0,0,0" Click="Save_Click" IsDefault="True"/>
+        </StackPanel>
+    </StackPanel>
+</Window>
