@@ -53,6 +53,8 @@ public sealed partial class MainViewModel : ObservableObject
         _settings = settings;
         _devices.Changed += OnDevicesChanged;
         RefreshSdk();
+        // If the SDK isn't there yet, land on Install rather than the empty AVDs list.
+        if (!_sdk.IsReady) _activeSection = "Install";
         Log.Info("AndroidEmulatorPlus v0.1.0 ready.");
     }
 

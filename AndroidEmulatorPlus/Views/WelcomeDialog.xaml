@@ -1,0 +1,72 @@
+<Window x:Class="AndroidEmulatorPlus.Views.WelcomeDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Welcome"
+        Width="640" Height="540"
+        WindowStyle="ToolWindow"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="{StaticResource BaseBrush}"
+        Foreground="{StaticResource TextBrush}">
+    <Grid Margin="24,20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock FontSize="20" FontWeight="SemiBold" Foreground="{StaticResource LavenderBrush}" Text="Welcome to AndroidEmulatorPlus"/>
+        <TextBlock Grid.Row="1" Foreground="{StaticResource SubtextBrush}" TextWrapping="Wrap" Margin="0,4,0,12">
+            This wizard walks through the four-step flow the app is built around. Each step has a button that jumps to the matching tab — close the wizard any time to explore on your own.
+        </TextBlock>
+
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource SectionHeader}" Text="① Install / SDK"/>
+                        <TextBlock Foreground="{StaticResource SubtextBrush}" TextWrapping="Wrap">
+                            If you don't have the Android SDK yet, the Install tab can fetch the command-line tools (~150 MB). Then "Browse online…" on the AVDs tab installs a system image. The wizard's first job is to make sure those pieces exist.
+                        </TextBlock>
+                        <TextBlock x:Name="SdkStatus" Foreground="{StaticResource YellowBrush}" Margin="0,6,0,0" FontWeight="SemiBold"/>
+                        <Button Content="Go to Install / SDK" Style="{StaticResource FlatButton}" HorizontalAlignment="Left" Margin="0,10,0,0" Click="GoToInstall_Click"/>
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource SectionHeader}" Text="② Create an AVD"/>
+                        <TextBlock Foreground="{StaticResource SubtextBrush}" TextWrapping="Wrap">
+                            From the AVDs tab pick a device profile (phone, tablet, Wear OS, TV, Auto) plus a system image. The "Browse online…" button installs new images via sdkmanager. Click Create.
+                        </TextBlock>
+                        <TextBlock x:Name="AvdStatus" Foreground="{StaticResource YellowBrush}" Margin="0,6,0,0" FontWeight="SemiBold"/>
+                        <Button Content="Go to AVDs" Style="{StaticResource FlatButton}" HorizontalAlignment="Left" Margin="0,10,0,0" Click="GoToAvd_Click"/>
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource SectionHeader}" Text="③ Root (optional)"/>
+                        <TextBlock Foreground="{StaticResource SubtextBrush}" TextWrapping="Wrap">
+                            Launch the AVD, then click "Root with Latest Magisk" on the Root tab. The Verify + Persist Policy button persists Magisk's shell→allow policy so future `adb shell su` calls don't trigger the dialog. Skip this step if you just want a vanilla emulator.
+                        </TextBlock>
+                        <Button Content="Go to Root" Style="{StaticResource FlatButton}" HorizontalAlignment="Left" Margin="0,10,0,0" Click="GoToRoot_Click"/>
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource Card}">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource SectionHeader}" Text="④ Migrate from phone (optional)"/>
+                        <TextBlock Foreground="{StaticResource SubtextBrush}" TextWrapping="Wrap">
+                            Connect a USB-debugging-enabled phone (or pair over Wi-Fi from the Migrate tab) and pick the packages to copy. Internal data copy requires root on BOTH ends.
+                        </TextBlock>
+                        <Button Content="Go to Migrate" Style="{StaticResource FlatButton}" HorizontalAlignment="Left" Margin="0,10,0,0" Click="GoToMigrate_Click"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+            <CheckBox x:Name="DontShowBox" Content="Don't show again" IsChecked="True" VerticalAlignment="Center" Margin="0,0,12,0"/>
+            <Button Content="Close" Style="{StaticResource PrimaryButton}" Click="Close_Click" IsDefault="True" IsCancel="True"/>
+        </StackPanel>
+    </Grid>
+</Window>

@@ -27,6 +27,10 @@ public sealed class AppSettings
     /// <summary>HTTP proxy for the embedded HttpClient (e.g. corporate forward proxy).</summary>
     [JsonPropertyName("httpProxy")]
     public string? HttpProxy { get; set; }
+
+    /// <summary>True once the user has seen / dismissed the first-launch wizard.</summary>
+    [JsonPropertyName("hasSeenWizard")]
+    public bool HasSeenWizard { get; set; }
 }
 
 public sealed class SettingsService

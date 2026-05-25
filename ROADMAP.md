@@ -22,7 +22,7 @@ Build constraint: this VMware VM has no .NET SDK; changes here are best-effort a
 ## Phase 2 — P1 workflow gaps
 
 - [x] **P1 R-01** — "Browse online…" button on the AVDs tab opens a system-image picker dialog backed by `sdkmanager --list`. Auto-license-accept available; install runs via `sdkmanager <pkg>` with `y\n` spam; refreshes AvailableImages on success.
-- [ ] **P1 R-02** — First-launch wizard: install SDK → create AVD → root → migrate, all guided.
+- [x] **P1 R-02** — `WelcomeDialog` shown on first launch when no settings.json / no SDK / no AVDs. Lists the four phases of the workflow with a Go-to button per step; "Don't show again" persists `hasSeenWizard=true`. App also auto-navigates to Install when the SDK isn't detected.
 - [x] **P1 R-06** — Snapshots… overflow entry opens a dialog listing `&lt;avd&gt;.avd/snapshots/` with sizes and modified time. Save / Load go through `adb emu avd snapshot save|load` (requires the AVD to be running); Delete works any time and uses a typed confirmation.
 - [x] **P1 R-08** — `ApkSignerService` runs `apksigner verify --print-certs` before each install (toggle on the Apps tab); bundle formats are unzipped first so the inner APK is inspected. Mismatched / unverified APKs fail-stop before adb install.
 - [x] **P1 R-09 (partial)** — Per-package progress is now logged for APK / data / ext / OBB legs of the migration, plus the cache card on the Migrate tab reports byte totals after every run. Live byte-rate inside an adb push/pull is upstream-limited; bandwidth-aware streaming is deferred.

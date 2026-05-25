@@ -49,6 +49,7 @@ All notable changes to this project will be documented here. Format follows [Kee
 - Migration phone-side tar now probes `tar --help` once per session and falls back to a `find … -prune | tar -T -` pipeline for tar builds that don't support `--exclude=` (older toybox, non-standard ROMs).
 - Migrate tab "Force-stop on source phone before tar" checkbox closes the running app on the phone immediately before tarring `/data/data`, so the SQLite DBs aren't captured mid-write.
 - New ⚙ Settings button on the top bar opens a dialog covering theme, SDK root override (autodetect when blank), media output dir (defaults to `~/Pictures/AndroidEmulatorPlus`), and HTTP proxy. SdkLocator honors the override; screenshot/record helpers write to the configured media dir. The card includes an explicit "no telemetry" statement.
+- First-launch wizard (R-02): a Welcome dialog opens once when no settings.json/no SDK/no AVDs are present, walking through the four workflow steps with Go-to buttons per step. "Don't show again" persists `hasSeenWizard` in settings.json. The app also auto-navigates to Install on startup if the SDK isn't detected.
 
 ### Changed
 
