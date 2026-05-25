@@ -6,21 +6,21 @@
         WindowStyle="ToolWindow"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
-        Background="{StaticResource BaseBrush}"
-        Foreground="{StaticResource TextBrush}">
+        Background="{DynamicResource BaseBrush}"
+        Foreground="{DynamicResource TextBrush}">
     <StackPanel Margin="24,20">
         <TextBlock x:Name="HeaderText"
                    FontSize="16" FontWeight="SemiBold"
-                   Foreground="{StaticResource LavenderBrush}"
+                   Foreground="{DynamicResource LavenderBrush}"
                    TextWrapping="Wrap"
                    Margin="0,0,0,8"/>
         <TextBlock x:Name="BodyText"
-                   Foreground="{StaticResource SubtextBrush}"
+                   Foreground="{DynamicResource SubtextBrush}"
                    TextWrapping="Wrap"
                    Margin="0,0,0,10"/>
         <TextBox x:Name="InputBox" KeyDown="InputBox_KeyDown"/>
         <TextBlock x:Name="ErrorText"
-                   Foreground="{StaticResource RedBrush}"
+                   Foreground="{DynamicResource RedBrush}"
                    TextWrapping="Wrap"
                    FontSize="12"
                    Margin="0,6,0,0"

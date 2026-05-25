@@ -3,31 +3,31 @@
 
     <!-- Window default text -->
     <Style TargetType="{x:Type Window}">
-        <Setter Property="Background" Value="{StaticResource BaseBrush}"/>
-        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource BaseBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
         <Setter Property="FontFamily" Value="Segoe UI Variable, Segoe UI, sans-serif"/>
         <Setter Property="FontSize" Value="13"/>
     </Style>
 
     <Style TargetType="{x:Type TextBlock}">
-        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
     </Style>
 
     <Style x:Key="HeaderText" TargetType="{x:Type TextBlock}">
-        <Setter Property="Foreground" Value="{StaticResource LavenderBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource LavenderBrush}"/>
         <Setter Property="FontSize" Value="22"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="Margin" Value="0,0,0,4"/>
     </Style>
 
     <Style x:Key="SubheaderText" TargetType="{x:Type TextBlock}">
-        <Setter Property="Foreground" Value="{StaticResource SubtextBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource SubtextBrush}"/>
         <Setter Property="FontSize" Value="13"/>
         <Setter Property="Margin" Value="0,0,0,12"/>
     </Style>
 
     <Style x:Key="SectionHeader" TargetType="{x:Type TextBlock}">
-        <Setter Property="Foreground" Value="{StaticResource MauveBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource MauveBrush}"/>
         <Setter Property="FontSize" Value="13"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="Margin" Value="0,12,0,6"/>
@@ -35,8 +35,8 @@
 
     <!-- Card: rounded-rect surface, 8px corners, no pill backdrops anywhere -->
     <Style x:Key="Card" TargetType="{x:Type Border}">
-        <Setter Property="Background" Value="{StaticResource MantleBrush}"/>
-        <Setter Property="BorderBrush" Value="{StaticResource SurfaceBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource MantleBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource SurfaceBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="CornerRadius" Value="8"/>
         <Setter Property="Padding" Value="16"/>
@@ -44,9 +44,9 @@
     </Style>
 
     <Style x:Key="FlatButton" TargetType="{x:Type Button}">
-        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
-        <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
-        <Setter Property="BorderBrush" Value="{StaticResource Surface1Brush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource Surface1Brush}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Padding" Value="14,8"/>
         <Setter Property="MinHeight" Value="34"/>
@@ -67,10 +67,10 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="bg" Property="Background" Value="{StaticResource Surface1Brush}"/>
+                            <Setter TargetName="bg" Property="Background" Value="{DynamicResource Surface1Brush}"/>
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="bg" Property="Background" Value="{StaticResource OverlayBrush}"/>
+                            <Setter TargetName="bg" Property="Background" Value="{DynamicResource OverlayBrush}"/>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.45"/>
@@ -83,9 +83,9 @@
     </Style>
 
     <Style x:Key="PrimaryButton" TargetType="{x:Type Button}" BasedOn="{StaticResource FlatButton}">
-        <Setter Property="Background" Value="{StaticResource BlueBrush}"/>
-        <Setter Property="Foreground" Value="{StaticResource CrustBrush}"/>
-        <Setter Property="BorderBrush" Value="{StaticResource LavenderBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource BlueBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource CrustBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource LavenderBrush}"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type Button}">
@@ -100,10 +100,10 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="bg" Property="Background" Value="{StaticResource LavenderBrush}"/>
+                            <Setter TargetName="bg" Property="Background" Value="{DynamicResource LavenderBrush}"/>
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="bg" Property="Background" Value="{StaticResource MauveBrush}"/>
+                            <Setter TargetName="bg" Property="Background" Value="{DynamicResource MauveBrush}"/>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.45"/>
@@ -116,13 +116,13 @@
     </Style>
 
     <Style x:Key="DangerButton" TargetType="{x:Type Button}" BasedOn="{StaticResource FlatButton}">
-        <Setter Property="Background" Value="{StaticResource RedBrush}"/>
-        <Setter Property="Foreground" Value="{StaticResource CrustBrush}"/>
-        <Setter Property="BorderBrush" Value="{StaticResource RedBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource RedBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource CrustBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource RedBrush}"/>
     </Style>
 
     <Style x:Key="SidebarButton" TargetType="{x:Type RadioButton}">
-        <Setter Property="Foreground" Value="{StaticResource SubtextBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource SubtextBrush}"/>
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="Padding" Value="14,10"/>
         <Setter Property="Margin" Value="6,2"/>
@@ -141,12 +141,12 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="bg" Property="Background" Value="{StaticResource SurfaceBrush}"/>
-                            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+                            <Setter TargetName="bg" Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
                         </Trigger>
                         <Trigger Property="IsChecked" Value="True">
-                            <Setter TargetName="bg" Property="Background" Value="{StaticResource Surface1Brush}"/>
-                            <Setter Property="Foreground" Value="{StaticResource LavenderBrush}"/>
+                            <Setter TargetName="bg" Property="Background" Value="{DynamicResource Surface1Brush}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource LavenderBrush}"/>
                             <Setter Property="FontWeight" Value="SemiBold"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
@@ -156,13 +156,13 @@
     </Style>
 
     <Style TargetType="{x:Type TextBox}">
-        <Setter Property="Background" Value="{StaticResource CrustBrush}"/>
-        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
-        <Setter Property="BorderBrush" Value="{StaticResource Surface1Brush}"/>
+        <Setter Property="Background" Value="{DynamicResource CrustBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource Surface1Brush}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Padding" Value="8,6"/>
-        <Setter Property="CaretBrush" Value="{StaticResource LavenderBrush}"/>
-        <Setter Property="SelectionBrush" Value="{StaticResource BlueBrush}"/>
+        <Setter Property="CaretBrush" Value="{DynamicResource LavenderBrush}"/>
+        <Setter Property="SelectionBrush" Value="{DynamicResource BlueBrush}"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type TextBox}">
@@ -178,29 +178,29 @@
     </Style>
 
     <Style TargetType="{x:Type CheckBox}">
-        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
         <Setter Property="VerticalContentAlignment" Value="Center"/>
         <Setter Property="Margin" Value="0,3"/>
     </Style>
 
     <Style TargetType="{x:Type ComboBox}">
-        <Setter Property="Background" Value="{StaticResource CrustBrush}"/>
-        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
-        <Setter Property="BorderBrush" Value="{StaticResource Surface1Brush}"/>
+        <Setter Property="Background" Value="{DynamicResource CrustBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource Surface1Brush}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Padding" Value="8,6"/>
         <Setter Property="MinHeight" Value="32"/>
     </Style>
 
     <Style TargetType="{x:Type Slider}">
-        <Setter Property="Foreground" Value="{StaticResource BlueBrush}"/>
-        <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource BlueBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
         <Setter Property="MinHeight" Value="28"/>
     </Style>
 
     <Style TargetType="{x:Type ProgressBar}">
-        <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
-        <Setter Property="Foreground" Value="{StaticResource BlueBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource BlueBrush}"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="MinHeight" Value="6"/>
         <Setter Property="Template">
@@ -220,12 +220,12 @@
     </Style>
 
     <Style TargetType="{x:Type ScrollBar}">
-        <Setter Property="Background" Value="{StaticResource MantleBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource MantleBrush}"/>
     </Style>
 
     <Style x:Key="ConsoleText" TargetType="{x:Type TextBox}">
-        <Setter Property="Background" Value="{StaticResource CrustBrush}"/>
-        <Setter Property="Foreground" Value="{StaticResource SubtextBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource CrustBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource SubtextBrush}"/>
         <Setter Property="FontFamily" Value="Cascadia Mono, Consolas, monospace"/>
         <Setter Property="FontSize" Value="12"/>
         <Setter Property="BorderThickness" Value="0"/>
@@ -250,7 +250,7 @@
         <!-- Intentionally rounded-rect (not pill). 4px corners only. -->
         <Setter Property="CornerRadius" Value="4"/>
         <Setter Property="Padding" Value="6,2"/>
-        <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
+        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
     </Style>
 
 </ResourceDictionary>

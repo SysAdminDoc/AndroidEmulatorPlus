@@ -6,12 +6,12 @@
         WindowStyle="ToolWindow"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
-        Background="{StaticResource BaseBrush}"
-        Foreground="{StaticResource TextBrush}">
+        Background="{DynamicResource BaseBrush}"
+        Foreground="{DynamicResource TextBrush}">
     <StackPanel Margin="24,18">
-        <TextBlock FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource LavenderBrush}" Text="Settings"/>
-        <TextBlock Foreground="{StaticResource SubtextBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,12">
-            Persisted to <Run FontFamily="Cascadia Mono">%LOCALAPPDATA%\AndroidEmulatorPlus\settings.json</Run>. Theme changes apply on next launch.
+        <TextBlock FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource LavenderBrush}" Text="Settings"/>
+        <TextBlock Foreground="{DynamicResource SubtextBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,12">
+            Persisted to <Run FontFamily="Cascadia Mono">%LOCALAPPDATA%\AndroidEmulatorPlus\settings.json</Run>. Theme switches live; proxy applies on next launch.
         </TextBlock>
 
         <Border Style="{StaticResource Card}">
@@ -22,7 +22,7 @@
                         <ColumnDefinition Width="160"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="Theme" Foreground="{StaticResource SubtextBrush}" VerticalAlignment="Center"/>
+                    <TextBlock Text="Theme" Foreground="{DynamicResource SubtextBrush}" VerticalAlignment="Center"/>
                     <ComboBox Grid.Column="1" x:Name="ThemeBox">
                         <ComboBoxItem Content="mocha"/>
                         <ComboBoxItem Content="latte"/>
@@ -44,15 +44,15 @@
                         <RowDefinition/>
                         <RowDefinition/>
                     </Grid.RowDefinitions>
-                    <TextBlock Text="SDK root override" Foreground="{StaticResource SubtextBrush}" VerticalAlignment="Center"/>
+                    <TextBlock Text="SDK root override" Foreground="{DynamicResource SubtextBrush}" VerticalAlignment="Center"/>
                     <TextBox Grid.Column="1" x:Name="SdkRootBox" Margin="0,0,4,0"/>
                     <Button Grid.Column="2" Content="Browse…" Style="{StaticResource FlatButton}" Click="BrowseSdk_Click" MinWidth="0" Padding="10,4"/>
 
-                    <TextBlock Grid.Row="1" Text="Media dir (screenshots / recordings)" Foreground="{StaticResource SubtextBrush}" VerticalAlignment="Center" Margin="0,8,0,0"/>
+                    <TextBlock Grid.Row="1" Text="Media dir (screenshots / recordings)" Foreground="{DynamicResource SubtextBrush}" VerticalAlignment="Center" Margin="0,8,0,0"/>
                     <TextBox Grid.Row="1" Grid.Column="1" x:Name="MediaDirBox" Margin="0,8,4,0"/>
                     <Button Grid.Row="1" Grid.Column="2" Content="Browse…" Style="{StaticResource FlatButton}" Click="BrowseMedia_Click" MinWidth="0" Padding="10,4" Margin="0,8,0,0"/>
                 </Grid>
-                <TextBlock Foreground="{StaticResource OverlayBrush}" FontSize="11" Margin="0,8,0,0" TextWrapping="Wrap">
+                <TextBlock Foreground="{DynamicResource OverlayBrush}" FontSize="11" Margin="0,8,0,0" TextWrapping="Wrap">
                     Leave SDK root empty to autodetect via <Run FontFamily="Cascadia Mono">$ANDROID_HOME</Run> → <Run FontFamily="Cascadia Mono">%LOCALAPPDATA%\Android\Sdk</Run> → fallbacks.
                 </TextBlock>
             </StackPanel>
@@ -66,10 +66,10 @@
                         <ColumnDefinition Width="160"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="HTTP proxy" Foreground="{StaticResource SubtextBrush}" VerticalAlignment="Center"/>
+                    <TextBlock Text="HTTP proxy" Foreground="{DynamicResource SubtextBrush}" VerticalAlignment="Center"/>
                     <TextBox Grid.Column="1" x:Name="ProxyBox"/>
                 </Grid>
-                <TextBlock Foreground="{StaticResource OverlayBrush}" FontSize="11" Margin="0,6,0,0" TextWrapping="Wrap">
+                <TextBlock Foreground="{DynamicResource OverlayBrush}" FontSize="11" Margin="0,6,0,0" TextWrapping="Wrap">
                     Format: <Run FontFamily="Cascadia Mono">http://host:port</Run>. Empty = direct. Applied on next launch.
                 </TextBlock>
             </StackPanel>
@@ -79,7 +79,7 @@
             <StackPanel>
                 <TextBlock Style="{StaticResource SectionHeader}" Text="Behavior"/>
                 <CheckBox x:Name="AutoScrcpyBox" Content="Auto-launch scrcpy after AVD boots" />
-                <TextBlock Foreground="{StaticResource OverlayBrush}" FontSize="11" Margin="0,4,0,0" TextWrapping="Wrap">
+                <TextBlock Foreground="{DynamicResource OverlayBrush}" FontSize="11" Margin="0,4,0,0" TextWrapping="Wrap">
                     Watches the device monitor for newly-attached emulators and runs scrcpy.exe with their serial. Requires scrcpy on PATH or in <Run FontFamily="Cascadia Mono">%LOCALAPPDATA%\AndroidEmulatorPlus\scrcpy\</Run>.
                 </TextBlock>
             </StackPanel>
@@ -91,7 +91,7 @@
                 <StackPanel Orientation="Horizontal">
                     <Button Content="Show welcome wizard…" Style="{StaticResource FlatButton}" Click="ShowWizard_Click"/>
                 </StackPanel>
-                <TextBlock Foreground="{StaticResource OverlayBrush}" FontSize="11" Margin="0,6,0,0" TextWrapping="Wrap">
+                <TextBlock Foreground="{DynamicResource OverlayBrush}" FontSize="11" Margin="0,6,0,0" TextWrapping="Wrap">
                     Re-opens the four-step onboarding wizard. Closes Settings first; reopen from here any time.
                 </TextBlock>
             </StackPanel>
@@ -100,7 +100,7 @@
         <Border Style="{StaticResource Card}">
             <StackPanel>
                 <TextBlock Style="{StaticResource SectionHeader}" Text="Telemetry"/>
-                <TextBlock Foreground="{StaticResource GreenBrush}" Text="No telemetry is sent. Crash details (unhandled exceptions) are written locally to crash.log only." TextWrapping="Wrap"/>
+                <TextBlock Foreground="{DynamicResource GreenBrush}" Text="No telemetry is sent. Crash details (unhandled exceptions) are written locally to crash.log only." TextWrapping="Wrap"/>
             </StackPanel>
         </Border>
 

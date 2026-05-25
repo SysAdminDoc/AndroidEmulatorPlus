@@ -23,7 +23,7 @@
                         Visibility="{Binding HasAvds, Converter={x:Static views:NotBoolToVisibilityConverter.Instance}}">
                     <StackPanel>
                         <TextBlock Style="{StaticResource SectionHeader}" Text="No AVDs yet"/>
-                        <TextBlock Foreground="{StaticResource SubtextBrush}" TextWrapping="Wrap">
+                        <TextBlock Foreground="{DynamicResource SubtextBrush}" TextWrapping="Wrap">
                             Create one using the form below. If the System image dropdown is empty, install a system image from the Install / SDK tab first (or use Android Studio's SDK Manager).
                         </TextBlock>
                     </StackPanel>
@@ -40,17 +40,17 @@
                                 </Grid.ColumnDefinitions>
                                 <StackPanel>
                                     <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="{Binding Name}" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}"/>
+                                        <TextBlock Text="{Binding Name}" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextBrush}"/>
                                         <Border Style="{StaticResource StatusPill}" Margin="10,2,0,0">
-                                            <TextBlock Text="{Binding Badge}" FontSize="11" Foreground="{StaticResource MauveBrush}"/>
+                                            <TextBlock Text="{Binding Badge}" FontSize="11" Foreground="{DynamicResource MauveBrush}"/>
                                         </Border>
-                                        <Border Style="{StaticResource StatusPill}" Margin="6,2,0,0" Background="{StaticResource GreenBrush}"
+                                        <Border Style="{StaticResource StatusPill}" Margin="6,2,0,0" Background="{DynamicResource GreenBrush}"
                                                 Visibility="{Binding IsRunning, Converter={x:Static views:BoolToVisibilityConverter.Instance}}">
-                                            <TextBlock Text="● Running" FontSize="11" Foreground="{StaticResource CrustBrush}" FontWeight="SemiBold"/>
+                                            <TextBlock Text="● Running" FontSize="11" Foreground="{DynamicResource CrustBrush}" FontWeight="SemiBold"/>
                                         </Border>
                                     </StackPanel>
-                                    <TextBlock Text="{Binding Subtitle}" Foreground="{StaticResource SubtextBrush}" Margin="0,4,0,0"/>
-                                    <TextBlock Text="{Binding SystemImage}" FontFamily="Cascadia Mono, Consolas" FontSize="11" Foreground="{StaticResource OverlayBrush}" Margin="0,4,0,0"/>
+                                    <TextBlock Text="{Binding Subtitle}" Foreground="{DynamicResource SubtextBrush}" Margin="0,4,0,0"/>
+                                    <TextBlock Text="{Binding SystemImage}" FontFamily="Cascadia Mono, Consolas" FontSize="11" Foreground="{DynamicResource OverlayBrush}" Margin="0,4,0,0"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                                     <Button Content="▶ Launch" Style="{StaticResource PrimaryButton}"
@@ -114,11 +114,11 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <StackPanel Margin="0,0,8,0">
-                        <TextBlock Text="Name" Foreground="{StaticResource SubtextBrush}" Margin="0,0,0,4"/>
+                        <TextBlock Text="Name" Foreground="{DynamicResource SubtextBrush}" Margin="0,0,0,4"/>
                         <TextBox Text="{Binding NewName, UpdateSourceTrigger=PropertyChanged}"/>
                     </StackPanel>
                     <StackPanel Grid.Column="1" Margin="8,0">
-                        <TextBlock Text="Device profile" Foreground="{StaticResource SubtextBrush}" Margin="0,0,0,4"/>
+                        <TextBlock Text="Device profile" Foreground="{DynamicResource SubtextBrush}" Margin="0,0,0,4"/>
                         <ComboBox ItemsSource="{Binding AvailableDevices}" SelectedItem="{Binding NewDevice}" IsEditable="True"/>
                     </StackPanel>
                     <StackPanel Grid.Column="2" Margin="8,0">
@@ -127,7 +127,7 @@
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <TextBlock Text="System image" Foreground="{StaticResource SubtextBrush}" Margin="0,0,0,4"/>
+                            <TextBlock Text="System image" Foreground="{DynamicResource SubtextBrush}" Margin="0,0,0,4"/>
                             <Button Grid.Column="1" Content="Browse online…" Style="{StaticResource FlatButton}"
                                     MinWidth="0" Padding="8,2" MinHeight="0"
                                     Command="{Binding BrowseSystemImagesCommand}"

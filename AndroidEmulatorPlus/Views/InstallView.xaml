@@ -22,16 +22,16 @@
                             <ColumnDefinition Width="160"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Text="SDK Root" Grid.Row="0" Grid.Column="0" Foreground="{StaticResource SubtextBrush}"/>
+                        <TextBlock Text="SDK Root" Grid.Row="0" Grid.Column="0" Foreground="{DynamicResource SubtextBrush}"/>
                         <TextBlock Text="{Binding SdkPathText}" Grid.Row="0" Grid.Column="1"/>
-                        <TextBlock Text="platform-tools" Grid.Row="1" Grid.Column="0" Foreground="{StaticResource SubtextBrush}" Margin="0,6,0,0"/>
+                        <TextBlock Text="platform-tools" Grid.Row="1" Grid.Column="0" Foreground="{DynamicResource SubtextBrush}" Margin="0,6,0,0"/>
                         <TextBlock Text="{Binding HasPlatformTools, Converter={x:Static views:BoolStatusConverter.Instance}}" Grid.Row="1" Grid.Column="1" Margin="0,6,0,0"/>
-                        <TextBlock Text="emulator" Grid.Row="2" Grid.Column="0" Foreground="{StaticResource SubtextBrush}" Margin="0,6,0,0"/>
+                        <TextBlock Text="emulator" Grid.Row="2" Grid.Column="0" Foreground="{DynamicResource SubtextBrush}" Margin="0,6,0,0"/>
                         <TextBlock Text="{Binding HasEmulator, Converter={x:Static views:BoolStatusConverter.Instance}}" Grid.Row="2" Grid.Column="1" Margin="0,6,0,0"/>
-                        <TextBlock Text="cmdline-tools" Grid.Row="3" Grid.Column="0" Foreground="{StaticResource SubtextBrush}" Margin="0,6,0,0"/>
+                        <TextBlock Text="cmdline-tools" Grid.Row="3" Grid.Column="0" Foreground="{DynamicResource SubtextBrush}" Margin="0,6,0,0"/>
                         <TextBlock Text="{Binding HasCmdlineTools, Converter={x:Static views:BoolStatusConverter.Instance}}" Grid.Row="3" Grid.Column="1" Margin="0,6,0,0"/>
-                        <TextBlock Text="Status" Grid.Row="4" Grid.Column="0" Foreground="{StaticResource SubtextBrush}" Margin="0,6,0,0"/>
-                        <TextBlock Text="{Binding StatusText}" Grid.Row="4" Grid.Column="1" Margin="0,6,0,0" Foreground="{StaticResource LavenderBrush}"/>
+                        <TextBlock Text="Status" Grid.Row="4" Grid.Column="0" Foreground="{DynamicResource SubtextBrush}" Margin="0,6,0,0"/>
+                        <TextBlock Text="{Binding StatusText}" Grid.Row="4" Grid.Column="1" Margin="0,6,0,0" Foreground="{DynamicResource LavenderBrush}"/>
                     </Grid>
                     <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
                         <Button Content="Refresh" Style="{StaticResource FlatButton}" Command="{Binding RefreshCommand}"/>
@@ -46,18 +46,18 @@
             <Border Style="{StaticResource Card}">
                 <StackPanel>
                     <TextBlock Style="{StaticResource SectionHeader}" Text="Hardware acceleration"/>
-                    <TextBlock Foreground="{StaticResource SubtextBrush}" TextWrapping="Wrap">
+                    <TextBlock Foreground="{DynamicResource SubtextBrush}" TextWrapping="Wrap">
                         Runs <Run FontFamily="Cascadia Mono, Consolas">emulator -accel-check</Run> to verify that Windows Hypervisor Platform / Hyper-V is enabled so the emulator can use hardware virtualization.
                     </TextBlock>
                     <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
                         <Button Content="Run accel-check" Style="{StaticResource FlatButton}" Command="{Binding CheckAccelCommand}"/>
-                        <TextBlock Text="{Binding AccelText}" Margin="14,0,0,0" VerticalAlignment="Center" Foreground="{StaticResource LavenderBrush}"/>
+                        <TextBlock Text="{Binding AccelText}" Margin="14,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource LavenderBrush}"/>
                     </StackPanel>
-                    <Border Background="{StaticResource CrustBrush}" CornerRadius="6" Padding="10,8" Margin="0,10,0,0"
+                    <Border Background="{DynamicResource CrustBrush}" CornerRadius="6" Padding="10,8" Margin="0,10,0,0"
                             Visibility="{Binding AccelOk, Converter={x:Static views:NotBoolToVisibilityConverter.Instance}}">
                         <StackPanel>
-                            <TextBlock Foreground="{StaticResource YellowBrush}" FontWeight="SemiBold" Margin="0,0,0,4" Text="Remediation"/>
-                            <TextBlock Foreground="{StaticResource SubtextBrush}" TextWrapping="Wrap" FontSize="12">
+                            <TextBlock Foreground="{DynamicResource YellowBrush}" FontWeight="SemiBold" Margin="0,0,0,4" Text="Remediation"/>
+                            <TextBlock Foreground="{DynamicResource SubtextBrush}" TextWrapping="Wrap" FontSize="12">
                                 Hardware virtualization is gated by a Windows feature and (on Intel) a BIOS flag. Open one of:
                             </TextBlock>
                             <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
@@ -86,9 +86,9 @@
                             <Button Content="Clear crash.log" Style="{StaticResource DangerButton}" Command="{Binding ClearCrashLogCommand}" Margin="8,0,0,0"/>
                         </StackPanel>
                     </Grid>
-                    <Border Background="{StaticResource CrustBrush}" CornerRadius="6" Padding="10,8" Margin="0,6,0,0">
+                    <Border Background="{DynamicResource CrustBrush}" CornerRadius="6" Padding="10,8" Margin="0,6,0,0">
                         <TextBlock Text="{Binding DiagnosticsText}" FontFamily="Cascadia Mono, Consolas, monospace" FontSize="11"
-                                   Foreground="{StaticResource SubtextBrush}" TextWrapping="NoWrap" MaxHeight="220"/>
+                                   Foreground="{DynamicResource SubtextBrush}" TextWrapping="NoWrap" MaxHeight="220"/>
                     </Border>
                 </StackPanel>
             </Border>
@@ -96,7 +96,7 @@
             <Border Style="{StaticResource Card}">
                 <StackPanel>
                     <TextBlock Style="{StaticResource SectionHeader}" Text="If nothing is installed"/>
-                    <TextBlock Foreground="{StaticResource SubtextBrush}" TextWrapping="Wrap">
+                    <TextBlock Foreground="{DynamicResource SubtextBrush}" TextWrapping="Wrap">
                         Option 1 — install just the command-line tools (~150 MB). Then use the AVDs tab to pull a system image and create an emulator.
                     </TextBlock>
                     <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
@@ -104,11 +104,11 @@
                         <Button Content="✗ Cancel" Style="{StaticResource DangerButton}" Margin="8,0,0,0"
                                 Command="{Binding CancelCommand}"
                                 Visibility="{Binding IsBusy, Converter={x:Static views:BoolToVisibilityConverter.Instance}}"/>
-                        <TextBlock Text="{Binding Step}" Foreground="{StaticResource OverlayBrush}" Margin="12,0,0,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding Step}" Foreground="{DynamicResource OverlayBrush}" Margin="12,0,0,0" VerticalAlignment="Center"/>
                     </StackPanel>
-                    <TextBlock Text="{Binding CmdlineToolsNote}" Foreground="{StaticResource YellowBrush}" Margin="0,6,0,0" TextWrapping="Wrap" FontSize="12"
+                    <TextBlock Text="{Binding CmdlineToolsNote}" Foreground="{DynamicResource YellowBrush}" Margin="0,6,0,0" TextWrapping="Wrap" FontSize="12"
                                Visibility="{Binding HasCmdlineToolsNote, Converter={x:Static views:BoolToVisibilityConverter.Instance}}"/>
-                    <TextBlock Foreground="{StaticResource SubtextBrush}" Margin="0,18,0,0" TextWrapping="Wrap">
+                    <TextBlock Foreground="{DynamicResource SubtextBrush}" Margin="0,18,0,0" TextWrapping="Wrap">
                         Option 2 — install Android Studio (~1.2 GB). Includes the Device Manager UI plus all SDK components.
                     </TextBlock>
                     <Button Content="Open developer.android.com/studio" Style="{StaticResource FlatButton}" Command="{Binding OpenStudioDownloadPageCommand}" Margin="0,10,0,0" HorizontalAlignment="Left"/>

@@ -28,7 +28,7 @@
         </Grid.RowDefinitions>
 
         <!-- Top bar -->
-        <Border Grid.Row="0" Background="{StaticResource MantleBrush}" BorderBrush="{StaticResource SurfaceBrush}" BorderThickness="0,0,0,1">
+        <Border Grid.Row="0" Background="{DynamicResource MantleBrush}" BorderBrush="{DynamicResource SurfaceBrush}" BorderThickness="0,0,0,1">
             <Grid Margin="16,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -42,23 +42,23 @@
                 </Grid.ColumnDefinitions>
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock Text="AndroidEmulatorPlus" FontWeight="SemiBold" FontSize="15"
-                               Foreground="{StaticResource LavenderBrush}"/>
-                    <TextBlock Text="v0.2.0" Margin="8,0,0,0" Foreground="{StaticResource OverlayBrush}" VerticalAlignment="Center"/>
+                               Foreground="{DynamicResource LavenderBrush}"/>
+                    <TextBlock Text="v0.2.0" Margin="8,0,0,0" Foreground="{DynamicResource OverlayBrush}" VerticalAlignment="Center"/>
                 </StackPanel>
 
                 <Border Grid.Column="1" Style="{StaticResource StatusPill}" Margin="4">
-                    <TextBlock Text="{Binding SdkStatusText}" Foreground="{StaticResource SubtextBrush}" FontSize="12"/>
+                    <TextBlock Text="{Binding SdkStatusText}" Foreground="{DynamicResource SubtextBrush}" FontSize="12"/>
                 </Border>
-                <Border Grid.Column="2" Style="{StaticResource StatusPill}" Margin="4" Background="{StaticResource SurfaceBrush}">
+                <Border Grid.Column="2" Style="{StaticResource StatusPill}" Margin="4" Background="{DynamicResource SurfaceBrush}">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="📱" FontSize="12" VerticalAlignment="Center"/>
-                        <TextBlock Text="{Binding PhoneStatusText}" Margin="6,0,0,0" Foreground="{StaticResource SubtextBrush}" FontSize="12"/>
+                        <TextBlock Text="{Binding PhoneStatusText}" Margin="6,0,0,0" Foreground="{DynamicResource SubtextBrush}" FontSize="12"/>
                     </StackPanel>
                 </Border>
-                <Border Grid.Column="3" Style="{StaticResource StatusPill}" Margin="4" Background="{StaticResource SurfaceBrush}">
+                <Border Grid.Column="3" Style="{StaticResource StatusPill}" Margin="4" Background="{DynamicResource SurfaceBrush}">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="💻" FontSize="12" VerticalAlignment="Center"/>
-                        <TextBlock Text="{Binding EmulatorStatusText}" Margin="6,0,0,0" Foreground="{StaticResource SubtextBrush}" FontSize="12"/>
+                        <TextBlock Text="{Binding EmulatorStatusText}" Margin="6,0,0,0" Foreground="{DynamicResource SubtextBrush}" FontSize="12"/>
                     </StackPanel>
                 </Border>
                 <Button Grid.Column="4" Style="{StaticResource FlatButton}" Margin="8,4,0,4"
@@ -91,9 +91,9 @@
             </Grid.ColumnDefinitions>
 
             <!-- Sidebar -->
-            <Border Background="{StaticResource MantleBrush}" BorderBrush="{StaticResource SurfaceBrush}" BorderThickness="0,0,1,0">
+            <Border Background="{DynamicResource MantleBrush}" BorderBrush="{DynamicResource SurfaceBrush}" BorderThickness="0,0,1,0">
                 <StackPanel Margin="0,12">
-                    <TextBlock Text="WORKFLOW" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource OverlayBrush}" Margin="20,4,0,8"/>
+                    <TextBlock Text="WORKFLOW" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource OverlayBrush}" Margin="20,4,0,8"/>
                     <RadioButton Style="{StaticResource SidebarButton}" Content="① Install / SDK"
                                  IsChecked="{Binding ActiveSection, Converter={x:Static views:EqualsConverter.Instance}, ConverterParameter=Install, Mode=OneWay}"
                                  Command="{Binding NavigateCommand}" CommandParameter="Install"/>
@@ -122,7 +122,7 @@
             </Border>
 
             <!-- Content -->
-            <Grid Grid.Column="1" Background="{StaticResource BaseBrush}">
+            <Grid Grid.Column="1" Background="{DynamicResource BaseBrush}">
                 <views:InstallView DataContext="{Binding InstallVm}"
                                    Visibility="{Binding DataContext.ActiveSection, RelativeSource={RelativeSource AncestorType=Window}, Converter={x:Static views:VisibleIfEqualConverter.Instance}, ConverterParameter=Install}"/>
                 <views:AvdView DataContext="{Binding AvdVm}"
@@ -144,8 +144,8 @@
 
         <!-- Log panel -->
         <GridSplitter Grid.Row="1" Height="6" HorizontalAlignment="Stretch" VerticalAlignment="Bottom"
-                      Background="{StaticResource SurfaceBrush}" />
-        <Border Grid.Row="2" Background="{StaticResource MantleBrush}" BorderBrush="{StaticResource SurfaceBrush}" BorderThickness="0,1,0,0">
+                      Background="{DynamicResource SurfaceBrush}" />
+        <Border Grid.Row="2" Background="{DynamicResource MantleBrush}" BorderBrush="{DynamicResource SurfaceBrush}" BorderThickness="0,1,0,0">
             <Grid Margin="12,8">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -156,10 +156,10 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="Log" FontWeight="SemiBold" Foreground="{StaticResource MauveBrush}"/>
+                    <TextBlock Text="Log" FontWeight="SemiBold" Foreground="{DynamicResource MauveBrush}"/>
                     <Button Grid.Column="1" Content="Clear" Style="{StaticResource FlatButton}" Click="ClearLog_Click" Padding="10,4" MinHeight="0" MinWidth="0"/>
                 </Grid>
-                <Border Grid.Row="1" Background="{StaticResource CrustBrush}" CornerRadius="6" Padding="8" Margin="0,6,0,0">
+                <Border Grid.Row="1" Background="{DynamicResource CrustBrush}" CornerRadius="6" Padding="8" Margin="0,6,0,0">
                     <ItemsControl ItemsSource="{Binding Log.Entries}" x:Name="LogList">
                         <ItemsControl.Template>
                             <ControlTemplate>
@@ -174,19 +174,19 @@
                                            TextWrapping="NoWrap">
                                     <TextBlock.Style>
                                         <Style TargetType="TextBlock">
-                                            <Setter Property="Foreground" Value="{StaticResource SubtextBrush}"/>
+                                            <Setter Property="Foreground" Value="{DynamicResource SubtextBrush}"/>
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding Level}" Value="Success">
-                                                    <Setter Property="Foreground" Value="{StaticResource GreenBrush}"/>
+                                                    <Setter Property="Foreground" Value="{DynamicResource GreenBrush}"/>
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding Level}" Value="Warning">
-                                                    <Setter Property="Foreground" Value="{StaticResource YellowBrush}"/>
+                                                    <Setter Property="Foreground" Value="{DynamicResource YellowBrush}"/>
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding Level}" Value="Error">
-                                                    <Setter Property="Foreground" Value="{StaticResource RedBrush}"/>
+                                                    <Setter Property="Foreground" Value="{DynamicResource RedBrush}"/>
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding Level}" Value="Detail">
-                                                    <Setter Property="Foreground" Value="{StaticResource SubtextBrush}"/>
+                                                    <Setter Property="Foreground" Value="{DynamicResource SubtextBrush}"/>
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>

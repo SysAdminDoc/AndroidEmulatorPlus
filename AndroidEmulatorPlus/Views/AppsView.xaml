@@ -25,7 +25,7 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="Filter:" VerticalAlignment="Center" Foreground="{StaticResource SubtextBrush}"/>
+                        <TextBlock Text="Filter:" VerticalAlignment="Center" Foreground="{DynamicResource SubtextBrush}"/>
                         <TextBox Text="{Binding Filter, UpdateSourceTrigger=PropertyChanged}" Width="240" Margin="8,0,0,0"/>
                         <CheckBox Content="Include system" IsChecked="{Binding IncludeSystem}" Margin="16,0,0,0" VerticalAlignment="Center"/>
                         <CheckBox Content="Include disabled" IsChecked="{Binding IncludeDisabled}" Margin="12,0,0,0" VerticalAlignment="Center"/>
@@ -74,9 +74,9 @@
                                 </Grid.ColumnDefinitions>
                                 <CheckBox IsChecked="{Binding IsSelected}" Content="{Binding Package}"/>
                                 <Border Grid.Column="1" Style="{StaticResource StatusPill}" Margin="6,2,0,0">
-                                    <TextBlock Text="{Binding SourceTag}" FontSize="11" Foreground="{StaticResource MauveBrush}"/>
+                                    <TextBlock Text="{Binding SourceTag}" FontSize="11" Foreground="{DynamicResource MauveBrush}"/>
                                 </Border>
-                                <TextBlock Grid.Column="2" Text="{Binding SizeText}" Foreground="{StaticResource OverlayBrush}" FontFamily="Cascadia Mono" FontSize="11" VerticalAlignment="Center" Margin="10,0,0,0" MinWidth="60" TextAlignment="Right"/>
+                                <TextBlock Grid.Column="2" Text="{Binding SizeText}" Foreground="{DynamicResource OverlayBrush}" FontFamily="Cascadia Mono" FontSize="11" VerticalAlignment="Center" Margin="10,0,0,0" MinWidth="60" TextAlignment="Right"/>
                             </Grid>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
@@ -86,7 +86,7 @@
 
         <StackPanel Grid.Row="3" Margin="0,12,0,0">
             <StackPanel Orientation="Horizontal">
-                <TextBlock Text="Action mode:" Foreground="{StaticResource SubtextBrush}" VerticalAlignment="Center"/>
+                <TextBlock Text="Action mode:" Foreground="{DynamicResource SubtextBrush}" VerticalAlignment="Center"/>
                 <RadioButton GroupName="UninstallMode" Content="Uninstall (adb)" Margin="10,0,0,0"
                              IsChecked="{Binding UninstallMode, Converter={x:Static views:EqualsConverter.Instance}, ConverterParameter=user, Mode=OneWay}"
                              Command="{Binding SetUninstallModeUserCommand}" />

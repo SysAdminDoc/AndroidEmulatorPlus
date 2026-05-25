@@ -5,8 +5,8 @@
         Width="640" Height="480"
         WindowStyle="ToolWindow"
         WindowStartupLocation="CenterOwner"
-        Background="{StaticResource BaseBrush}"
-        Foreground="{StaticResource TextBrush}">
+        Background="{DynamicResource BaseBrush}"
+        Foreground="{DynamicResource TextBrush}">
     <Grid Margin="20,16">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -16,19 +16,19 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource LavenderBrush}" Text="Install a system image"/>
-        <TextBlock Grid.Row="0" Foreground="{StaticResource SubtextBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,22,0,12">
+        <TextBlock Grid.Row="0" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource LavenderBrush}" Text="Install a system image"/>
+        <TextBlock Grid.Row="0" Foreground="{DynamicResource SubtextBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,22,0,12">
             Pulled from `sdkmanager --list`. Pick one and click Install. The download is large (200-700 MB) and the disk install pulls several GB more.
         </TextBlock>
 
         <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,8,0,8">
-            <TextBlock Text="Filter:" Foreground="{StaticResource SubtextBrush}" VerticalAlignment="Center"/>
+            <TextBlock Text="Filter:" Foreground="{DynamicResource SubtextBrush}" VerticalAlignment="Center"/>
             <TextBox x:Name="FilterBox" Width="240" Margin="8,0,0,0" TextChanged="FilterBox_TextChanged"/>
             <Button x:Name="RefreshButton" Content="Refresh" Style="{StaticResource FlatButton}" Margin="12,0,0,0" Click="Refresh_Click"/>
-            <TextBlock x:Name="StatusText" Foreground="{StaticResource OverlayBrush}" Margin="14,0,0,0" VerticalAlignment="Center"/>
+            <TextBlock x:Name="StatusText" Foreground="{DynamicResource OverlayBrush}" Margin="14,0,0,0" VerticalAlignment="Center"/>
         </StackPanel>
 
-        <Border Grid.Row="2" Background="{StaticResource CrustBrush}" CornerRadius="6">
+        <Border Grid.Row="2" Background="{DynamicResource CrustBrush}" CornerRadius="6">
             <ListBox x:Name="ImagesList" Background="Transparent" BorderThickness="0">
                 <ListBox.ItemTemplate>
                     <DataTemplate>
@@ -38,7 +38,7 @@
             </ListBox>
         </Border>
 
-        <TextBlock Grid.Row="3" x:Name="ProgressText" Foreground="{StaticResource YellowBrush}" Margin="0,8,0,0" TextWrapping="Wrap"/>
+        <TextBlock Grid.Row="3" x:Name="ProgressText" Foreground="{DynamicResource YellowBrush}" Margin="0,8,0,0" TextWrapping="Wrap"/>
 
         <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,14,0,0">
             <Button x:Name="LicensesButton" Content="Accept all licenses" Style="{StaticResource FlatButton}" Click="Licenses_Click"/>

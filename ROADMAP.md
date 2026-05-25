@@ -70,7 +70,10 @@ be `dotnet build`-verified on a host with the SDK before tagging a release.
 - [x] **P2 C-11** — `CacheDiagnosticsService.Changed` event fires after Clear*,
   Apps tab Export/Import; `MigrateViewModel` subscribes and re-measures on
   the UI thread.
-- [ ] **P2 C-12** — DynamicResource sweep so theme switches live without restart.
+- [x] **P2 C-12** — All 216 `StaticResource …Brush` references across Styles.xaml,
+  MainWindow.xaml, and 17 view/dialog XAML files swept to `DynamicResource`.
+  New `ThemeService.Apply(theme)` swaps `Application.Resources.MergedDictionaries[0]`
+  in place; SettingsDialog calls it on Save. Theme now switches without restart.
 - [ ] **P2 C-17** — README screenshots + landing image (one PNG per tab, Mocha + Latte).
 - [x] **P2 R-03** — Covered by C-07 (above).
 

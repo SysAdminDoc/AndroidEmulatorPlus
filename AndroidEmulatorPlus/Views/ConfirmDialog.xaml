@@ -6,8 +6,8 @@
         WindowStyle="ToolWindow"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
-        Background="{StaticResource BaseBrush}"
-        Foreground="{StaticResource TextBrush}">
+        Background="{DynamicResource BaseBrush}"
+        Foreground="{DynamicResource TextBrush}">
     <Grid Margin="24,20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -20,19 +20,19 @@
         <TextBlock x:Name="HeaderText"
                    Grid.Row="0"
                    FontSize="18" FontWeight="SemiBold"
-                   Foreground="{StaticResource RedBrush}"
+                   Foreground="{DynamicResource RedBrush}"
                    TextWrapping="Wrap"
                    Margin="0,0,0,10"/>
 
         <TextBlock x:Name="BodyText"
                    Grid.Row="1"
-                   Foreground="{StaticResource SubtextBrush}"
+                   Foreground="{DynamicResource SubtextBrush}"
                    TextWrapping="Wrap"
                    Margin="0,0,0,12"/>
 
         <Border x:Name="DetailContainer"
                 Grid.Row="2"
-                Background="{StaticResource CrustBrush}"
+                Background="{DynamicResource CrustBrush}"
                 CornerRadius="6"
                 Padding="10,8"
                 Margin="0,0,0,12"
@@ -42,7 +42,7 @@
                 <TextBlock x:Name="DetailText"
                            FontFamily="Cascadia Mono, Consolas, monospace"
                            FontSize="11"
-                           Foreground="{StaticResource SubtextBrush}"
+                           Foreground="{DynamicResource SubtextBrush}"
                            TextWrapping="NoWrap"/>
             </ScrollViewer>
         </Border>
@@ -52,7 +52,7 @@
                     Visibility="Collapsed"
                     Margin="0,0,0,12">
             <TextBlock x:Name="TypedConfirmPrompt"
-                       Foreground="{StaticResource YellowBrush}"
+                       Foreground="{DynamicResource YellowBrush}"
                        TextWrapping="Wrap"
                        Margin="0,0,0,6"/>
             <TextBox x:Name="TypedConfirmBox" TextChanged="TypedConfirmBox_TextChanged"/>

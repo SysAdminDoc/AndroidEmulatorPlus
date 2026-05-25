@@ -51,12 +51,16 @@ public partial class SettingsDialog : Window
 
     private void Save_Click(object sender, RoutedEventArgs e)
     {
-        _settings.Current.Theme = (ThemeBox.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "mocha";
+        var newTheme = (ThemeBox.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "mocha";
+        var themeChanged = !string.Equals(newTheme, _settings.Current.Theme, System.StringComparison.OrdinalIgnoreCase);
         _settings.Current.SdkRootOverride = string.IsNullOrWhiteSpace(SdkRootBox.Text) ? null : SdkRootBox.Text.Trim();
         _settings.Current.MediaDir = string.IsNullOrWhiteSpace(MediaDirBox.Text) ? null : MediaDirBox.Text.Trim();
         _settings.Current.HttpProxy = string.IsNullOrWhiteSpace(ProxyBox.Text) ? null : ProxyBox.Text.Trim();
         _settings.Current.AutoScrcpy = AutoScrcpyBox.IsChecked == true;
         _settings.Save();
+        // C-12: live theme swap via ThemeService (also persists the chosen theme).
+        if (themeChanged && App.Services.GetService(typeof(ThemeService)) is ThemeService theme)
+            theme.Apply(newTheme);
         DialogResult = true;
         Close();
     }
