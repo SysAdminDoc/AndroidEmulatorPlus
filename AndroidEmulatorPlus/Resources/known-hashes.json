@@ -1,0 +1,12 @@
+{
+  "_comment": "SHA-256 manifest for supply-chain verification. Append a key after smoke-testing a new download; the verifier hard-fails on mismatch for known keys and logs-and-continues for unknown keys.",
+  "_format": {
+    "magisk": "key = asset filename returned by GitHub releases (e.g. 'Magisk-v28.1.apk')",
+    "cmdlineTools": "key = full URL returned by the developer.android.com scrape (or the hard-coded fallback)"
+  },
+  "version": 1,
+  "magisk": {},
+  "cmdlineTools": {
+    "https://dl.google.com/android/repository/commandlinetools-win-13114758_latest.zip": ""
+  }
+}

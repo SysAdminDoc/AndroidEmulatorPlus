@@ -16,6 +16,7 @@ All notable changes to this project will be documented here. Format follows [Kee
 - Cmdline-tools URL is now resolved at install time from `https://developer.android.com/studio` instead of a hard-coded `commandlinetools-win-NNNN_latest.zip`. Falls back to the previous hard-coded URL if the scrape fails (so first-launch still works offline-ish); a yellow notice surfaces in the UI when the fallback is in use.
 - Empty-state card on the AVDs tab when no AVDs exist — links the user to the create form.
 - `.apks` / `.xapk` / `.apkm` bundles are now extracted before install. Inner splits go through `adb install-multiple`; any `*.obb` files are pushed to `/sdcard/Android/obb/<pkg>/` (package name resolved from a `manifest.json` / `info.json` inside the bundle, or the `main.<ver>.<pkg>.obb` filename convention). Previously the dialog filter advertised these formats but `adb install` refused them.
+- Downloaded Magisk APK and cmdline-tools ZIP are now SHA-256 verified against an embedded `Resources/known-hashes.json` manifest. Known-key mismatches hard-fail and delete the partial file. Unknown keys log the computed hash so future manifest updates have a record (trust-on-first-use).
 
 ### Changed
 

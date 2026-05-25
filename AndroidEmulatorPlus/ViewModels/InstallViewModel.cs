@@ -12,6 +12,7 @@ public sealed partial class InstallViewModel : ObservableObject
     private readonly SdkLocator _sdk;
     private readonly DownloadService _dl;
     private readonly EmulatorService _emu;
+    private readonly HashVerificationService _hash;
     private readonly LogService _log;
 
     [ObservableProperty] private string _statusText = "";
@@ -34,11 +35,12 @@ public sealed partial class InstallViewModel : ObservableObject
     private static string CrashLogPath => Path.Combine(DiagnosticsRoot, "crash.log");
     private static string DailyLogPath => Path.Combine(DiagnosticsRoot, "logs", $"app-{DateTime.Now:yyyyMMdd}.log");
 
-    public InstallViewModel(SdkLocator sdk, DownloadService dl, EmulatorService emu, LogService log)
+    public InstallViewModel(SdkLocator sdk, DownloadService dl, EmulatorService emu, HashVerificationService hash, LogService log)
     {
         _sdk = sdk;
         _dl = dl;
         _emu = emu;
+        _hash = hash;
         _log = log;
     }
 
@@ -144,6 +146,15 @@ public sealed partial class InstallViewModel : ObservableObject
             Step = "Downloading command-line tools…";
             var zip = Path.Combine(Path.GetTempPath(), "android-cmdline-tools.zip");
             await _dl.DownloadAsync(url: res.Url, dest: zip);
+
+            Step = "Verifying download…";
+            var check = _hash.VerifyCmdlineTools(res.Url, zip);
+            if (!check.Ok)
+            {
+                try { File.Delete(zip); } catch { }
+                _log.Error($"cmdline-tools download SHA-256 mismatch: {check.Detail}. Partial download deleted.");
+                return;
+            }
 
             Step = "Extracting…";
             var staging = Path.Combine(sdkRoot, "cmdline-tools-staging");

@@ -12,8 +12,8 @@ Build constraint: this VMware VM has no .NET SDK; changes here are best-effort a
 ## Phase 1 — P0 hardening
 
 - [x] **P0 B-01** — Fix `IsEnabled` mis-binding on busy buttons (`NotBoolConverter` introduced; InstallView/RootView updated).
-- [x] **P0 B-02** — `.apks` / `.xapk` / `.apkm` bundles are now unzipped before install; inner splits go through `adb install-multiple` and any `*.obb` lands in `/sdcard/Android/obb/<pkg>/` (package resolved via manifest.json or main.<ver>.<pkg>.obb pattern).
-- [ ] **P0 A-04** — Verify SHA-256 of downloaded Magisk APK and the cmdline-tools ZIP against an in-tree manifest before use. Hard-fail on mismatch for known tags; log-and-warn for unknown tags. Today the app trusts whatever GitHub releases / dl.google.com returns.
+- [x] **P0 B-02** — `.apks` / `.xapk` / `.apkm` bundles are now unzipped before install; inner splits go through `adb install-multiple` and any `*.obb` lands in `/sdcard/Android/obb/<pkg>/` (package resolved via manifest.json or `main.<ver>.<pkg>.obb` pattern).
+- [x] **P0 A-04** — SHA-256 verification against embedded `Resources/known-hashes.json`. Hard-fail for known keys, trust-on-first-use log entry for unknown keys. Manifest ships with empty `magisk` table and one cmdlineTools URL placeholder; maintainer appends entries after smoke-test.
 - [ ] **P0 A-03** — Replace the placeholder `"master"` ref in `RootService.RootAvdPinnedRef` with a verified rootAVD SHA after smoke-test on API 35 + API 36 Google Play AVDs. _Hook landed; the constant currently still resolves to `master` until a verified SHA is recorded._
 - [ ] **P0 A-05** — Migration cache size indicator + Clear button on the Migrate tab. `MigrationService.TransferInternalData` uses best-effort `try/Directory.Delete` cleanup; orphaned multi-GB tarballs can survive crashes at `%LOCALAPPDATA%\AndroidEmulatorPlus\transfer\`.
 - [ ] **P0 A-07** — Typed confirmation dialog before Resize+Wipe Data. Logging shipped; an interactive confirm with `WIPE`-to-confirm field is still TODO.

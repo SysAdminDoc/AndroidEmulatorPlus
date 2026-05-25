@@ -18,14 +18,16 @@ public sealed class RootService
     private readonly DownloadService _dl;
     private readonly LogService _log;
     private readonly EmulatorService _emu;
+    private readonly HashVerificationService _hash;
 
-    public RootService(SdkLocator sdk, AdbService adb, DownloadService dl, LogService log, EmulatorService emu)
+    public RootService(SdkLocator sdk, AdbService adb, DownloadService dl, LogService log, EmulatorService emu, HashVerificationService hash)
     {
         _sdk = sdk;
         _adb = adb;
         _dl = dl;
         _log = log;
         _emu = emu;
+        _hash = hash;
     }
 
     public string CacheRoot => Path.Combine(
@@ -71,6 +73,18 @@ public sealed class RootService
         var (tag, url) = info;
         status?.Report($"Downloading Magisk {tag}…");
         await _dl.DownloadAsync(url, MagiskApkPath, null, ct);
+
+        // Verify SHA-256 against in-tree manifest. Hard-fail on mismatch for known
+        // versions; log-and-continue for unknown (trust-on-first-use).
+        var assetName = System.IO.Path.GetFileName(new Uri(url).LocalPath);
+        var check = _hash.VerifyMagisk(assetName, MagiskApkPath);
+        if (!check.Ok)
+        {
+            try { File.Delete(MagiskApkPath); } catch { }
+            throw new InvalidOperationException(
+                $"Magisk APK SHA-256 verification failed: {check.Detail}. Partial download deleted.");
+        }
+
         // rootAVD treats the same artifact as a zip when patching:
         File.Copy(MagiskApkPath, Path.Combine(RootAvdDir, "Magisk.zip"), overwrite: true);
         var appsDir = Path.Combine(RootAvdDir, "Apps");
