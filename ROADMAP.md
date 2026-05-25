@@ -29,7 +29,7 @@ Build constraint: this VMware VM has no .NET SDK; changes here are best-effort a
 - [ ] **P0 A-03** — Pin rootAVD to a known-good revision in `RootService.EnsureRootAvdAsync` (currently `git clone --depth 1` of `master`). When newbit pushes a breaking commit, the entire root flow breaks silently. Store the pinned SHA in a constant and `git checkout <sha>` after clone.
 - [ ] **P0 A-04** — Verify SHA-256 of downloaded Magisk APK and the cmdline-tools ZIP against expected values before use. Today the app trusts whatever GitHub releases / dl.google.com returns. Supply-chain risk on a tool that patches a ramdisk.
 - [ ] **P0 A-05** — `MigrationService` does `try { Directory.Delete(work, true); } catch { }` and `try { File.Delete(local); } catch { }` in `finally`. On a cancellation or crash mid-flow, the transfer cache at `%LOCALAPPDATA%\AndroidEmulatorPlus\transfer\` can grow to many GB. Add an "orphaned cache size" indicator in the UI plus a "Clear cache" button.
-- [ ] **P0 A-06** — `ConfigViewModel.ParseSizeGb` only handles `*G` and `*M`. Many Android AVDs persist `disk.dataPartition.size` as raw bytes (e.g. `8589934592`). Today the slider snaps back to the default 16 GB and "Save config" then writes that incorrect value, shrinking the partition. Parse plain integer bytes too.
+- [x] **P0 A-06** — `ConfigViewModel.ParseSizeGb` only handles `*G` and `*M`. Many Android AVDs persist `disk.dataPartition.size` as raw bytes (e.g. `8589934592`). Today the slider snaps back to the default 16 GB and "Save config" then writes that incorrect value, shrinking the partition. Parse plain integer bytes too.
 - [ ] **P0 A-07** — `ConfigService.ResizeDiskAsync` deletes `snapshots/` recursively without confirmation. Add a confirmation dialog or at minimum a verbose log line listing every snapshot about to be destroyed (snapshot names are user-meaningful).
 
 ### Workflow gaps (P1)
@@ -63,8 +63,8 @@ Build constraint: this VMware VM has no .NET SDK; changes here are best-effort a
 
 ### Architecture / hygiene (P2)
 
-- [ ] **P2 A-31** — Remove unused `Microsoft.Extensions.Logging` + `Microsoft.Extensions.Logging.Abstractions` package references — `LogService` is custom and nothing in the project actually uses ILogger.
-- [ ] **P2 A-32** — `EmulatorService.ListAvdsAsync` is wired but never called — `AvdService.List()` already walks `.ini` files for the same result. Delete the unused method or repurpose it as a sanity check.
+- [x] **P2 A-31** — Remove unused `Microsoft.Extensions.Logging` + `Microsoft.Extensions.Logging.Abstractions` package references — `LogService` is custom and nothing in the project actually uses ILogger.
+- [x] **P2 A-32** — `EmulatorService.ListAvdsAsync` is wired but never called — `AvdService.List()` already walks `.ini` files for the same result. Delete the unused method or repurpose it as a sanity check.
 - [ ] **P2 A-33** — `EmulatorService._current` only tracks the most recent launch — multiple AVDs running concurrently are not tracked, and Stop only kills the latest. Switch to `Dictionary<string AvdName, Process>`.
 - [ ] **P2 A-34** — App close should attempt to gracefully kill any emulator children launched in this session (today they survive as orphans because `_current` may not even be the right one).
 - [ ] **P2 A-35** — Add a basic unit-test project (`AndroidEmulatorPlus.Tests`) — at minimum cover `AvdService.ParseIni`/`WriteIni` round-trip, `DownloadService.LatestMagiskAsync` asset-name filter, and `MigrationService.ParseFailReason`.

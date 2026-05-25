@@ -26,13 +26,6 @@ public sealed class EmulatorService
         return _current;
     }
 
-    public async Task<List<string>> ListAvdsAsync(CancellationToken ct = default)
-    {
-        var r = await ProcessRunner.RunAsync(_sdk.EmulatorRequired, new[] { "-list-avds" }, ct: ct);
-        return r.StdOut.Split('\n', StringSplitOptions.RemoveEmptyEntries)
-            .Select(s => s.Trim()).Where(s => s.Length > 0).ToList();
-    }
-
     public void TryKill()
     {
         try
