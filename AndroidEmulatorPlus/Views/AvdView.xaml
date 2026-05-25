@@ -71,6 +71,9 @@
                                                 <MenuItem Header="Show on disk"
                                                           Command="{Binding DataContext.ShowOnDiskCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                           CommandParameter="{Binding}"/>
+                                                <MenuItem Header="Rename…"
+                                                          Command="{Binding DataContext.RenameCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                          CommandParameter="{Binding}"/>
                                                 <MenuItem Header="Create desktop shortcut"
                                                           Command="{Binding DataContext.CreateShortcutCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                           CommandParameter="{Binding}"/>

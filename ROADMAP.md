@@ -32,7 +32,7 @@ Build constraint: this VMware VM has no .NET SDK; changes here are best-effort a
 - [ ] **P1 A-16** — Auto-accept SDK licenses. Pipe `y\n` repeatedly to `sdkmanager --licenses`.
 - [ ] **P1 A-18** — `-s` (system) + `-d` (disabled-only) toggles on Apps tab; show package source per row.
 - [ ] **P1 A-19** — Detect `allowBackup=false` per package and warn before attempting data migration.
-- [ ] **P1 A-25** — Rename AVD popup on the AVD card overflow menu. Backend (`AvdService.RenameAsync` + `AvdViewModel.RenameCommand`) ready; only the XAML is missing.
+- [x] **P1 A-25** — Rename AVD popup in the AVD card overflow menu (new reusable `PromptDialog` with regex+collision validation).
 - [ ] **P1 A-36** — `.github/workflows/build.yml` that builds the project on `windows-latest` and uploads the published `.exe` as a release artifact.
 - [ ] **P1 B-10** — Centralize `CancellationTokenSource` plumbing across long-running viewmodels (umbrella for A-01 cancel).
 - [ ] **P1 B-11** — Multi-AVD `Process` tracking via `ConcurrentDictionary` (sub-task of A-33).
@@ -48,7 +48,7 @@ Build constraint: this VMware VM has no .NET SDK; changes here are best-effort a
 - [ ] **P2 A-24 remediation** — Pass/fail shipped; remediation-link UI on accel-check failure (Windows Hypervisor Platform feature, Intel HAXM, AMD Hyper-V) is still TODO.
 - [ ] **P2 A-26** — Duplicate AVD (copy `<name>.avd` directory + `<name>.ini`, rewrite `path=` references).
 - [ ] **P2 A-27** — Keyboard shortcuts: F5 = Refresh active tab, Ctrl+1..6 = switch sections, Ctrl+L = clear log.
-- [ ] **P2 A-28** — Microcopy: inline "Launch `<name>`" CTA on Root tab's "Launch the AVD first" warning.
+- [x] **P2 A-28** — Inline "Launch & root" CTA on the Root tab when no emulator is attached; launches selected AVD, waits for boot, then re-enters the root flow.
 - [ ] **P2 A-29** — Detect tar flavor on the phone and fall back to a `find … -prune` pipeline for tar implementations without `--exclude=`.
 - [ ] **P2 A-30** — `am force-stop` on the source phone before tar (with consent flag).
 - [ ] **P2 A-33** — `EmulatorService` should track running children in `Dictionary<string AvdName, Process>` instead of a single `_current`.

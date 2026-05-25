@@ -195,27 +195,39 @@ public sealed partial class AvdViewModel : ObservableObject
         catch (Exception ex) { _log.Error("Shortcut create failed: " + ex.Message); }
     }
 
-    [ObservableProperty] private string _renameTarget = "";
-
     [RelayCommand]
     private async Task RenameAsync(Avd? avd)
     {
         if (avd is null) return;
-        if (string.IsNullOrWhiteSpace(RenameTarget) || RenameTarget == avd.Name)
-        {
-            _log.Warning("Enter a new name in the Rename field first.");
-            return;
-        }
         if (avd.IsRunning)
         {
             _log.Warning("Stop the emulator before renaming its AVD.");
             return;
         }
+        var existing = new HashSet<string>(Avds.Select(a => a.Name), StringComparer.OrdinalIgnoreCase);
+        var newName = Views.PromptDialog.Show(
+            owner: null,
+            header: $"Rename '{avd.Name}'",
+            body: "AVD names may contain letters, digits, '.', '_' and '-'.",
+            initial: avd.Name,
+            okText: "Rename",
+            validate: text =>
+            {
+                var t = (text ?? "").Trim();
+                if (string.IsNullOrEmpty(t)) return "Name cannot be empty.";
+                if (t == avd.Name) return "Pick a different name.";
+                if (!System.Text.RegularExpressions.Regex.IsMatch(t, @"^[A-Za-z0-9._-]+$"))
+                    return "Only letters, digits, '.', '_' and '-' are allowed.";
+                if (existing.Contains(t)) return $"An AVD named '{t}' already exists.";
+                return null;
+            });
+        if (newName is null) return;
+        newName = newName.Trim();
         IsBusy = true;
         try
         {
-            var r = await _avds.RenameAsync(avd.Name, RenameTarget.Trim());
-            if (r.Success) { _log.Success($"Renamed '{avd.Name}' → '{RenameTarget.Trim()}'."); RenameTarget = ""; }
+            var r = await _avds.RenameAsync(avd.Name, newName);
+            if (r.Success) _log.Success($"Renamed '{avd.Name}' → '{newName}'.");
             else _log.Error("avdmanager move: " + r.Combined.Trim());
             await RefreshAsync();
         }

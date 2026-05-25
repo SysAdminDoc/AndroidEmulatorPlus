@@ -14,15 +14,17 @@ public sealed partial class RootViewModel : ObservableObject
     private readonly LogService _log;
     private readonly DeviceMonitor _monitor;
     private readonly SdkLocator _sdk;
+    private readonly EmulatorService _emu;
 
     public ObservableCollection<Avd> Avds { get; } = new();
     [ObservableProperty] private Avd? _selectedAvd;
     [ObservableProperty] private string _status = "—";
     [ObservableProperty] private string _step = "";
     [ObservableProperty] private bool _isBusy;
+    [ObservableProperty] private bool _needsLaunch;
 
     public RootViewModel(RootService root, AdbService adb, AvdService avds, LogService log,
-        DeviceMonitor monitor, SdkLocator sdk)
+        DeviceMonitor monitor, SdkLocator sdk, EmulatorService emu)
     {
         _root = root;
         _adb = adb;
@@ -30,7 +32,17 @@ public sealed partial class RootViewModel : ObservableObject
         _log = log;
         _monitor = monitor;
         _sdk = sdk;
+        _emu = emu;
+        _monitor.Changed += _ => UpdateNeedsLaunch();
     }
+
+    private void UpdateNeedsLaunch()
+    {
+        NeedsLaunch = SelectedAvd is not null
+            && !_monitor.Current.Any(d => d.IsEmulator && d.IsOnline);
+    }
+
+    partial void OnSelectedAvdChanged(Avd? value) => UpdateNeedsLaunch();
 
     [RelayCommand]
     private async Task RefreshAsync()
@@ -45,6 +57,47 @@ public sealed partial class RootViewModel : ObservableObject
             Status = rooted ? "Rooted (Magisk daemon active)" : "Not rooted (or root not granted to shell)";
         }
         else Status = "No emulator running.";
+        UpdateNeedsLaunch();
+    }
+
+    /// <summary>
+    /// A-28: inline "Launch &lt;name&gt;" CTA. Launches the selected AVD, waits for adb to
+    /// report it, and then re-enters the Root flow once boot completes.
+    /// </summary>
+    [RelayCommand]
+    private async Task LaunchAndRootAsync()
+    {
+        if (SelectedAvd is null) { _log.Warning("Pick an AVD first."); return; }
+        _log.Info($"Launching '{SelectedAvd.Name}' before rooting…");
+        IsBusy = true;
+        Step = $"Launching {SelectedAvd.Name}…";
+        try
+        {
+            _emu.Launch(SelectedAvd.Name);
+            // Poll the device monitor for up to two minutes.
+            var deadline = DateTime.UtcNow + TimeSpan.FromMinutes(2);
+            Models.Device? emu = null;
+            while (DateTime.UtcNow < deadline)
+            {
+                emu = _monitor.Current.FirstOrDefault(d => d.IsEmulator);
+                if (emu is not null) break;
+                await Task.Delay(2000);
+            }
+            if (emu is null) { _log.Error("Emulator did not appear in adb within 2 minutes."); return; }
+            Step = "Waiting for boot…";
+            if (!await _adb.WaitForBootAsync(emu.Serial, TimeSpan.FromMinutes(3)))
+            {
+                _log.Error("sys.boot_completed never became 1. Aborting root.");
+                return;
+            }
+            _log.Success("Emulator booted. Starting root flow…");
+        }
+        finally
+        {
+            IsBusy = false;
+            Step = "";
+        }
+        await RootAsync();
     }
 
     [RelayCommand]

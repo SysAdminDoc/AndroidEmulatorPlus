@@ -19,6 +19,8 @@ All notable changes to this project will be documented here. Format follows [Kee
 - Downloaded Magisk APK and cmdline-tools ZIP are now SHA-256 verified against an embedded `Resources/known-hashes.json` manifest. Known-key mismatches hard-fail and delete the partial file. Unknown keys log the computed hash so future manifest updates have a record (trust-on-first-use).
 - Cache card on the Migrate tab reports total cache usage (migration tarballs + bundle extracts + rootAVD/Magisk clone). Two clear actions: "Clear migration cache" (safe, recoverable) and "Clear root cache" (forces re-clone of rootAVD next root). Auto-recalculates after every migration.
 - Reusable `ConfirmDialog` for destructive actions. Resize+Wipe Data now requires typing `WIPE` and shows every snapshot + qcow2 overlay about to be destroyed. Delete AVD shows the on-disk folder + size; Un-Root shows the ramdisk path and the backup path it will restore from.
+- Rename AVD action lands in the AVD card's overflow menu via a new reusable `PromptDialog` (regex-validated, blocks name collisions, refuses to rename a running AVD).
+- Root tab now shows an inline "Launch & root" card when an AVD is selected but no emulator is attached. The button launches the AVD, polls adb for up to 2 minutes for the device, waits for `sys.boot_completed`, and re-enters the root flow — no more dead-end "Launch the AVD first" warning.
 
 ### Changed
 
