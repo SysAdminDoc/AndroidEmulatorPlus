@@ -670,7 +670,9 @@ into the current [ROADMAP.md](ROADMAP.md) checklist.
 These genuinely block release or larger-scope implementation:
 
 1. **Release smoke environment**: v0.2.0 still needs API 35 and API 36 Google
-   Play AVD root-flow smoke tests on a machine with Android SDK/emulator images.
+   Play AVD root-flow smoke tests. This VM now has Android SDK/emulator/images
+   installed, but `emulator -accel-check` reports unsupported virtualization
+   extensions, so the smoke must run on another host.
 2. **GitHub Actions billing**: SysAdminDoc org runners were previously blocked
    at allocation. Confirm whether v0.2.0 releases through CI or a one-off local
    `dotnet publish`.

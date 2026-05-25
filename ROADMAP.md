@@ -18,10 +18,17 @@ Tag legend:
 - Local .NET SDK gap is resolved for this VM. .NET SDK `9.0.314` is installed
   machine-wide via winget, with a matching user-local SDK also present in
   `C:\Users\Xray\.dotnet`.
+- Java gap is resolved for Android SDK tooling. Microsoft OpenJDK 21 is installed
+  at `C:\Program Files\Microsoft\jdk-21.0.11.10-hotspot`.
+- Android SDK tooling is present in `C:\Users\Xray\.cache\android-sdk`; emulator
+  `36.5.11`, API 35 Google Play x86_64, and API 36 Google Play x86_64 images are
+  installed.
 - `global.json` pins repository builds to .NET 9 with feature-band roll-forward.
-- `dotnet build AndroidEmulatorPlus.sln -c Release` is expected to run locally.
-- Release smoke still requires a real Android emulator and rooted API 35/API 36
-  Google Play AVDs.
+- `dotnet build AndroidEmulatorPlus.sln -c Release` and `dotnet test` pass
+  locally.
+- Release smoke is blocked on this VMware guest: `emulator -accel-check` reports
+  "Virtualization extension is not supported." The remaining C-01 smoke needs a
+  host with nested virtualization/Hyper-V acceleration available.
 
 ## Active Checklist
 
@@ -30,8 +37,7 @@ Tag legend:
 - [ ] **P0 C-01-release** - Final maintainer release steps on a desktop with
   a real emulator:
   1. Smoke-test the Magisk-v30.7 root flow on API 35 and API 36 Google Play AVDs.
-  2. Run the full `AndroidEmulatorPlus.Tests` suite after the smoke environment
-     is ready.
+  2. Re-run the full `AndroidEmulatorPlus.Tests` suite on the smoke host.
   3. `git tag v0.2.0 && git push --tags` to trigger the release workflow.
 
 ### Phase 2 - Documentation and Packaging
