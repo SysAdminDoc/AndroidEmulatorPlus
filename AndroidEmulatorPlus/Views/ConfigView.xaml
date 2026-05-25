@@ -57,6 +57,43 @@
 
             <Border Style="{StaticResource Card}">
                 <StackPanel>
+                    <TextBlock Style="{StaticResource SectionHeader}" Text="Screen preset"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="120"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Device" VerticalAlignment="Center" Foreground="{StaticResource SubtextBrush}"/>
+                        <ComboBox Grid.Column="1" ItemsSource="{Binding ScreenPresets}" SelectedItem="{Binding ScreenPreset}"/>
+                    </Grid>
+                    <TextBlock Foreground="{StaticResource OverlayBrush}" FontSize="11" Margin="0,6,0,0">
+                        Picking a preset overwrites the Width / Height / DPI fields above.
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource SectionHeader}" Text="GPU mode"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="120"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="hw.gpu.mode" VerticalAlignment="Center" Foreground="{StaticResource SubtextBrush}" FontFamily="Cascadia Mono"/>
+                        <ComboBox Grid.Column="1" ItemsSource="{Binding GpuModes}" SelectedItem="{Binding GpuMode}"/>
+                    </Grid>
+                    <TextBlock Foreground="{StaticResource OverlayBrush}" FontSize="11" Margin="0,6,0,0" TextWrapping="Wrap">
+                        <Run FontWeight="SemiBold">host</Run>: native GPU passthrough — fastest on a real desktop.
+                        <Run FontWeight="SemiBold">swiftshader_indirect</Run>: software rasterizer — use inside a VM or over RDP.
+                        <Run FontWeight="SemiBold">angle_indirect</Run>: ANGLE → DirectX — works around buggy GPU drivers.
+                        <Run FontWeight="SemiBold">guest</Run>: render inside the emulated GPU.
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
                     <TextBlock Style="{StaticResource SectionHeader}" Text="Boot"/>
                     <CheckBox Content="Fast boot (use saved snapshot)" IsChecked="{Binding FastBoot}"/>
                     <CheckBox Content="Cold boot always" IsChecked="{Binding ColdBootAlways}"/>

@@ -15,12 +15,35 @@ public sealed class EmulatorService
         _log = log;
     }
 
+    public sealed record LaunchOptions(
+        bool ColdBoot = false,
+        bool WipeData = false,
+        bool NoWindow = false,
+        bool NoAudio = false,
+        string? HttpProxy = null,
+        string? DnsServer = null,
+        string? FrontCamera = null,
+        string? BackCamera = null,
+        string? GpuMode = null);
+
     public Process Launch(string avdName, bool coldBoot = false, bool wipeData = false)
+        => Launch(avdName, new LaunchOptions(ColdBoot: coldBoot, WipeData: wipeData));
+
+    public Process Launch(string avdName, LaunchOptions opt)
     {
         var args = new List<string> { "-avd", avdName };
-        if (coldBoot) args.Add("-no-snapshot-load");
-        if (wipeData) args.Add("-wipe-data");
-        _log.Info($"Launching emulator '{avdName}'{(coldBoot ? " (cold boot)" : "")}{(wipeData ? " (wipe data)" : "")}…");
+        if (opt.ColdBoot) args.Add("-no-snapshot-load");
+        if (opt.WipeData) args.Add("-wipe-data");
+        if (opt.NoWindow) args.Add("-no-window");
+        if (opt.NoAudio) args.Add("-no-audio");
+        if (!string.IsNullOrWhiteSpace(opt.HttpProxy)) { args.Add("-http-proxy"); args.Add(opt.HttpProxy!); }
+        if (!string.IsNullOrWhiteSpace(opt.DnsServer)) { args.Add("-dns-server"); args.Add(opt.DnsServer!); }
+        if (!string.IsNullOrWhiteSpace(opt.FrontCamera)) { args.Add("-camera-front"); args.Add(opt.FrontCamera!); }
+        if (!string.IsNullOrWhiteSpace(opt.BackCamera))  { args.Add("-camera-back");  args.Add(opt.BackCamera!); }
+        if (!string.IsNullOrWhiteSpace(opt.GpuMode))     { args.Add("-gpu");          args.Add(opt.GpuMode!); }
+
+        var flagSummary = string.Join(" ", args.Skip(2));
+        _log.Info($"Launching emulator '{avdName}' {flagSummary}".TrimEnd());
         _current = ProcessRunner.StartDetached(_sdk.EmulatorRequired, args,
             workingDir: System.IO.Path.GetDirectoryName(_sdk.EmulatorRequired));
         return _current;

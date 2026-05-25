@@ -121,6 +121,15 @@ public sealed partial class AvdViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void LaunchWithOptions(Avd? avd)
+    {
+        if (avd is null) return;
+        var opt = Views.LaunchOptionsDialog.Show(null, avd.Name);
+        if (opt is null) return;
+        _emu.Launch(avd.Name, opt);
+    }
+
+    [RelayCommand]
     private async Task DeleteAsync(Avd? avd)
     {
         if (avd is null) return;

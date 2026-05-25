@@ -42,9 +42,9 @@ Build constraint: this VMware VM has no .NET SDK; changes here are best-effort a
 - [ ] **P2 R-03** — Magisk module manager view (Zygisk DenyList, Shamiko, LSPosed, PlayIntegrityFork).
 - [ ] **P2 R-04** — OBB transfer pass during migration (opt-in toggle — game OBBs can be huge).
 - [ ] **P2 R-05** — Per-app data export to ZIP + "Restore from ZIP" flow.
-- [ ] **P2 A-21** — Screen W/H/DPI preset picker (Pixel 7 / 7 Pro / Tablet / Fold / Custom).
-- [ ] **P2 A-22** — GPU mode picker in Configure tab (`hw.gpu.mode`: host / swiftshader_indirect / angle_indirect).
-- [ ] **P2 A-23** — Launch flags on the AVD card overflow (`-http-proxy`, `-dns-server`, `-no-window`, `-noaudio`, `-camera-front/back`).
+- [x] **P2 A-21** — Configure tab ships a ScreenPreset picker (Pixel 7/7 Pro/8/8 Pro/9 Pro/Tablet/Fold open & closed/Nexus 5X/Small phone/TV) that fills in Width/Height/DPI.
+- [x] **P2 A-22** — Configure tab ships a `hw.gpu.mode` picker (host / swiftshader_indirect / angle_indirect / guest / off) with inline guidance.
+- [x] **P2 A-23** — AVD overflow menu adds "Launch with options…": cold boot, wipe, headless, no-audio, http-proxy, dns-server, front/back camera.
 - [ ] **P2 A-24 remediation** — Pass/fail shipped; remediation-link UI on accel-check failure (Windows Hypervisor Platform feature, Intel HAXM, AMD Hyper-V) is still TODO.
 - [ ] **P2 A-26** — Duplicate AVD (copy `<name>.avd` directory + `<name>.ini`, rewrite `path=` references).
 - [ ] **P2 A-27** — Keyboard shortcuts: F5 = Refresh active tab, Ctrl+1..6 = switch sections, Ctrl+L = clear log.

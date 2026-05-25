@@ -23,6 +23,17 @@ public sealed partial class ConfigViewModel : ObservableObject
     [ObservableProperty] private bool _fastBoot;
     [ObservableProperty] private bool _coldBootAlways;
     [ObservableProperty] private bool _isBusy;
+    [ObservableProperty] private string _gpuMode = "host";
+    [ObservableProperty] private ScreenPreset? _screenPreset;
+
+    /// <summary>Choices for the GPU mode picker (A-22).</summary>
+    public IReadOnlyList<string> GpuModes { get; } = new[]
+    {
+        "host", "swiftshader_indirect", "angle_indirect", "guest", "off",
+    };
+
+    /// <summary>Choices for the screen preset picker (A-21).</summary>
+    public IReadOnlyList<ScreenPreset> ScreenPresets { get; } = ScreenPreset.All;
 
     public ConfigViewModel(AvdService avds, ConfigService cfg, LogService log)
     {
@@ -55,6 +66,18 @@ public sealed partial class ConfigViewModel : ObservableObject
             .Equals("yes", StringComparison.OrdinalIgnoreCase);
         ColdBootAlways = (Selected.Config.GetValueOrDefault("fastboot.forceColdBoot") ?? "no")
             .Equals("yes", StringComparison.OrdinalIgnoreCase);
+        var gpu = Selected.Config.GetValueOrDefault("hw.gpu.mode");
+        GpuMode = string.IsNullOrEmpty(gpu) ? "host" : gpu;
+        // Match the current W/H/DPI against a known preset for the picker; null if custom.
+        ScreenPreset = ScreenPresets.FirstOrDefault(p => p.Matches(ScreenW, ScreenH, Dpi));
+    }
+
+    partial void OnScreenPresetChanged(ScreenPreset? value)
+    {
+        if (value is null) return;
+        ScreenW = value.Width;
+        ScreenH = value.Height;
+        Dpi = value.Dpi;
     }
 
     private static int? ParseSizeGb(string? s)
@@ -84,6 +107,8 @@ public sealed partial class ConfigViewModel : ObservableObject
             ["hw.lcd.density"] = Dpi.ToString(),
             ["fastboot.forceFastBoot"] = FastBoot ? "yes" : "no",
             ["fastboot.forceColdBoot"] = ColdBootAlways ? "yes" : "no",
+            ["hw.gpu.mode"] = string.IsNullOrEmpty(GpuMode) ? "host" : GpuMode,
+            ["hw.gpu.enabled"] = "yes",
         };
         _cfg.UpdateConfig(Selected, updates);
         _log.Success($"Applied config to '{Selected.Name}'. Some changes need a relaunch.");

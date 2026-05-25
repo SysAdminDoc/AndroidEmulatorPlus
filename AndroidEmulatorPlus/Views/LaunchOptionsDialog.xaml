@@ -1,0 +1,68 @@
+<Window x:Class="AndroidEmulatorPlus.Views.LaunchOptionsDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Launch options"
+        Width="540" SizeToContent="Height"
+        WindowStyle="ToolWindow"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="{StaticResource BaseBrush}"
+        Foreground="{StaticResource TextBrush}">
+    <StackPanel Margin="24,20">
+        <TextBlock x:Name="HeaderText"
+                   FontSize="16" FontWeight="SemiBold"
+                   Foreground="{StaticResource LavenderBrush}"
+                   TextWrapping="Wrap"
+                   Margin="0,0,0,4"/>
+        <TextBlock Foreground="{StaticResource SubtextBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,0,0,12">
+            All fields are optional. Empty fields are omitted from the emulator command line.
+        </TextBlock>
+
+        <Grid Margin="0,0,0,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="140"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition/>
+                <RowDefinition/>
+                <RowDefinition/>
+                <RowDefinition/>
+                <RowDefinition/>
+                <RowDefinition/>
+                <RowDefinition/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
+
+            <CheckBox x:Name="ColdBootBox" Content="Cold boot" Grid.ColumnSpan="2" Margin="0,2"/>
+            <CheckBox x:Name="WipeBox" Grid.Row="1" Content="Wipe data on next launch" Grid.ColumnSpan="2" Margin="0,2"/>
+            <CheckBox x:Name="NoWindowBox" Grid.Row="2" Content="Headless (-no-window)" Grid.ColumnSpan="2" Margin="0,2"/>
+            <CheckBox x:Name="NoAudioBox" Grid.Row="3" Content="No audio (-no-audio)" Grid.ColumnSpan="2" Margin="0,2"/>
+
+            <TextBlock Grid.Row="4" Text="HTTP proxy" Foreground="{StaticResource SubtextBrush}" VerticalAlignment="Center" Margin="0,8,0,0"/>
+            <TextBox  Grid.Row="4" Grid.Column="1" x:Name="HttpProxyBox" Margin="0,8,0,0" />
+
+            <TextBlock Grid.Row="5" Text="DNS server" Foreground="{StaticResource SubtextBrush}" VerticalAlignment="Center" Margin="0,8,0,0"/>
+            <TextBox  Grid.Row="5" Grid.Column="1" x:Name="DnsBox" Margin="0,8,0,0" />
+
+            <TextBlock Grid.Row="6" Text="Front camera" Foreground="{StaticResource SubtextBrush}" VerticalAlignment="Center" Margin="0,8,0,0"/>
+            <ComboBox Grid.Row="6" Grid.Column="1" x:Name="FrontCameraBox" Margin="0,8,0,0" IsEditable="True">
+                <ComboBoxItem>none</ComboBoxItem>
+                <ComboBoxItem>emulated</ComboBoxItem>
+                <ComboBoxItem>webcam0</ComboBoxItem>
+            </ComboBox>
+
+            <TextBlock Grid.Row="7" Text="Back camera" Foreground="{StaticResource SubtextBrush}" VerticalAlignment="Center" Margin="0,8,0,0"/>
+            <ComboBox Grid.Row="7" Grid.Column="1" x:Name="BackCameraBox" Margin="0,8,0,0" IsEditable="True">
+                <ComboBoxItem>none</ComboBoxItem>
+                <ComboBoxItem>emulated</ComboBoxItem>
+                <ComboBoxItem>webcam0</ComboBoxItem>
+            </ComboBox>
+        </Grid>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,14,0,0">
+            <Button Content="Cancel" Style="{StaticResource FlatButton}" Click="Cancel_Click" IsCancel="True"/>
+            <Button Content="Launch" Style="{StaticResource PrimaryButton}" Click="Launch_Click" Margin="10,0,0,0" IsDefault="True"/>
+        </StackPanel>
+    </StackPanel>
+</Window>

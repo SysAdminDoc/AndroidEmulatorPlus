@@ -68,6 +68,10 @@
                                             Click="OverflowButton_Click" Content="⋯">
                                         <Button.ContextMenu>
                                             <ContextMenu>
+                                                <MenuItem Header="Launch with options…"
+                                                          Command="{Binding DataContext.LaunchWithOptionsCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                          CommandParameter="{Binding}"/>
+                                                <Separator/>
                                                 <MenuItem Header="Show on disk"
                                                           Command="{Binding DataContext.ShowOnDiskCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                           CommandParameter="{Binding}"/>
