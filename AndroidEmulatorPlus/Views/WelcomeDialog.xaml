@@ -25,7 +25,7 @@
             <StackPanel>
                 <Border x:Name="SdkCard" Style="{StaticResource Card}">
                     <StackPanel>
-                        <TextBlock Style="{StaticResource SectionHeader}" Text="① Install / SDK"/>
+                        <TextBlock Style="{StaticResource SectionHeader}" Text="1. Install / SDK"/>
                         <TextBlock Foreground="{DynamicResource SubtextBrush}" TextWrapping="Wrap">
                             If you don't have the Android SDK yet, the Install tab can fetch the command-line tools (~150 MB). Then "Browse online…" on the AVDs tab installs a system image. The wizard's first job is to make sure those pieces exist.
                         </TextBlock>
@@ -35,7 +35,7 @@
                 </Border>
                 <Border x:Name="AvdCard" Style="{StaticResource Card}">
                     <StackPanel>
-                        <TextBlock Style="{StaticResource SectionHeader}" Text="② Create an AVD"/>
+                        <TextBlock Style="{StaticResource SectionHeader}" Text="2. Create an AVD"/>
                         <TextBlock Foreground="{DynamicResource SubtextBrush}" TextWrapping="Wrap">
                             From the AVDs tab pick a device profile (phone, tablet, Wear OS, TV, Auto) plus a system image. The "Browse online…" button installs new images via sdkmanager. Click Create.
                         </TextBlock>
@@ -45,7 +45,7 @@
                 </Border>
                 <Border Style="{StaticResource Card}">
                     <StackPanel>
-                        <TextBlock Style="{StaticResource SectionHeader}" Text="③ Root (optional)"/>
+                        <TextBlock Style="{StaticResource SectionHeader}" Text="3. Root (optional)"/>
                         <TextBlock Foreground="{DynamicResource SubtextBrush}" TextWrapping="Wrap">
                             Launch the AVD, then click "Root with Latest Magisk" on the Root tab. The Verify + Persist Policy button persists Magisk's shell→allow policy so future `adb shell su` calls don't trigger the dialog. Skip this step if you just want a vanilla emulator.
                         </TextBlock>
@@ -54,7 +54,7 @@
                 </Border>
                 <Border Style="{StaticResource Card}">
                     <StackPanel>
-                        <TextBlock Style="{StaticResource SectionHeader}" Text="④ Migrate from phone (optional)"/>
+                        <TextBlock Style="{StaticResource SectionHeader}" Text="4. Migrate from phone (optional)"/>
                         <TextBlock Foreground="{DynamicResource SubtextBrush}" TextWrapping="Wrap">
                             Connect a USB-debugging-enabled phone (or pair over Wi-Fi from the Migrate tab) and pick the packages to copy. Internal data copy requires root on BOTH ends.
                         </TextBlock>

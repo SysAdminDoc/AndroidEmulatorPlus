@@ -55,7 +55,13 @@ public sealed partial class AppsViewModel : ObservableObject
     private async Task RefreshAsync()
     {
         var emu = _monitor.Current.FirstOrDefault(d => d.IsEmulator);
-        if (emu is null) { _log.Warning("No emulator running."); return; }
+        if (emu is null)
+        {
+            Apps.Clear();
+            NotifyListStateChanged();
+            _log.Warning("No emulator running.");
+            return;
+        }
         var generation = Interlocked.Increment(ref _refreshGeneration);
         _refreshCts?.Cancel();
         var refreshCts = new CancellationTokenSource();
@@ -69,7 +75,7 @@ public sealed partial class AppsViewModel : ObservableObject
             Apps.Clear();
             foreach (var a in list)
                 Apps.Add(a);
-            OnPropertyChanged(nameof(FilteredApps));
+            NotifyListStateChanged();
         }
         catch (OperationCanceledException) { }
         finally
@@ -96,6 +102,18 @@ public sealed partial class AppsViewModel : ObservableObject
     public IEnumerable<AndroidApp> FilteredApps => string.IsNullOrWhiteSpace(Filter)
         ? Apps
         : Apps.Where(a => a.Package.Contains(Filter, StringComparison.OrdinalIgnoreCase));
+
+    public bool HasApps => Apps.Count > 0;
+    public bool HasFilteredApps => FilteredApps.Any();
+    public bool IsFilteredEmpty => HasApps && !HasFilteredApps;
+
+    private void NotifyListStateChanged()
+    {
+        OnPropertyChanged(nameof(FilteredApps));
+        OnPropertyChanged(nameof(HasApps));
+        OnPropertyChanged(nameof(HasFilteredApps));
+        OnPropertyChanged(nameof(IsFilteredEmpty));
+    }
 
     [RelayCommand]
     private void SelectAll()  { foreach (var a in FilteredApps) a.IsSelected = true; }
@@ -226,7 +244,7 @@ public sealed partial class AppsViewModel : ObservableObject
     {
         var ok = Views.ConfirmDialog.Show(
             owner: null,
-            header: $"⚠ Signer mismatch for '{pkg}'",
+            header: $"Signer mismatch for '{pkg}'",
             body: "The signing certificate of this APK does NOT match the certificate of the version already installed on the device. " +
                   "Continuing will replace the installed app with one signed by a different developer — common for re-signed / patched APKs and a red flag for sideloads.",
             detail: detail,
@@ -294,5 +312,5 @@ public sealed partial class AppsViewModel : ObservableObject
         finally { IsBusy = false; _cache.NotifyChanged(); }
     }
 
-    partial void OnFilterChanged(string value) => OnPropertyChanged(nameof(FilteredApps));
+    partial void OnFilterChanged(string value) => NotifyListStateChanged();
 }

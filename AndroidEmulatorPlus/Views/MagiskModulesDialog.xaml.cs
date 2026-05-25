@@ -51,7 +51,7 @@ public partial class MagiskModulesDialog : Window
         if (_selected is null) { StatusText.Text = "Select a module first."; return; }
         StatusText.Text = $"Installing {_selected.Name}…";
         var ok = await _svc.InstallCatalogEntryAsync(_serial, _selected);
-        StatusText.Text = ok ? $"✓ {_selected.Name} installed. Cold-boot the emulator." : "✗ Install failed — see log.";
+        StatusText.Text = ok ? $"{_selected.Name} installed. Cold-boot the emulator." : "Install failed - see log.";
         if (ok) await RefreshInstalledAsync();
     }
 
@@ -64,7 +64,7 @@ public partial class MagiskModulesDialog : Window
         if (dlg.ShowDialog() != true) return;
         StatusText.Text = $"Installing {Path.GetFileName(dlg.FileName)}…";
         var ok = await _svc.InstallFromZipAsync(_serial, dlg.FileName);
-        StatusText.Text = ok ? "✓ Installed. Cold-boot the emulator." : "✗ Install failed — see log.";
+        StatusText.Text = ok ? "Installed. Cold-boot the emulator." : "Install failed - see log.";
         if (ok) await RefreshInstalledAsync();
     }
 
@@ -75,7 +75,7 @@ public partial class MagiskModulesDialog : Window
         if (InstalledList.SelectedItem is not InstalledMagiskModule m) { StatusText.Text = "Select an installed module first."; return; }
         StatusText.Text = $"{(m.Enabled ? "Disabling" : "Enabling")} {m.Id}…";
         var ok = await _svc.SetEnabledAsync(_serial, m.Id, !m.Enabled);
-        StatusText.Text = ok ? $"✓ Toggled. Cold-boot to apply." : "✗ Toggle failed — see log.";
+        StatusText.Text = ok ? "Toggled. Cold-boot to apply." : "Toggle failed - see log.";
         if (ok) await RefreshInstalledAsync();
     }
 

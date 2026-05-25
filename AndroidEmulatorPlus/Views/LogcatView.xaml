@@ -32,31 +32,40 @@
                         <TextBox Text="{Binding PackageFilter, UpdateSourceTrigger=PropertyChanged}" FontFamily="Cascadia Mono"/>
                     </StackPanel>
                 </Grid>
-                <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
-                    <Button Content="▶ Start" Style="{StaticResource PrimaryButton}"
+                <WrapPanel Margin="0,12,-8,-8">
+                    <Button Content="Start stream" Style="{StaticResource PrimaryButton}"
+                            Margin="0,0,8,8"
                             Command="{Binding StartCommand}"
                             IsEnabled="{Binding IsStreaming, Converter={x:Static views:NotBoolConverter.Instance}}"/>
-                    <Button Content="■ Stop" Style="{StaticResource DangerButton}" Margin="8,0,0,0"
+                    <Button Content="Stop" Style="{StaticResource DangerButton}" Margin="0,0,8,8"
                             Command="{Binding StopCommand}"
                             IsEnabled="{Binding IsStreaming}"/>
-                    <Button Content="Clear buffer (adb logcat -c)" Style="{StaticResource FlatButton}" Margin="8,0,0,0"
+                    <Button Content="Clear buffer (adb logcat -c)" Style="{StaticResource FlatButton}" Margin="0,0,8,8"
                             Command="{Binding ClearBufferCommand}"/>
-                    <Button Content="Clear view" Style="{StaticResource FlatButton}" Margin="8,0,0,0"
+                    <Button Content="Clear view" Style="{StaticResource FlatButton}" Margin="0,0,8,8"
                             Command="{Binding ClearViewCommand}"/>
-                    <Button Content="Save…" Style="{StaticResource FlatButton}" Margin="8,0,0,0"
+                    <Button Content="Save…" Style="{StaticResource FlatButton}" Margin="0,0,8,8"
                             Command="{Binding SaveCommand}"/>
-                    <TextBlock Text="{Binding Status}" Foreground="{DynamicResource OverlayBrush}" Margin="14,0,0,0" VerticalAlignment="Center"/>
-                </StackPanel>
+                    <TextBlock Text="{Binding Status}" Foreground="{DynamicResource OverlayBrush}" Margin="6,0,8,8" VerticalAlignment="Center"/>
+                </WrapPanel>
             </StackPanel>
         </Border>
 
-        <Border Grid.Row="2" Background="{DynamicResource CrustBrush}" CornerRadius="6" Padding="8" Margin="0,12,0,0">
-            <ListBox ItemsSource="{Binding Lines}" x:Name="LinesList"
+        <Border Grid.Row="2" Background="{DynamicResource CrustBrush}" BorderBrush="{DynamicResource SurfaceBrush}" BorderThickness="1" CornerRadius="6" Padding="8" Margin="0,12,0,0">
+            <Grid>
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="440"
+                            Visibility="{Binding Lines.Count, Converter={x:Static views:ZeroCountToVisibilityConverter.Instance}}">
+                    <TextBlock Text="No log lines yet" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextBrush}" HorizontalAlignment="Center"/>
+                    <TextBlock Style="{StaticResource MicrocopyText}" TextAlignment="Center" Margin="0,6,0,0"
+                               Text="Start streaming to watch emulator logs. Use the priority filter to keep the signal focused."/>
+                </StackPanel>
+                <ListBox ItemsSource="{Binding Lines}" x:Name="LinesList"
                      Background="Transparent" BorderThickness="0"
                      ScrollViewer.HorizontalScrollBarVisibility="Auto"
                      ScrollViewer.VerticalScrollBarVisibility="Auto"
                      VirtualizingPanel.IsVirtualizing="True"
-                     VirtualizingPanel.VirtualizationMode="Recycling">
+                     VirtualizingPanel.VirtualizationMode="Recycling"
+                     Visibility="{Binding Lines.Count, Converter={x:Static views:CountToVisibilityConverter.Instance}}">
                 <ListBox.ItemTemplate>
                     <DataTemplate>
                         <TextBlock Text="{Binding}" FontFamily="Cascadia Mono, Consolas, monospace" FontSize="11"
@@ -70,7 +79,8 @@
                         <Setter Property="Background" Value="Transparent"/>
                     </Style>
                 </ListBox.ItemContainerStyle>
-            </ListBox>
+                </ListBox>
+            </Grid>
         </Border>
     </Grid>
 </UserControl>

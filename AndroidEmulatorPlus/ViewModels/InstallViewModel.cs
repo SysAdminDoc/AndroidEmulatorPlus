@@ -133,10 +133,10 @@ public sealed partial class InstallViewModel : ObservableObject
         {
             var status = await _emu.AccelCheckAsync();
             AccelOk = status.Ok;
-            AccelText = status.Ok ? $"✓ {status.Summary}" : $"✗ {status.Summary}";
+            AccelText = status.Ok ? $"Ready: {status.Summary}" : $"Needs attention: {status.Summary}";
             _log.Info("Accel: " + status.Summary);
         }
-        catch (Exception ex) { AccelOk = false; AccelText = "✗ " + ex.Message; }
+        catch (Exception ex) { AccelOk = false; AccelText = "Needs attention: " + ex.Message; }
         finally { IsBusy = false; Step = ""; }
     }
 
@@ -160,7 +160,7 @@ public sealed partial class InstallViewModel : ObservableObject
             if (res.IsFallback)
             {
                 HasCmdlineToolsNote = true;
-                CmdlineToolsNote = $"⚠ Using fallback cmdline-tools URL ({res.Reason ?? "scrape failed"}). " +
+                CmdlineToolsNote = $"Using fallback cmdline-tools URL ({res.Reason ?? "scrape failed"}). " +
                     "Build number may be older than what's published today.";
             }
             else

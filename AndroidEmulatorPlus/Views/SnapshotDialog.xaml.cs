@@ -43,7 +43,7 @@ public partial class SnapshotDialog : Window
         }
         StatusText.Text = $"Saving snapshot '{name}'…";
         var ok = await _svc.SaveAsync(_serial, name);
-        StatusText.Text = ok ? $"✓ Snapshot '{name}' saved." : "✗ Save failed — see log.";
+        StatusText.Text = ok ? $"Snapshot '{name}' saved." : "Save failed - see log.";
         if (ok) Refresh();
     }
 
@@ -53,7 +53,7 @@ public partial class SnapshotDialog : Window
         if (List.SelectedItem is not Snapshot snap) { StatusText.Text = "Select a snapshot first."; return; }
         StatusText.Text = $"Loading '{snap.Name}'…";
         var ok = await _svc.LoadAsync(_serial, snap.Name);
-        StatusText.Text = ok ? $"✓ Loaded '{snap.Name}'." : "✗ Load failed — see log.";
+        StatusText.Text = ok ? $"Loaded '{snap.Name}'." : "Load failed - see log.";
     }
 
     private void Delete_Click(object sender, RoutedEventArgs e)

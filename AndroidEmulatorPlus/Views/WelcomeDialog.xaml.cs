@@ -18,10 +18,10 @@ public partial class WelcomeDialog : Window
         _settings = settings;
         InitializeComponent();
         _sdkComplete = sdk.IsReady;
-        SdkStatus.Text = _sdkComplete ? "✓ SDK detected." : "⚠ SDK not detected — start here.";
+        SdkStatus.Text = _sdkComplete ? "SDK detected." : "SDK not detected - start here.";
         var avdCount = avds.List().Count;
         _avdComplete = avdCount > 0;
-        AvdStatus.Text = _avdComplete ? $"✓ {avdCount} AVD(s) on disk." : "⚠ No AVDs yet — create one.";
+        AvdStatus.Text = _avdComplete ? $"{avdCount} AVD(s) on disk." : "No AVDs yet - create one.";
         ApplyVisibility();
     }
 

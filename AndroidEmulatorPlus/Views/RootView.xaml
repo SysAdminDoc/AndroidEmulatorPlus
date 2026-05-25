@@ -23,9 +23,8 @@
                     Background="{DynamicResource SurfaceBrush}"
                     Visibility="{Binding NeedsLaunch, Converter={x:Static views:BoolToVisibilityConverter.Instance}}">
                 <StackPanel>
-                    <TextBlock Foreground="{DynamicResource YellowBrush}" FontWeight="SemiBold" TextWrapping="Wrap">
-                        ⚠ rootAVD needs a running emulator to patch the ramdisk through adb.
-                    </TextBlock>
+                    <TextBlock Foreground="{DynamicResource YellowBrush}" FontWeight="SemiBold" TextWrapping="Wrap"
+                               Text="rootAVD needs a running emulator to patch the ramdisk through adb."/>
                     <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
                         <Button Content="Launch &amp; root" Style="{StaticResource PrimaryButton}"
                                 Command="{Binding LaunchAndRootCommand}"
@@ -39,21 +38,21 @@
             <Border Style="{StaticResource Card}">
                 <StackPanel>
                     <TextBlock Style="{StaticResource SectionHeader}" Text="Actions"/>
-                    <StackPanel Orientation="Horizontal">
-                        <Button Content="Root with Latest Magisk" Style="{StaticResource PrimaryButton}" Command="{Binding RootCommand}" IsEnabled="{Binding IsBusy, Converter={x:Static views:NotBoolConverter.Instance}}"/>
-                        <Button Content="✗ Cancel" Style="{StaticResource DangerButton}" Margin="8,0,0,0"
+                    <WrapPanel Margin="0,0,-8,-8">
+                        <Button Content="Root with Latest Magisk" Style="{StaticResource PrimaryButton}" Margin="0,0,8,8" Command="{Binding RootCommand}" IsEnabled="{Binding IsBusy, Converter={x:Static views:NotBoolConverter.Instance}}"/>
+                        <Button Content="Cancel" Style="{StaticResource DangerButton}" Margin="0,0,8,8"
                                 Command="{Binding CancelCommand}"
                                 Visibility="{Binding IsBusy, Converter={x:Static views:BoolToVisibilityConverter.Instance}}"/>
-                        <Button Content="Verify + Persist Policy" Style="{StaticResource FlatButton}" Command="{Binding VerifyCommand}" Margin="8,0,0,0"/>
-                        <Button Content="Un-Root (Restore Ramdisk)" Style="{StaticResource DangerButton}" Command="{Binding UnRootCommand}" Margin="8,0,0,0"/>
-                        <Button Content="Dry run (LISTONLY)" Style="{StaticResource FlatButton}" Command="{Binding DryRunCommand}" Margin="8,0,0,0"
+                        <Button Content="Verify + Persist Policy" Style="{StaticResource FlatButton}" Command="{Binding VerifyCommand}" Margin="0,0,8,8"/>
+                        <Button Content="Un-Root (Restore Ramdisk)" Style="{StaticResource DangerButton}" Command="{Binding UnRootCommand}" Margin="0,0,8,8"/>
+                        <Button Content="Dry run (LISTONLY)" Style="{StaticResource FlatButton}" Command="{Binding DryRunCommand}" Margin="0,0,8,8"
                                 ToolTip="Runs rootAVD LISTONLY to preview which AVDs would be patched. No files are changed."/>
-                        <Button Content="Modules…" Style="{StaticResource FlatButton}" Command="{Binding OpenModulesCommand}" Margin="8,0,0,0"
+                        <Button Content="Modules…" Style="{StaticResource FlatButton}" Command="{Binding OpenModulesCommand}" Margin="0,0,8,8"
                                 ToolTip="Magisk module manager — install Shamiko, LSPosed, PlayIntegrityFork, etc. on the rooted emulator (R-03)."/>
-                    </StackPanel>
+                    </WrapPanel>
                     <TextBlock Foreground="{DynamicResource SubtextBrush}" Margin="0,14,0,0" TextWrapping="Wrap">
-                        Workflow:  ① Launch the AVD from the AVDs tab.  ② Press "Root with Latest Magisk".
-                        ③ Cold-boot the AVD (AVDs tab → Cold Boot).  ④ Press "Verify + Persist Policy".
+                        Workflow:  1. Launch the AVD from the AVDs tab.  2. Press "Root with Latest Magisk".
+                        3. Cold-boot the AVD (AVDs tab -> Cold Boot).  4. Press "Verify + Persist Policy".
                     </TextBlock>
                     <TextBlock Foreground="{DynamicResource OverlayBrush}" Margin="0,10,0,0" TextWrapping="Wrap" FontSize="12">
                         Backups (.original) of the stock ramdisk are kept inside the system-image folder. Un-Root copies them back.

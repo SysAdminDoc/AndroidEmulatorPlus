@@ -22,11 +22,12 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty] private string _activeSection = "Avd";
 
     [ObservableProperty] private string _sdkStatusText = "";
+    [ObservableProperty] private string _sdkDetailText = "";
     [ObservableProperty] private string _phoneStatusText = "no phone";
     [ObservableProperty] private string _emulatorStatusText = "no emulator";
     [ObservableProperty] private bool _hasEmulatorAttached;
     [ObservableProperty] private bool _isRecording;
-    [ObservableProperty] private string _recordButtonText = "🎥 Record";
+    [ObservableProperty] private string _recordButtonText = "Record";
 
     private readonly SdkLocator _sdk;
     private readonly DeviceMonitor _devices;
@@ -138,9 +139,10 @@ public sealed partial class MainViewModel : ObservableObject
     public void RefreshSdk()
     {
         _sdk.Refresh();
-        SdkStatusText = _sdk.IsReady
-            ? $"SDK ✓  {_sdk.SdkRoot}"
-            : "SDK not found — open Install tab to set up.";
+        SdkStatusText = _sdk.IsReady ? "Ready" : "Not found";
+        SdkDetailText = _sdk.IsReady
+            ? _sdk.SdkRoot ?? "SDK detected."
+            : "Open the Install / SDK tab to set up Android tooling.";
     }
 
     [RelayCommand]
@@ -200,7 +202,7 @@ public sealed partial class MainViewModel : ObservableObject
             finally
             {
                 IsRecording = false;
-                RecordButtonText = "🎥 Record";
+                RecordButtonText = "Record";
             }
             if (local is not null)
             {
@@ -214,6 +216,6 @@ public sealed partial class MainViewModel : ObservableObject
         var remote = _record.Start(emu.Serial);
         if (remote is null) return;
         IsRecording = true;
-        RecordButtonText = "■ Stop recording";
+        RecordButtonText = "Stop recording";
     }
 }

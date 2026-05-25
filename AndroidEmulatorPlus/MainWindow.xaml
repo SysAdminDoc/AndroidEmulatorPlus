@@ -23,14 +23,14 @@
     </Window.InputBindings>
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="48"/>
+            <RowDefinition Height="56"/>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="200"/>
+            <RowDefinition Height="210"/>
         </Grid.RowDefinitions>
 
         <!-- Top bar -->
         <Border Grid.Row="0" Background="{DynamicResource MantleBrush}" BorderBrush="{DynamicResource SurfaceBrush}" BorderThickness="0,0,0,1">
-            <Grid Margin="16,0">
+            <Grid Margin="18,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
@@ -42,43 +42,46 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="AndroidEmulatorPlus" FontWeight="SemiBold" FontSize="15"
+                    <TextBlock Text="AndroidEmulatorPlus" FontWeight="SemiBold" FontSize="16"
                                Foreground="{DynamicResource LavenderBrush}"/>
-                    <TextBlock Text="v0.2.0" Margin="8,0,0,0" Foreground="{DynamicResource OverlayBrush}" VerticalAlignment="Center"/>
+                    <TextBlock Text="v0.2.0" Margin="8,1,0,0" Foreground="{DynamicResource OverlayBrush}" VerticalAlignment="Center"/>
                 </StackPanel>
 
-                <Border Grid.Column="1" Style="{StaticResource StatusPill}" Margin="4">
-                    <TextBlock Text="{Binding SdkStatusText}" Foreground="{DynamicResource SubtextBrush}" FontSize="12"/>
+                <Border Grid.Column="1" Style="{StaticResource StatusPill}" Margin="4" ToolTip="{Binding SdkDetailText}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="SDK" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource OverlayBrush}" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding SdkStatusText}" Margin="7,0,0,0" Foreground="{DynamicResource SubtextBrush}" FontSize="12"/>
+                    </StackPanel>
                 </Border>
                 <Border Grid.Column="2" Style="{StaticResource StatusPill}" Margin="4" Background="{DynamicResource SurfaceBrush}">
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="📱" FontSize="12" VerticalAlignment="Center"/>
-                        <TextBlock Text="{Binding PhoneStatusText}" Margin="6,0,0,0" Foreground="{DynamicResource SubtextBrush}" FontSize="12"/>
+                        <TextBlock Text="Phone" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource OverlayBrush}" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding PhoneStatusText}" Margin="7,0,0,0" Foreground="{DynamicResource SubtextBrush}" FontSize="12"/>
                     </StackPanel>
                 </Border>
                 <Border Grid.Column="3" Style="{StaticResource StatusPill}" Margin="4" Background="{DynamicResource SurfaceBrush}">
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="💻" FontSize="12" VerticalAlignment="Center"/>
-                        <TextBlock Text="{Binding EmulatorStatusText}" Margin="6,0,0,0" Foreground="{DynamicResource SubtextBrush}" FontSize="12"/>
+                        <TextBlock Text="Emulator" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource OverlayBrush}" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding EmulatorStatusText}" Margin="7,0,0,0" Foreground="{DynamicResource SubtextBrush}" FontSize="12"/>
                     </StackPanel>
                 </Border>
-                <Button Grid.Column="4" Style="{StaticResource FlatButton}" Margin="8,4,0,4"
-                        Content="📷  Screenshot" MinWidth="0" Padding="10,4"
+                <Button Grid.Column="4" Style="{StaticResource SmallButton}" Margin="10,8,0,8"
+                        Content="Screenshot"
                         Command="{Binding ScreenshotCommand}"
                         IsEnabled="{Binding HasEmulatorAttached}"
                         ToolTip="Capture a PNG from the attached emulator"/>
-                <Button Grid.Column="5" Style="{StaticResource FlatButton}" Margin="8,4,0,4"
-                        Content="{Binding RecordButtonText}" MinWidth="0" Padding="10,4"
+                <Button Grid.Column="5" Style="{StaticResource SmallButton}" Margin="8,8,0,8"
+                        Content="{Binding RecordButtonText}"
                         Command="{Binding RecordCommand}"
                         IsEnabled="{Binding HasEmulatorAttached}"
                         ToolTip="Start / stop screenrecord on the attached emulator (capped at 3 min by Android)"/>
-                <Button Grid.Column="6" Style="{StaticResource FlatButton}" Margin="8,4,0,4"
-                        Content="🖥 scrcpy" MinWidth="0" Padding="10,4"
+                <Button Grid.Column="6" Style="{StaticResource SmallButton}" Margin="8,8,0,8"
+                        Content="scrcpy"
                         Command="{Binding LaunchScrcpyCommand}"
                         IsEnabled="{Binding HasEmulatorAttached}"
                         ToolTip="Launch external scrcpy.exe against the attached emulator (winget install Genymobile.scrcpy)"/>
-                <Button Grid.Column="7" Style="{StaticResource FlatButton}" Margin="8,4,0,4"
-                        Content="⚙ Settings" MinWidth="0" Padding="10,4"
+                <Button Grid.Column="7" Style="{StaticResource SmallButton}" Margin="8,8,0,8"
+                        Content="Settings"
                         Command="{Binding OpenSettingsCommand}"
                         ToolTip="Theme, paths, network proxy — persists to %LOCALAPPDATA%\AndroidEmulatorPlus\settings.json"/>
             </Grid>
@@ -87,36 +90,36 @@
         <!-- Main: sidebar + content -->
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="200"/>
+                <ColumnDefinition Width="216"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
 
             <!-- Sidebar -->
             <Border Background="{DynamicResource MantleBrush}" BorderBrush="{DynamicResource SurfaceBrush}" BorderThickness="0,0,1,0">
-                <StackPanel Margin="0,12">
-                    <TextBlock Text="WORKFLOW" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource OverlayBrush}" Margin="20,4,0,8"/>
-                    <RadioButton Style="{StaticResource SidebarButton}" Content="① Install / SDK"
+                <StackPanel Margin="0,14">
+                    <TextBlock Text="WORKFLOW" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource OverlayBrush}" Margin="20,4,0,10"/>
+                    <RadioButton Style="{StaticResource SidebarButton}" Content="Install / SDK"
                                  IsChecked="{Binding ActiveSection, Converter={x:Static views:EqualsConverter.Instance}, ConverterParameter=Install, Mode=OneWay}"
                                  Command="{Binding NavigateCommand}" CommandParameter="Install"/>
-                    <RadioButton Style="{StaticResource SidebarButton}" Content="② AVDs"
+                    <RadioButton Style="{StaticResource SidebarButton}" Content="AVDs"
                                  IsChecked="{Binding ActiveSection, Converter={x:Static views:EqualsConverter.Instance}, ConverterParameter=Avd, Mode=OneWay}"
                                  Command="{Binding NavigateCommand}" CommandParameter="Avd"/>
-                    <RadioButton Style="{StaticResource SidebarButton}" Content="③ Root"
+                    <RadioButton Style="{StaticResource SidebarButton}" Content="Root"
                                  IsChecked="{Binding ActiveSection, Converter={x:Static views:EqualsConverter.Instance}, ConverterParameter=Root, Mode=OneWay}"
                                  Command="{Binding NavigateCommand}" CommandParameter="Root"/>
-                    <RadioButton Style="{StaticResource SidebarButton}" Content="④ Migrate from Phone"
+                    <RadioButton Style="{StaticResource SidebarButton}" Content="Migrate from Phone"
                                  IsChecked="{Binding ActiveSection, Converter={x:Static views:EqualsConverter.Instance}, ConverterParameter=Migrate, Mode=OneWay}"
                                  Command="{Binding NavigateCommand}" CommandParameter="Migrate"/>
-                    <RadioButton Style="{StaticResource SidebarButton}" Content="⑤ Apps / Debloat"
+                    <RadioButton Style="{StaticResource SidebarButton}" Content="Apps / Debloat"
                                  IsChecked="{Binding ActiveSection, Converter={x:Static views:EqualsConverter.Instance}, ConverterParameter=Apps, Mode=OneWay}"
                                  Command="{Binding NavigateCommand}" CommandParameter="Apps"/>
-                    <RadioButton Style="{StaticResource SidebarButton}" Content="⑥ Configure"
+                    <RadioButton Style="{StaticResource SidebarButton}" Content="Configure"
                                  IsChecked="{Binding ActiveSection, Converter={x:Static views:EqualsConverter.Instance}, ConverterParameter=Config, Mode=OneWay}"
                                  Command="{Binding NavigateCommand}" CommandParameter="Config"/>
-                    <RadioButton Style="{StaticResource SidebarButton}" Content="⑦ Logcat"
+                    <RadioButton Style="{StaticResource SidebarButton}" Content="Logcat"
                                  IsChecked="{Binding ActiveSection, Converter={x:Static views:EqualsConverter.Instance}, ConverterParameter=Logcat, Mode=OneWay}"
                                  Command="{Binding NavigateCommand}" CommandParameter="Logcat"/>
-                    <RadioButton Style="{StaticResource SidebarButton}" Content="⑧ Console"
+                    <RadioButton Style="{StaticResource SidebarButton}" Content="Console"
                                  IsChecked="{Binding ActiveSection, Converter={x:Static views:EqualsConverter.Instance}, ConverterParameter=Console, Mode=OneWay}"
                                  Command="{Binding NavigateCommand}" CommandParameter="Console"/>
                 </StackPanel>
@@ -147,7 +150,7 @@
         <GridSplitter Grid.Row="1" Height="6" HorizontalAlignment="Stretch" VerticalAlignment="Bottom"
                       Background="{DynamicResource SurfaceBrush}" />
         <Border Grid.Row="2" Background="{DynamicResource MantleBrush}" BorderBrush="{DynamicResource SurfaceBrush}" BorderThickness="0,1,0,0">
-            <Grid Margin="12,8">
+            <Grid Margin="14,10">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
@@ -157,10 +160,10 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="Log" FontWeight="SemiBold" Foreground="{DynamicResource MauveBrush}"/>
-                    <Button Grid.Column="1" Content="Clear" Style="{StaticResource FlatButton}" Click="ClearLog_Click" Padding="10,4" MinHeight="0" MinWidth="0"/>
+                    <TextBlock Text="Activity log" FontWeight="SemiBold" Foreground="{DynamicResource MauveBrush}"/>
+                    <Button Grid.Column="1" Content="Clear log" Style="{StaticResource SmallButton}" Click="ClearLog_Click"/>
                 </Grid>
-                <Border Grid.Row="1" Background="{DynamicResource CrustBrush}" CornerRadius="6" Padding="8" Margin="0,6,0,0">
+                <Border Grid.Row="1" Background="{DynamicResource CrustBrush}" BorderBrush="{DynamicResource SurfaceBrush}" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,7,0,0">
                     <ItemsControl ItemsSource="{Binding Log.Entries}" x:Name="LogList">
                         <ItemsControl.Template>
                             <ControlTemplate>
@@ -172,7 +175,7 @@
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <TextBlock Text="{Binding Display}" FontFamily="Cascadia Mono, Consolas, monospace" FontSize="12"
-                                           TextWrapping="NoWrap">
+                                           TextWrapping="NoWrap" Margin="0,1">
                                     <TextBlock.Style>
                                         <Style TargetType="TextBlock">
                                             <Setter Property="Foreground" Value="{DynamicResource SubtextBrush}"/>

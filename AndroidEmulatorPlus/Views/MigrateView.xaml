@@ -99,8 +99,23 @@
         </Border>
 
         <Border Grid.Row="3" Style="{StaticResource Card}">
-            <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="320">
-                <ItemsControl ItemsSource="{Binding FilteredPackages}">
+            <Grid>
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="460"
+                            Visibility="{Binding HasPackages, Converter={x:Static views:NotBoolToVisibilityConverter.Instance}}">
+                    <TextBlock Text="No phone packages loaded" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextBrush}" HorizontalAlignment="Center"/>
+                    <TextBlock Style="{StaticResource MicrocopyText}" TextAlignment="Center" Margin="0,6,0,0"
+                               Text="Connect a USB-debugging phone or pair over Wi-Fi, then refresh to choose packages for migration."/>
+                    <Button Content="Refresh packages" Style="{StaticResource FlatButton}" Command="{Binding RefreshCommand}" HorizontalAlignment="Center" Margin="0,12,0,0"/>
+                </StackPanel>
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="460"
+                            Visibility="{Binding IsPackageFilterEmpty, Converter={x:Static views:BoolToVisibilityConverter.Instance}}">
+                    <TextBlock Text="No packages match this filter" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextBrush}" HorizontalAlignment="Center"/>
+                    <TextBlock Style="{StaticResource MicrocopyText}" TextAlignment="Center" Margin="0,6,0,0"
+                               Text="Clear or broaden the filter to return to the loaded phone package list."/>
+                </StackPanel>
+                <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="320"
+                              Visibility="{Binding HasFilteredPackages, Converter={x:Static views:BoolToVisibilityConverter.Instance}}">
+                    <ItemsControl ItemsSource="{Binding FilteredPackages}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Grid Margin="0,3">
@@ -113,13 +128,14 @@
                                         Background="{DynamicResource YellowBrush}"
                                         Visibility="{Binding AllowBackup, Converter={x:Static views:NotBoolToVisibilityConverter.Instance}}"
                                         ToolTip="android:allowBackup=&quot;false&quot; — restored data will be rejected by the app">
-                                    <TextBlock Text="⚠ no-backup" FontSize="11" Foreground="{DynamicResource CrustBrush}" FontWeight="SemiBold"/>
+                                    <TextBlock Text="No backup" FontSize="11" Foreground="{DynamicResource CrustBrush}" FontWeight="SemiBold"/>
                                 </Border>
                             </Grid>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </ScrollViewer>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Grid>
         </Border>
 
         <StackPanel Grid.Row="4" Margin="0,12,0,0">
@@ -132,7 +148,7 @@
                 <StackPanel Grid.Column="0" Orientation="Horizontal">
                     <Button Content="Start Migration" Style="{StaticResource PrimaryButton}" Command="{Binding MigrateCommand}"
                             IsEnabled="{Binding IsBusy, Converter={x:Static views:NotBoolConverter.Instance}}"/>
-                    <Button Content="✗ Cancel" Style="{StaticResource DangerButton}" Margin="8,0,0,0"
+                    <Button Content="Cancel" Style="{StaticResource DangerButton}" Margin="8,0,0,0"
                             Command="{Binding CancelCommand}"
                             Visibility="{Binding IsBusy, Converter={x:Static views:BoolToVisibilityConverter.Instance}}"/>
                 </StackPanel>

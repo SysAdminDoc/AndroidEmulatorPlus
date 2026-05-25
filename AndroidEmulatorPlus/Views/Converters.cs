@@ -41,6 +41,24 @@ public sealed class NotBoolToVisibilityConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
+public sealed class CountToVisibilityConverter : IValueConverter
+{
+    public static readonly CountToVisibilityConverter Instance = new();
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => value is int count && count > 0 ? Visibility.Visible : Visibility.Collapsed;
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
+public sealed class ZeroCountToVisibilityConverter : IValueConverter
+{
+    public static readonly ZeroCountToVisibilityConverter Instance = new();
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => value is int count && count > 0 ? Visibility.Collapsed : Visibility.Visible;
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
 /// <summary>
 /// Returns the logical negation of a bool. Used to disable buttons while a VM is busy
 /// (binding <c>IsEnabled</c> to a Visibility converter does not coerce and the button

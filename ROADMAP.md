@@ -56,6 +56,10 @@ Tag legend:
 
 ## Recently Completed
 
+- 2026-05-25: premium UI/product polish pass covering shared control states,
+  keyboard focus rings, calmer app chrome, concise top-bar status, professional
+  text-only action labels, responsive wrapping action rows, Apps/Migrate/Logcat
+  empty states, and de-noised status microcopy. See [CHANGELOG.md](CHANGELOG.md).
 - 2026-05-25: deep hardening pass for shell quoting and identifier validation,
   bundle signature verification, Magisk latest-release downloads, module zip
   validation, app-data tar import/migration safety, refresh race handling,

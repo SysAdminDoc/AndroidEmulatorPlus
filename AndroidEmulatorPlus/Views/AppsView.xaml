@@ -14,7 +14,7 @@
         <StackPanel Grid.Row="0">
             <TextBlock Style="{StaticResource HeaderText}" Text="Apps / Debloat"/>
             <TextBlock Style="{StaticResource SubheaderText}" TextWrapping="Wrap">
-                Inventory of installed apps on the running emulator. Bulk-uninstall, batch-install APKs, or apply a debloat preset. Tip: drag <Run FontWeight="SemiBold">.apk</Run> / <Run FontWeight="SemiBold">.apks</Run> / <Run FontWeight="SemiBold">.xapk</Run> / <Run FontWeight="SemiBold">.apkm</Run> files anywhere on this tab to install them — bundles are auto-extracted before install.
+                Inventory of installed apps on the running emulator. Bulk-uninstall, batch-install APKs, or apply a debloat preset. Tip: drag <Run FontWeight="SemiBold">.apk</Run> / <Run FontWeight="SemiBold">.apks</Run> / <Run FontWeight="SemiBold">.xapk</Run> / <Run FontWeight="SemiBold">.apkm</Run> files anywhere on this tab to install them; bundles are auto-extracted before install.
             </TextBlock>
         </StackPanel>
 
@@ -36,7 +36,7 @@
                     <StackPanel Grid.Column="1" Orientation="Horizontal">
                         <Button Content="Refresh" Style="{StaticResource FlatButton}" Command="{Binding RefreshCommand}"/>
                         <Button Content="Compute sizes" Style="{StaticResource FlatButton}" Command="{Binding ComputeSizesCommand}" Margin="8,0,0,0" ToolTip="Root required: runs du -sb /data/data/&lt;pkg&gt; for every loaded row"/>
-                        <Button Content="Install APK…" Style="{StaticResource FlatButton}" Command="{Binding InstallApkCommand}" Margin="8,0,0,0"/>
+                        <Button Content="Install APK..." Style="{StaticResource FlatButton}" Command="{Binding InstallApkCommand}" Margin="8,0,0,0"/>
                     </StackPanel>
                 </Grid>
                 <WrapPanel Margin="0,10,0,0">
@@ -63,8 +63,23 @@
         </Border>
 
         <Border Grid.Row="2" Style="{StaticResource Card}">
-            <ScrollViewer VerticalScrollBarVisibility="Auto">
-                <ItemsControl ItemsSource="{Binding FilteredApps}">
+            <Grid>
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="420"
+                            Visibility="{Binding HasApps, Converter={x:Static views:NotBoolToVisibilityConverter.Instance}}">
+                    <TextBlock Text="No apps loaded" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextBrush}" HorizontalAlignment="Center"/>
+                    <TextBlock Style="{StaticResource MicrocopyText}" TextAlignment="Center" Margin="0,6,0,0"
+                               Text="Start an emulator, then refresh this tab to load installed packages."/>
+                    <Button Content="Refresh apps" Style="{StaticResource FlatButton}" Command="{Binding RefreshCommand}" HorizontalAlignment="Center" Margin="0,12,0,0"/>
+                </StackPanel>
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="420"
+                            Visibility="{Binding IsFilteredEmpty, Converter={x:Static views:BoolToVisibilityConverter.Instance}}">
+                    <TextBlock Text="No apps match this filter" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextBrush}" HorizontalAlignment="Center"/>
+                    <TextBlock Style="{StaticResource MicrocopyText}" TextAlignment="Center" Margin="0,6,0,0"
+                               Text="Clear or broaden the filter to see the loaded package list."/>
+                </StackPanel>
+                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                              Visibility="{Binding HasFilteredApps, Converter={x:Static views:BoolToVisibilityConverter.Instance}}">
+                    <ItemsControl ItemsSource="{Binding FilteredApps}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Grid Margin="0,3">
@@ -81,8 +96,9 @@
                             </Grid>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </ScrollViewer>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Grid>
         </Border>
 
         <StackPanel Grid.Row="3" Margin="0,12,0,0">
@@ -95,15 +111,15 @@
                              IsChecked="{Binding UninstallMode, Converter={x:Static views:EqualsConverter.Instance}, ConverterParameter=user0, Mode=OneWay}"
                              Command="{Binding SetUninstallModeUser0Command}" />
             </StackPanel>
-            <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                <Button Content="✗ Uninstall Selected" Style="{StaticResource DangerButton}" Command="{Binding UninstallSelectedCommand}"/>
-                <Button Content="↺ Re-enable selected (user 0)" Style="{StaticResource FlatButton}" Command="{Binding ReinstallSelectedCommand}" Margin="8,0,0,0"
-                        ToolTip="cmd package install-existing — only useful for apps removed via 'Disable for user 0'."/>
-                <Button Content="⤓ Export data…" Style="{StaticResource FlatButton}" Command="{Binding ExportSelectedCommand}" Margin="8,0,0,0"
+            <WrapPanel Margin="0,10,-8,-8">
+                <Button Content="Uninstall selected" Style="{StaticResource DangerButton}" Command="{Binding UninstallSelectedCommand}" Margin="0,0,8,8"/>
+                <Button Content="Re-enable selected" Style="{StaticResource FlatButton}" Command="{Binding ReinstallSelectedCommand}" Margin="8,0,8,8"
+                        ToolTip="cmd package install-existing; only useful for apps removed via 'Disable for user 0'."/>
+                <Button Content="Export data..." Style="{StaticResource FlatButton}" Command="{Binding ExportSelectedCommand}" Margin="0,0,8,8"
                         ToolTip="Tar /data/data/&lt;pkg&gt; per selected app into a .zip (root required)."/>
-                <Button Content="⤒ Import from ZIP…" Style="{StaticResource FlatButton}" Command="{Binding ImportZipCommand}" Margin="8,0,0,0"
+                <Button Content="Import ZIP..." Style="{StaticResource FlatButton}" Command="{Binding ImportZipCommand}" Margin="0,0,8,8"
                         ToolTip="Restore a .zip produced by Export data into /data/data/&lt;pkg&gt; (root required, package must be installed)."/>
-            </StackPanel>
+            </WrapPanel>
         </StackPanel>
     </Grid>
 </UserControl>

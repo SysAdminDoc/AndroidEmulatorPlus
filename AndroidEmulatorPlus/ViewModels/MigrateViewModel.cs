@@ -114,7 +114,7 @@ public sealed partial class MigrateViewModel : ObservableObject
             {
                 var rooted = await _adb.IsRootedAsync(phone.Serial, ct);
                 if (generation != _refreshGeneration) return;
-                PhoneStatus = $"{phone.Display}{(rooted ? "  ✓ rooted" : "  ⚠ NOT rooted — data copy unavailable")}";
+                PhoneStatus = $"{phone.Display}{(rooted ? "  rooted" : "  not rooted - data copy unavailable")}";
             }
 
             if (emu is null) EmuStatus = "no emulator running";
@@ -122,17 +122,22 @@ public sealed partial class MigrateViewModel : ObservableObject
             {
                 var rooted = await _adb.IsRootedAsync(emu.Serial, ct);
                 if (generation != _refreshGeneration) return;
-                EmuStatus = $"{emu.Serial}{(rooted ? "  ✓ rooted" : "  ⚠ NOT rooted — data restore unavailable")}";
+                EmuStatus = $"{emu.Serial}{(rooted ? "  rooted" : "  not rooted - data restore unavailable")}";
             }
 
-            if (phone is null) return;
+            if (phone is null)
+            {
+                Packages.Clear();
+                NotifyPackageListStateChanged();
+                return;
+            }
             var list = await _adb.ListPackagesAsync(phone.Serial, ct: ct);
             if (generation != _refreshGeneration) return;
 
             Packages.Clear();
             foreach (var p in list)
                 Packages.Add(new AndroidApp { Package = p, IsSelected = true });
-            OnPropertyChanged(nameof(FilteredPackages));
+            NotifyPackageListStateChanged();
 
             // C-05: probe each package's allowBackup flag in the background.
             // Sequential because `pm dump` is comparatively cheap and a thousand
@@ -179,6 +184,18 @@ public sealed partial class MigrateViewModel : ObservableObject
     public IEnumerable<AndroidApp> FilteredPackages => string.IsNullOrWhiteSpace(Filter)
         ? Packages
         : Packages.Where(p => p.Package.Contains(Filter, StringComparison.OrdinalIgnoreCase));
+
+    public bool HasPackages => Packages.Count > 0;
+    public bool HasFilteredPackages => FilteredPackages.Any();
+    public bool IsPackageFilterEmpty => HasPackages && !HasFilteredPackages;
+
+    private void NotifyPackageListStateChanged()
+    {
+        OnPropertyChanged(nameof(FilteredPackages));
+        OnPropertyChanged(nameof(HasPackages));
+        OnPropertyChanged(nameof(HasFilteredPackages));
+        OnPropertyChanged(nameof(IsPackageFilterEmpty));
+    }
 
     [RelayCommand]
     private void SelectAll()
@@ -303,12 +320,12 @@ public sealed partial class MigrateViewModel : ObservableObject
         var r = await _adb.PairAsync(host, code);
         if (r.Success && r.Combined.Contains("Successfully", StringComparison.OrdinalIgnoreCase))
         {
-            PairStatus = "✓ Paired. Now enter the connect host:port below.";
+            PairStatus = "Paired. Enter the connect host:port below.";
             _log.Success($"Paired with {host}.");
         }
         else
         {
-            PairStatus = "✗ Pair failed — " + r.Combined.Trim();
+            PairStatus = "Pair failed - " + r.Combined.Trim();
             _log.Error("adb pair: " + r.Combined.Trim());
         }
     }
@@ -323,15 +340,15 @@ public sealed partial class MigrateViewModel : ObservableObject
         if (r.Combined.Contains("connected", StringComparison.OrdinalIgnoreCase)
             && !r.Combined.Contains("cannot", StringComparison.OrdinalIgnoreCase))
         {
-            PairStatus = "✓ Connected. " + r.StdOut.Trim();
+            PairStatus = "Connected. " + r.StdOut.Trim();
             _log.Success($"adb connect {host}: " + r.StdOut.Trim());
         }
         else
         {
-            PairStatus = "✗ Connect failed — " + r.Combined.Trim();
+            PairStatus = "Connect failed - " + r.Combined.Trim();
             _log.Error("adb connect: " + r.Combined.Trim());
         }
     }
 
-    partial void OnFilterChanged(string value) => OnPropertyChanged(nameof(FilteredPackages));
+    partial void OnFilterChanged(string value) => NotifyPackageListStateChanged();
 }

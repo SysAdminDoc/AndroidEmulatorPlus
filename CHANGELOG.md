@@ -6,6 +6,9 @@ All notable changes to this project will be documented here. Format follows [Kee
 
 ### Added
 
+- Premium UI polish pass: explicit empty/filter-empty states for Apps, Migrate,
+  and Logcat; compact reusable button styling; shared field-label and microcopy
+  styles; and count-based visibility converters for polished blank-list states.
 - Focused hardening tests for shell quoting/package validation, AVD/snapshot name
   validation, Magisk module zip validation, and app-data tar import validation.
 - Repository-level `global.json` pins builds to .NET 9 with feature-band
@@ -62,6 +65,17 @@ All notable changes to this project will be documented here. Format follows [Kee
 
 ### Changed
 
+- Main-window chrome is calmer and more spacious: concise SDK status with the
+  full SDK path moved to a tooltip, professional text-only top-bar actions,
+  cleaner sidebar labels, and a renamed "Activity log" panel.
+- Shared WPF styling now has stronger keyboard focus rings, clearer text
+  rendering, more consistent card padding, refined button hover/pressed states,
+  a real danger-button interaction state, and consistent status-pill borders.
+- Dense command rows in Root, Install, and Logcat wrap cleanly at narrower
+  widths instead of crowding or clipping.
+- User-facing status text was de-noised by replacing mixed emoji/symbol prefixes
+  with calm text labels across the toolbar, AVD cards, onboarding, Root,
+  Migrate, Logcat, Console, and secondary dialogs.
 - `SdkLocator` now autodetects the app-managed Android SDK cache at
   `%USERPROFILE%\.cache\android-sdk`.
 - `ProcessRunner` now waits for async stdout/stderr handlers to drain after the

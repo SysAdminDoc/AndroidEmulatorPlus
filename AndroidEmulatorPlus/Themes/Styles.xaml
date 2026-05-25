@@ -7,15 +7,32 @@
         <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
         <Setter Property="FontFamily" Value="Segoe UI Variable, Segoe UI, sans-serif"/>
         <Setter Property="FontSize" Value="13"/>
+        <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
+        <Setter Property="TextOptions.TextRenderingMode" Value="ClearType"/>
     </Style>
 
     <Style TargetType="{x:Type TextBlock}">
         <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+        <Setter Property="LineHeight" Value="18"/>
+    </Style>
+
+    <Style x:Key="FocusRing" TargetType="{x:Type Control}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Control}">
+                    <Border BorderBrush="{DynamicResource BlueBrush}"
+                            BorderThickness="2"
+                            CornerRadius="7"
+                            Margin="-3"
+                            Opacity="0.95"/>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
     </Style>
 
     <Style x:Key="HeaderText" TargetType="{x:Type TextBlock}">
         <Setter Property="Foreground" Value="{DynamicResource LavenderBrush}"/>
-        <Setter Property="FontSize" Value="22"/>
+        <Setter Property="FontSize" Value="24"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="Margin" Value="0,0,0,4"/>
     </Style>
@@ -23,14 +40,29 @@
     <Style x:Key="SubheaderText" TargetType="{x:Type TextBlock}">
         <Setter Property="Foreground" Value="{DynamicResource SubtextBrush}"/>
         <Setter Property="FontSize" Value="13"/>
-        <Setter Property="Margin" Value="0,0,0,12"/>
+        <Setter Property="LineHeight" Value="19"/>
+        <Setter Property="Margin" Value="0,0,0,16"/>
     </Style>
 
     <Style x:Key="SectionHeader" TargetType="{x:Type TextBlock}">
         <Setter Property="Foreground" Value="{DynamicResource MauveBrush}"/>
         <Setter Property="FontSize" Value="13"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
-        <Setter Property="Margin" Value="0,12,0,6"/>
+        <Setter Property="Margin" Value="0,0,0,8"/>
+    </Style>
+
+    <Style x:Key="FieldLabel" TargetType="{x:Type TextBlock}">
+        <Setter Property="Foreground" Value="{DynamicResource SubtextBrush}"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Margin" Value="0,0,0,5"/>
+    </Style>
+
+    <Style x:Key="MicrocopyText" TargetType="{x:Type TextBlock}">
+        <Setter Property="Foreground" Value="{DynamicResource OverlayBrush}"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="LineHeight" Value="16"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
     </Style>
 
     <!-- Card: rounded-rect surface, 8px corners, no pill backdrops anywhere -->
@@ -39,8 +71,8 @@
         <Setter Property="BorderBrush" Value="{DynamicResource SurfaceBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="CornerRadius" Value="8"/>
-        <Setter Property="Padding" Value="16"/>
-        <Setter Property="Margin" Value="0,0,0,12"/>
+        <Setter Property="Padding" Value="18"/>
+        <Setter Property="Margin" Value="0,0,0,14"/>
     </Style>
 
     <Style x:Key="FlatButton" TargetType="{x:Type Button}">
@@ -49,10 +81,12 @@
         <Setter Property="BorderBrush" Value="{DynamicResource Surface1Brush}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Padding" Value="14,8"/>
-        <Setter Property="MinHeight" Value="34"/>
+        <Setter Property="MinHeight" Value="36"/>
         <Setter Property="MinWidth" Value="100"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type Button}">
@@ -63,7 +97,8 @@
                             CornerRadius="6">
                         <ContentPresenter HorizontalAlignment="Center"
                                           VerticalAlignment="Center"
-                                          Margin="{TemplateBinding Padding}"/>
+                                          Margin="{TemplateBinding Padding}"
+                                          RecognizesAccessKey="True"/>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
@@ -71,6 +106,9 @@
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
                             <Setter TargetName="bg" Property="Background" Value="{DynamicResource OverlayBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="bg" Property="BorderBrush" Value="{DynamicResource BlueBrush}"/>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.45"/>
@@ -96,7 +134,8 @@
                             CornerRadius="6">
                         <ContentPresenter HorizontalAlignment="Center"
                                           VerticalAlignment="Center"
-                                          Margin="{TemplateBinding Padding}"/>
+                                          Margin="{TemplateBinding Padding}"
+                                          RecognizesAccessKey="True"/>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
@@ -104,6 +143,9 @@
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
                             <Setter TargetName="bg" Property="Background" Value="{DynamicResource MauveBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="bg" Property="BorderBrush" Value="{DynamicResource TealBrush}"/>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.45"/>
@@ -119,6 +161,44 @@
         <Setter Property="Background" Value="{DynamicResource RedBrush}"/>
         <Setter Property="Foreground" Value="{DynamicResource CrustBrush}"/>
         <Setter Property="BorderBrush" Value="{DynamicResource RedBrush}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Button}">
+                    <Border x:Name="bg"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="6">
+                        <ContentPresenter HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          Margin="{TemplateBinding Padding}"
+                                          RecognizesAccessKey="True"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="bg" Property="BorderBrush" Value="{DynamicResource PeachBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="bg" Property="Background" Value="{DynamicResource PeachBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="bg" Property="BorderBrush" Value="{DynamicResource YellowBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.45"/>
+                            <Setter Property="Cursor" Value="Arrow"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="SmallButton" TargetType="{x:Type Button}" BasedOn="{StaticResource FlatButton}">
+        <Setter Property="MinHeight" Value="30"/>
+        <Setter Property="MinWidth" Value="0"/>
+        <Setter Property="Padding" Value="10,4"/>
+        <Setter Property="FontSize" Value="12"/>
     </Style>
 
     <Style x:Key="SidebarButton" TargetType="{x:Type RadioButton}">
@@ -130,6 +210,7 @@
         <Setter Property="FontSize" Value="13"/>
         <Setter Property="HorizontalContentAlignment" Value="Left"/>
         <Setter Property="GroupName" Value="Sidebar"/>
+        <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type RadioButton}">
@@ -149,6 +230,10 @@
                             <Setter Property="Foreground" Value="{DynamicResource LavenderBrush}"/>
                             <Setter Property="FontWeight" Value="SemiBold"/>
                         </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="bg" Property="BorderBrush" Value="{DynamicResource BlueBrush}"/>
+                            <Setter TargetName="bg" Property="BorderThickness" Value="1"/>
+                        </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
@@ -163,15 +248,26 @@
         <Setter Property="Padding" Value="8,6"/>
         <Setter Property="CaretBrush" Value="{DynamicResource LavenderBrush}"/>
         <Setter Property="SelectionBrush" Value="{DynamicResource BlueBrush}"/>
+        <Setter Property="MinHeight" Value="34"/>
+        <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type TextBox}">
-                    <Border CornerRadius="6"
+                    <Border x:Name="bg"
+                            CornerRadius="6"
                             Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}">
                         <ScrollViewer x:Name="PART_ContentHost" Padding="{TemplateBinding Padding}" />
                     </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="bg" Property="BorderBrush" Value="{DynamicResource BlueBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.55"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
@@ -181,6 +277,7 @@
         <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
         <Setter Property="VerticalContentAlignment" Value="Center"/>
         <Setter Property="Margin" Value="0,3"/>
+        <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}"/>
     </Style>
 
     <Style TargetType="{x:Type ComboBox}">
@@ -189,7 +286,8 @@
         <Setter Property="BorderBrush" Value="{DynamicResource Surface1Brush}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Padding" Value="8,6"/>
-        <Setter Property="MinHeight" Value="32"/>
+        <Setter Property="MinHeight" Value="34"/>
+        <Setter Property="FocusVisualStyle" Value="{StaticResource FocusRing}"/>
     </Style>
 
     <Style TargetType="{x:Type Slider}">
@@ -249,8 +347,10 @@
     <Style x:Key="StatusPill" TargetType="{x:Type Border}">
         <!-- Intentionally rounded-rect (not pill). 4px corners only. -->
         <Setter Property="CornerRadius" Value="4"/>
-        <Setter Property="Padding" Value="6,2"/>
+        <Setter Property="Padding" Value="7,3"/>
         <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource Surface1Brush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
     </Style>
 
 </ResourceDictionary>
