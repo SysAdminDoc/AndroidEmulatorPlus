@@ -4,6 +4,16 @@ All notable changes to this project will be documented here. Format follows [Kee
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-05-25
+
+Major iteration on the v0.1.0 baseline. ~5000 lines, 8 tabs (added Logcat ⑦ and
+Console ⑧), 23 services, 9 view-models. Cancel buttons, multi-AVD process
+tracking, SHA-256 supply-chain verification, snapshot manager, Wi-Fi pairing,
+APK signature verification, OBB transfer, per-app data export/import, Catppuccin
+Latte theme, settings persistence, first-launch wizard, sensor/GPS/telephony
+console, scrcpy launcher, and a GitHub Actions release pipeline. Full surface
+listed below.
+
 ### Added
 
 - Pinning hook for rootAVD: `RootService.RootAvdPinnedRef` constant lets future releases pin the script to a verified SHA. When set, the clone uses full depth and `git checkout --detach` lands on the pin.
