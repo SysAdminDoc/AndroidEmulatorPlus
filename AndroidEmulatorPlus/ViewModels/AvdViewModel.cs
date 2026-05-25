@@ -60,7 +60,7 @@ public sealed partial class AvdViewModel : ObservableObject
         _sdk = sdk;
         _sdkman = sdkman;
         _snapshots = snapshots;
-        _monitor.Changed += _ => _ = RefreshRunningStateAsync();
+        _monitor.Changed += _devices => _ = RefreshRunningStateAsync();
     }
 
     [RelayCommand]

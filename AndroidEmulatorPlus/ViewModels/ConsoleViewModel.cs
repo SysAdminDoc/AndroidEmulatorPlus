@@ -93,7 +93,9 @@ public sealed partial class ConsoleViewModel : ObservableObject
     {
         if (ActiveSerial() is not { } s) { _log.Warning("No emulator attached."); return; }
         if (string.IsNullOrWhiteSpace(FreeFormArgs)) return;
-        var args = FreeFormArgs.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        IReadOnlyList<string> args;
+        try { args = ConsoleService.ParseEmuArgs(FreeFormArgs); }
+        catch (FormatException ex) { _log.Warning(ex.Message); return; }
         var r = await _console.SendAsync(s, args);
         LastResult = r.Combined.Trim();
     }

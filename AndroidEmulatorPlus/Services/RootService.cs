@@ -164,6 +164,11 @@ public sealed class RootService
                 ct: ct);
             return exit == 0;
         }
+        catch (TimeoutException)
+        {
+            _log.Error("rootAVD.sh LISTONLY exceeded 2 min timeout — killed.");
+            return false;
+        }
         catch (OperationCanceledException) { return false; }
     }
 
@@ -188,9 +193,8 @@ public sealed class RootService
                 ct: ct);
             return exit == 0;
         }
-        catch (OperationCanceledException)
+        catch (TimeoutException)
         {
-            if (ct.IsCancellationRequested) throw;
             _log.Error($"rootAVD.sh exceeded {PatchTimeout.TotalMinutes:0} min timeout — killed.");
             return false;
         }

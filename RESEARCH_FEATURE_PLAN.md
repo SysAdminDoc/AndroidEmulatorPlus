@@ -16,20 +16,14 @@ bandwidth-aware progress). What's now most valuable is **shipping a v0.2.0
 release** — none of this work is reachable to a user yet because the version pin,
 release tag, manifest population, and signed binary are all outstanding.
 
-Top opportunities, in order:
+Current planning status:
 
-1. **C-01** Cut a v0.2.0 release — version bump across the 5 places CLAUDE.md mandates, populate `Resources/known-hashes.json` with verified Magisk + cmdline-tools hashes, lock the rootAVD SHA, then `git tag v0.2.0` to trigger the existing CI release workflow.
-2. **C-02** Audit + fix the bundle-install ordering bug: `AppService.ExtractBundle` orders inner APKs by ascending size, but the base APK is typically *larger* than its config splits — install-multiple may put a split first and fail signature checks on some devices.
-3. **C-03** Wire `SettingsService.HttpProxy` into `DownloadService`'s `HttpClient` — the field is persisted and surfaced in the UI but never honored.
-4. **C-04** Wire `ApkSignerService.InstalledCertShaAsync` into the verify-before-install path so users actually get the "this is a different signer than what's installed" warning the feature was sold as.
-5. **C-05** A-19 `allowBackup=false` pre-flight in the Migrate pipeline (only P1 item never shipped).
-6. **C-06** Add an "App icon" to the WPF window + installer manifest — currently uses the .NET default icon and SmartScreen warns on first run.
-7. **C-07** R-03 Magisk module manager — install Zygisk modules (Shamiko, LSPosed, PlayIntegrityFork) from inside the tool against the rooted emulator.
-8. **C-08** Tests project coverage gaps: `AvdService.Duplicate` (file copy + ini rewrite — highest data-loss risk in the recently-added code is not tested), `AppService.ExtractBundle`, `ConfigService.PreviewWipe`, `PresetService` merge.
-9. **C-09** Lift `Process.Start` re-implementations in `RootService.PatchAsync`, `RootService.DryRunAsync`, `AvdService.CreateAsync`, `SdkmanagerService.AcceptLicensesAsync`, `SdkmanagerService.InstallAsync` into a `ProcessRunner.RunWithStdinAsync` helper. CLAUDE.md says `Helpers/ProcessRunner` is the sole `Process.Start` site; that invariant is broken in 5 places.
-10. **C-10** Add a Show-wizard-again entry to Settings — the first-launch wizard is one-shot and there's no path back.
-
-The rest is polish, documentation, and stretch goals (R-07 Avalonia port, R-03 Magisk modules, screenshot-driven README).
+- `ROADMAP.md` is now the only active checklist.
+- The C-01 code-side release prep, C-02 through C-16, C-18, and the feasible
+  part of C-19 have shipped and are recorded in `CHANGELOG.md`.
+- Remaining work is release smoke/tagging, screenshot capture, installer
+  packaging, and the large R-07 Avalonia port.
+- This file is retained as historical research/evidence only.
 
 ---
 
@@ -122,7 +116,7 @@ The rest is polish, documentation, and stretch goals (R-07 Avalonia port, R-03 M
 
 ### Top bar (left → right)
 
-- App name + version pill (`v0.1.0` — stale).
+- App name + version pill (`v0.2.0`).
 - SDK status pill, phone status pill, emulator status pill.
 - 📷 Screenshot, 🎥 Record toggle, 🖥 scrcpy, ⚙ Settings.
 
@@ -158,18 +152,18 @@ research surfaced *new* information.)
 | Feature | Entry | Maturity | Notes / new findings |
 |---|---|---|---|
 | `.apks` / `.xapk` / `.apkm` bundle install | Apps / drag-drop or file picker | **Likely buggy** | `ExtractBundle` sorts inner APKs by ascending size; with split bundles the base APK is usually *larger* (manifest + main resources) and ends up last. Some `install-multiple` consumers (PackageManager v34+) reject when base isn't first. **C-02**. |
-| APK signature verification | Apps / Verify-signatures toggle | **Partial** | `ApkSignerService.InspectAsync` runs and logs the cert SHA-256. The companion `InstalledCertShaAsync` is defined but never called, so the "warn on mismatch with already-installed package" half (R-08) is missing. **C-04**. |
-| HTTP proxy (Settings) | Settings → Network | **Dead** | `SettingsService.HttpProxy` is read+saved but `DownloadService` ignores it. **C-03**. |
-| First-launch wizard | Auto on startup | **One-shot** | No "show wizard again" entry in Settings; once `HasSeenWizard=true`, the only way back is to edit settings.json. **C-10**. |
+| APK signature verification | Apps / Verify-signatures toggle | Complete | `ApkSignerService.InspectAsync` verifies the APK, and installed cert SHA comparison now warns on signer mismatch. |
+| HTTP proxy (Settings) | Settings → Network | Complete | `DownloadService` reads `SettingsService.HttpProxy` at construction and applies it to `HttpClientHandler.Proxy`. |
+| First-launch wizard | Auto on startup | Complete | Settings can reopen the welcome wizard. |
 | Welcome wizard "Open settings.json" | Settings dialog → "Open settings.json" | Complete | Works — useful for the C-10 workaround. |
-| Theme switcher | Install tab + Settings | Restart required | Confirmed: StaticResource brushes can't live-swap. Restart prompt is shown. DynamicResource sweep is C-12 below. |
+| Theme switcher | Settings | Complete | `DynamicResource` sweep plus `ThemeService.Apply` enables live theme switching. |
 | Snapshot manager | AVD overflow → Snapshots… | Complete | Read-list always works; Save/Load require the emulator to be running (status text says so). |
-| Migrate cache card | Migrate tab | Mostly complete | Doesn't refresh after Apps-tab Export/Import which also writes to `transfer/`. **C-11**. |
-| Multi-AVD process tracking | EmulatorService | Complete | One race noted: setting `EnableRaisingEvents=true` AFTER `Process.Start` means a sub-second-lived emulator could exit before the subscription, leaving a stale entry. Theoretical; not a real concern for emulators. |
-| Console / `adb emu` | Console tab | Complete | Free-form command splits on whitespace — quoted strings with spaces would break. Document or use a real tokenizer. Minor. |
+| Migrate cache card | Migrate tab | Complete | Cache diagnostics publishes changes after export/import and clear operations. |
+| Multi-AVD process tracking | EmulatorService | Complete | `ProcessRunner.StartDetached` now enables process events before start; dictionary cleanup remains best effort. |
+| Console / `adb emu` | Console tab | Complete | Free-form command parsing now preserves quoted arguments. |
 | OBB transfer | Migrate / OBB toggle | Complete | `tar /sdcard/Android/obb/<pkg>` — works without root for /sdcard. |
 | ZIP export / import | Apps tab | Complete | Import requires the package to already be installed on the target. Microcopy already says so. |
-| Apps "Compute sizes" | Apps tab | Complete | Computes only for `FilteredApps`. After clearing the filter, previously-non-visible rows still show "—". **C-13**. |
+| Apps "Compute sizes" | Apps tab | Complete | Computes all loaded app rows, including rows hidden by the current filter. |
 | Logcat tab | Sidebar ⑦ | Complete | Auto-scrolls; 5000-line virtualized ring. Doesn't persist filter across sessions — fine. |
 | Force-stop on phone (A-30) | Migrate scope | Complete | Logs run before the tar; A-30 satisfied. |
 | Phone tar flavor probe (A-29) | Auto on first internal-data leg | Complete | Cached per serial. Good. |
@@ -233,12 +227,12 @@ pass-2 or that the now-mature feature set re-opens.
 
 ### C-01 — Cut v0.2.0 release (P0, M)
 
+- **Status**: code-side version bump, known-hash manifest, and rootAVD pin have
+  shipped. Final emulator smoke-test and tag push remain in `ROADMAP.md`.
 - **User problem**: nothing the autonomous loop shipped is reachable to a user
   yet. No tag, no signed binary, no download.
-- **Evidence**: [AndroidEmulatorPlus.csproj:12](AndroidEmulatorPlus/AndroidEmulatorPlus.csproj#L12)
-  still shows `<Version>0.1.0</Version>`; [MainWindow.xaml:6](AndroidEmulatorPlus/MainWindow.xaml#L6)
-  shows `Title="AndroidEmulatorPlus v0.1.0"`. [CHANGELOG.md](CHANGELOG.md)
-  `[Unreleased]` has 25+ entries.
+- **Original evidence**: the pre-release pass found stale 0.1.0 version pins and
+  a large `[Unreleased]` block. Those code-side pins now read 0.2.0.
 - **Behavior**: Bump in the 5 places CLAUDE.md mandates (csproj `<Version>`, `<FileVersion>`,
   `<InformationalVersion>`, `MainViewModel.cs` startup log, `MainWindow.xaml`
   `Title=`, sidebar version pill, `README.md` shields-io badge, `CHANGELOG.md`).
@@ -316,10 +310,10 @@ pass-2 or that the now-mature feature set re-opens.
 
 ### C-05 — `allowBackup=false` pre-flight (P1, M, was A-19)
 
-- **Problem**: Apps that explicitly opt out of backup will refuse the restored
-  data after migration. Pass-2's A-19 never shipped. This is the only P1 item
-  still open.
-- **Evidence**: ROADMAP A-19 unchecked.
+- **Status**: shipped. Rows now show the no-backup pill and skip the internal
+  data leg by default unless the force option is enabled.
+- **Original problem**: Apps that explicitly opt out of backup will refuse the
+  restored data after migration.
 - **Behavior**: Before each package's `TransferInternalDataAsync`, run
   `adb shell pm dump <pkg> | grep -i allowBackup` (or `dumpsys package <pkg>`).
   When false, mark the row with ⚠ and skip the data leg unless the user opted
@@ -426,7 +420,8 @@ pass-2 or that the now-mature feature set re-opens.
 
 ### C-12 — DynamicResource brush sweep for live theme swap (P2, M)
 
-- **Problem**: Theme requires app restart because Styles.xaml binds via
+- **Status**: shipped. Theme now swaps live through `ThemeService.Apply`.
+- **Original problem**: Theme required app restart because Styles.xaml bound via
   StaticResource.
 - **Behavior**: Replace `StaticResource …Brush` with `DynamicResource …Brush`
   in `Themes/Styles.xaml` and in every view that references brushes (~60
@@ -545,18 +540,17 @@ pass-2 or that the now-mature feature set re-opens.
 - **C-02 base-APK-last** — see above.
 - **C-03 dead HttpProxy** — see above.
 - **C-04 mismatched signer warning never fires** — see above.
-- **A-03 still open** — rootAVD pin is `"master"`; one breaking newbit push
-  silently bricks the root flow. Lock the SHA as part of C-01.
-- **Magisk SHA-256 manifest is empty** — every Magisk install today is
-  trust-on-first-use. C-01 populates it.
+- **A-03 rootAVD pin** — fixed; `RootAvdPinnedRef` is pinned to
+  `613caa44371f85e1a461bc030e07ddc2d71afe32`.
+- **Magisk SHA-256 manifest** — fixed for the v30.7 release asset, with
+  GitHub per-asset digest cross-checking at download time.
 
 ### Process tree races
 
-- **EmulatorService.Launch** sets `EnableRaisingEvents=true` after Process.Start.
-  Theoretical race: process exits before subscription; stale dictionary entry
-  forever. Practical risk near zero (emulators don't exit in microseconds).
-  Worth a 1-line fix: hand the Process to ProcessRunner.StartDetached which
-  sets the flag at create time.
+- **EmulatorService.Launch** now receives a `Process` from
+  `ProcessRunner.StartDetached` with `EnableRaisingEvents=true` set before
+  start. A sub-second process could still exit before the caller subscribes,
+  but practical emulator risk remains near zero.
 
 ### Settings file safety
 
@@ -635,115 +629,23 @@ pass-2 or that the now-mature feature set re-opens.
 
 ---
 
-## Prioritized Roadmap
+## Historical Roadmap Note
 
-Each item uses the C-NN tag introduced in this pass.
-
-### Phase 1 — Ship v0.2.0
-
-- [ ] **P0 C-01** — Cut v0.2.0 release
-  - Why: 24 unreleased commits, no downloadable binary.
-  - Evidence: `csproj <Version>0.1.0</Version>`; `CHANGELOG [Unreleased]` has 25+ entries.
-  - Touches: csproj, MainWindow.xaml, MainViewModel.cs (startup log), README.md badge,
-    CHANGELOG.md, RootService.RootAvdPinnedRef, Resources/known-hashes.json.
-  - Acceptance: `git tag v0.2.0 && git push --tags` triggers the release workflow;
-    a `.zip` artifact appears on GitHub Releases; downloaded EXE launches on a clean
-    Windows 11 VM with .NET 9 Runtime installed and v0.2.0 in its title bar.
-  - Verify: open the Releases page; download; run.
-- [ ] **P0 C-02** — Order base APK before splits in `ExtractBundle`
-  - Why: install-multiple ordering matters for some validators; ascending-size
-    puts the base last because the base is typically larger than per-config splits.
-  - Evidence: `AppService.cs:62` `.OrderBy(static p => p.Length)`.
-  - Touches: `AppService.cs`.
-  - Acceptance: a SAI-export `.apks` from a modern Play Store app installs cleanly
-    without "INSTALL_FAILED_INVALID_APK".
-  - Verify: drop a real `.apks` (e.g. an export of WhatsApp); Apps tab reports success.
-
-### Phase 2 — Plug the loose ends
-
-- [ ] **P1 C-03** — HTTP proxy applied to DownloadService
-  - Why: Settings field is persisted but ignored.
-  - Touches: DownloadService ctor takes SettingsService; HttpClientHandler.Proxy
-    is set from the override.
-  - Acceptance: set a proxy in Settings, restart, run the cmdline-tools download;
-    the proxy log shows the request.
-- [ ] **P1 C-04** — Cert-mismatch warning before install
-  - Why: R-08 was half-implemented — verifies but never compares against installed.
-  - Touches: ApkSignerService.InstalledCertShaAsync wired into
-    AppsViewModel.VerifyBeforeInstallAsync; aapt2 path added to SdkLocator;
-    new ConfirmDialog on mismatch.
-  - Acceptance: re-sign a known APK with a new cert; install attempt raises a
-    confirm dialog showing both SHAs.
-- [ ] **P1 C-05** — `allowBackup=false` pre-flight (was A-19)
-  - Why: only P1 item never shipped.
-  - Touches: MigrationService probe + MigrateView column.
-  - Acceptance: a com.discord-style package is marked ⚠ and its data leg is
-    skipped by default.
-- [ ] **P1 C-06** — Application icon + window icon
-  - Why: branding + SmartScreen first impression.
-  - Touches: Assets/aep.ico, csproj, MainWindow.xaml.
-  - Acceptance: alt-tab card and Explorer thumbnail show a non-default icon.
-
-### Phase 3 — Polish + parity
-
-- [ ] **P2 C-07** — R-03 Magisk module manager
-  - Touches: new MagiskService, ModulesViewModel + View, sub-tab or expander on Root.
-  - Acceptance: install Shamiko on a rooted API 35 AVD; `magisk module list` returns it.
-- [ ] **P2 C-08** — Tests for Duplicate, ExtractBundle, PreviewWipe, PresetService
-  merge, HashVerificationService manifest plumbing
-  - Touches: `AndroidEmulatorPlus.Tests/` new files + Fixtures.
-  - Acceptance: `dotnet test` reports the 5 new fixtures green.
-- [ ] **P2 C-09** — Lift Process.Start callers into ProcessRunner helpers
-  - Touches: ProcessRunner.RunWithStdinAsync + StreamAsync; 8 callers.
-  - Acceptance: only ProcessRunner contains `Process.Start` (grep verifies).
-- [ ] **P2 C-10** — Show-wizard-again button in Settings
-  - Touches: SettingsDialog.
-  - Acceptance: clicking the button re-opens the welcome wizard.
-- [ ] **P2 C-11** — Migrate cache refresh after Apps tab export/import
-  - Touches: AppsViewModel calls a shared cache-changed event.
-- [ ] **P2 C-12** — DynamicResource sweep for live theme swap
-  - Touches: Themes/Styles.xaml + every view brush reference + ThemeService.
-- [ ] **P2 C-17** — README screenshots + landing image
-  - Touches: docs/screenshots/, README.md.
-
-### Phase 4 — P3 polish
-
-- [ ] **P3 C-13** — Compute sizes covers all rows
-- [ ] **P3 C-14** — Welcome wizard auto-skips completed steps
-- [ ] **P3 C-15** — Remove duplicate Theme picker on Install tab
-- [ ] **P3 C-16** — "Auto-launch scrcpy after boot" toggle
-- [ ] **P3 C-18** — Atomic write for settings.json (write-tmp + rename)
-- [ ] **P3 C-19** — Refactor AppsViewModel / AvdViewModel into smaller services
-- [ ] **P3 C-20** — MSIX or NSIS installer
-- [ ] **P3 R-07** — Avalonia port (Linux + macOS)
+The active checklist was consolidated into [ROADMAP.md](ROADMAP.md) on
+2026-05-25. Older unchecked C-NN items in this research pass have either shipped
+or been narrowed into the remaining roadmap entries there.
 
 ---
 
 ## Quick Wins
 
-These items can ship inside C-01 (the version bump) or in a single dedicated commit:
-
-- Reconcile `ROADMAP.md`'s "Quick wins" section — entries B-12..B-20 are listed as
-  unchecked but all 8 actually shipped in batch-1 (commit `5676326`).
-- Bump `MainWindow.xaml` title and sidebar version pill alongside the csproj
-  `<Version>` (CLAUDE.md mandates this).
-- Add `<ApplicationManifest>` icon to make Explorer pretty even before C-06's
-  full icon set lands.
-- Trim the bundle staging dir in `AppService.ExtractBundle`'s exception path — it
-  currently leaves the work dir if the zip extraction itself throws. The finally
-  block only catches the success path.
-- Fix `MigrateView.xaml` "Force-stop on source phone" tooltip wording — currently
-  reads "Closes the app on the phone …" but the implementation also runs on the
-  *emulator* side (already in place via existing `am force-stop`). Minor.
+Retired. The active quick wins from this pass were either shipped or converted
+into the current [ROADMAP.md](ROADMAP.md) checklist.
 
 ---
 
 ## Larger Bets
 
-- **C-07 Magisk module manager** — touches Root flow, list-of-modules curation,
-  install/uninstall lifecycle.
-- **C-12 DynamicResource sweep** — touches every brush reference in the
-  codebase, ~60 sites.
 - **R-07 Avalonia port** — XAML mostly compatible, but `Process` plumbing,
   `Microsoft.Win32.OpenFileDialog`, `OpenFolderDialog`, `SaveFileDialog`,
   `System.Windows.Clipboard` all need shims. Defer until v0.3+.
@@ -765,20 +667,14 @@ These items can ship inside C-01 (the version bump) or in a single dedicated com
 
 ## Open Questions
 
-These genuinely block prioritization or implementation:
+These genuinely block release or larger-scope implementation:
 
-1. **rootAVD SHA**: A-03 needs a verified rootAVD revision to lock the pin.
-   Smoke-test on API 35 + 36 Google Play AVDs is the gating step.
-2. **rootAVD LISTONLY entry-point name**: `RootService.DryRunAsync` calls
-   `bash rootAVD.sh ListAllAVDs`. Verify this matches newbit's current
-   script — the README likely says `LISTONLY=1` as an env var; if so, change
-   the implementation to set that env var instead.
-3. **Magisk APK hash policy**: TOFU mode is shipping; should v0.2 ship with
-   *one* known-good Magisk hash baked in (the latest as of release) so the
-   manifest isn't empty? Or stay TOFU and expect users to populate?
-4. **Icon design**: who designs / commissions the AEP icon? Pixel-art Android
-   robot variant is the obvious shape; need a source.
-5. **GitHub Actions billing**: SysAdminDoc org runners are blocked at
-   allocation per the memory note. Does v0.2.0 release through the CI
-   pipeline, or as a one-off local `dotnet publish` on the maintainer's
-   desktop?
+1. **Release smoke environment**: v0.2.0 still needs API 35 and API 36 Google
+   Play AVD root-flow smoke tests on a machine with Android SDK/emulator images.
+2. **GitHub Actions billing**: SysAdminDoc org runners were previously blocked
+   at allocation. Confirm whether v0.2.0 releases through CI or a one-off local
+   `dotnet publish`.
+3. **README screenshots**: requires launching the WPF app on a desktop test
+   machine and capturing each tab in real use.
+4. **Avalonia scope**: R-07 needs concrete acceptance criteria before starting a
+   cross-platform UI migration.

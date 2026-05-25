@@ -176,9 +176,13 @@ public sealed class AdbService
                 timeout: TimeSpan.FromSeconds(30),
                 ct: ct);
         }
-        catch (OperationCanceledException)
+        catch (TimeoutException)
         {
             return new ProcessResult(-1, "", "adb pair timed out after 30s");
+        }
+        catch (OperationCanceledException)
+        {
+            return new ProcessResult(-1, "", "adb pair cancelled");
         }
     }
 

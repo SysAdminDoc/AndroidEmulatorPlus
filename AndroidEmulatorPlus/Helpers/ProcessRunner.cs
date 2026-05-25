@@ -68,6 +68,11 @@ public static class ProcessRunner
         {
             await proc.WaitForExitAsync(timeoutCts.Token);
         }
+        catch (OperationCanceledException) when (!ct.IsCancellationRequested && timeout.HasValue)
+        {
+            try { if (!proc.HasExited) proc.Kill(entireProcessTree: true); } catch { }
+            throw new TimeoutException($"{exe} exceeded timeout of {timeout.Value}.");
+        }
         catch (OperationCanceledException)
         {
             try { if (!proc.HasExited) proc.Kill(entireProcessTree: true); } catch { }
@@ -128,6 +133,11 @@ public static class ProcessRunner
             await proc.WaitForExitAsync(linked.Token);
             return new ProcessResult(proc.ExitCode, await stdoutTask, await stderrTask);
         }
+        catch (OperationCanceledException) when (!ct.IsCancellationRequested && timeout.HasValue)
+        {
+            try { if (!proc.HasExited) proc.Kill(entireProcessTree: true); } catch { }
+            throw new TimeoutException($"{exe} exceeded timeout of {timeout.Value}.");
+        }
         catch (OperationCanceledException)
         {
             try { if (!proc.HasExited) proc.Kill(entireProcessTree: true); } catch { }
@@ -175,6 +185,11 @@ public static class ProcessRunner
         {
             await proc.WaitForExitAsync(linked.Token);
         }
+        catch (OperationCanceledException) when (!ct.IsCancellationRequested && timeout.HasValue)
+        {
+            try { if (!proc.HasExited) proc.Kill(entireProcessTree: true); } catch { }
+            throw new TimeoutException($"{exe} exceeded timeout of {timeout.Value}.");
+        }
         catch (OperationCanceledException)
         {
             try { if (!proc.HasExited) proc.Kill(entireProcessTree: true); } catch { }
@@ -198,6 +213,8 @@ public static class ProcessRunner
         if (extraEnv != null)
             foreach (var kv in extraEnv)
                 psi.Environment[kv.Key] = kv.Value;
-        return Process.Start(psi)!;
+        var proc = new Process { StartInfo = psi, EnableRaisingEvents = true };
+        proc.Start();
+        return proc;
     }
 }

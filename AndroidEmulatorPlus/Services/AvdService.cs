@@ -55,6 +55,7 @@ public sealed class AvdService
 
     public static void WriteIni(string path, IDictionary<string, string> updates)
     {
+        var normalizedUpdates = new Dictionary<string, string>(updates, StringComparer.OrdinalIgnoreCase);
         var lines = File.Exists(path) ? File.ReadAllLines(path).ToList() : new List<string>();
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         for (int i = 0; i < lines.Count; i++)
@@ -64,13 +65,13 @@ public sealed class AvdService
             var eq = t.IndexOf('=');
             if (eq <= 0) continue;
             var key = t[..eq].Trim();
-            if (updates.TryGetValue(key, out var v))
+            if (normalizedUpdates.TryGetValue(key, out var v))
             {
                 lines[i] = $"{key}={v}";
                 seen.Add(key);
             }
         }
-        foreach (var kv in updates)
+        foreach (var kv in normalizedUpdates)
             if (!seen.Contains(kv.Key))
                 lines.Add($"{kv.Key}={kv.Value}");
         File.WriteAllLines(path, lines);
@@ -112,9 +113,8 @@ public sealed class AvdService
             return await ProcessRunner.RunWithStdinAsync("cmd.exe", args, new[] { "no" },
                 timeout: CreateAvdTimeout, ct: ct);
         }
-        catch (OperationCanceledException)
+        catch (TimeoutException)
         {
-            if (ct.IsCancellationRequested) throw;
             _log.Error($"avdmanager create exceeded {CreateAvdTimeout.TotalMinutes:0} min — killed.");
             return new ProcessResult(-1, "", "avdmanager create timed out");
         }

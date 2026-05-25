@@ -84,8 +84,8 @@
                     <CheckBox Content="External data (/sdcard/Android/data)" IsChecked="{Binding DoExternal}" Margin="0,0,18,0"/>
                     <CheckBox Content="OBB (game data — can be huge)" IsChecked="{Binding DoObb}" Margin="0,0,18,0" ToolTip="Copies /sdcard/Android/obb/&lt;pkg&gt; — opt-in because game OBBs are often multi-GB"/>
                 </WrapPanel>
-                <CheckBox Content="Force-stop on source phone before tar" IsChecked="{Binding ForceStopOnPhone}" Margin="0,8,0,0"
-                          ToolTip="Closes the app on the phone before tarring /data/data so the SQLite databases aren't captured mid-write."/>
+                <CheckBox Content="Force-stop source phone before tar" IsChecked="{Binding ForceStopOnPhone}" Margin="0,8,0,0"
+                          ToolTip="Closes the app on the phone before tarring /data/data so SQLite databases are not captured mid-write. The target emulator app is also stopped before restore."/>
                 <CheckBox Content="Force-migrate no-backup apps (override allowBackup=false skip)" IsChecked="{Binding ForceDataForNoBackup}" Margin="0,4,0,0"
                           ToolTip="By default the data leg is skipped for packages with android:allowBackup=&quot;false&quot; because the restored data is usually rejected. Enable to push it anyway."/>
                 <StackPanel Orientation="Horizontal" Margin="0,12,0,0">

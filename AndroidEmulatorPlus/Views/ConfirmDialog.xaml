@@ -55,7 +55,9 @@
                        Foreground="{DynamicResource YellowBrush}"
                        TextWrapping="Wrap"
                        Margin="0,0,0,6"/>
-            <TextBox x:Name="TypedConfirmBox" TextChanged="TypedConfirmBox_TextChanged"/>
+            <TextBox x:Name="TypedConfirmBox"
+                     AutomationProperties.Name="Typed confirmation text"
+                     TextChanged="TypedConfirmBox_TextChanged"/>
         </StackPanel>
 
         <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right">

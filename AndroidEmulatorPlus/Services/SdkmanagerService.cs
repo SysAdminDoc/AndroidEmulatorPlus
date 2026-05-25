@@ -50,9 +50,14 @@ public sealed class SdkmanagerService
             _log.Warning($"sdkmanager --licenses exited {r.ExitCode}: {r.Combined.Trim()}");
             return false;
         }
+        catch (TimeoutException)
+        {
+            _log.Error("sdkmanager --licenses timed out.");
+            return false;
+        }
         catch (OperationCanceledException)
         {
-            _log.Error("sdkmanager --licenses timed out / cancelled.");
+            _log.Error("sdkmanager --licenses cancelled.");
             return false;
         }
     }
@@ -81,9 +86,14 @@ public sealed class SdkmanagerService
                 ct: ct);
             return r.Success;
         }
+        catch (TimeoutException)
+        {
+            _log.Error($"sdkmanager install timed out ({string.Join(", ", pkgs)}).");
+            return false;
+        }
         catch (OperationCanceledException)
         {
-            _log.Error($"sdkmanager install timed out / cancelled ({string.Join(", ", pkgs)}).");
+            _log.Error($"sdkmanager install cancelled ({string.Join(", ", pkgs)}).");
             return false;
         }
     }

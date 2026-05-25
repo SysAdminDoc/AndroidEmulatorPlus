@@ -1,6 +1,7 @@
 <UserControl x:Class="AndroidEmulatorPlus.Views.RootView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="clr-namespace:AndroidEmulatorPlus.Views">
     <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="32,24">
         <StackPanel MaxWidth="900" HorizontalAlignment="Left">
             <TextBlock Style="{StaticResource HeaderText}" Text="Root via Magisk"/>
@@ -18,7 +19,7 @@
                 </StackPanel>
             </Border>
 
-            <Border Style="{StaticResource Card}" xmlns:views="clr-namespace:AndroidEmulatorPlus.Views"
+            <Border Style="{StaticResource Card}"
                     Background="{DynamicResource SurfaceBrush}"
                     Visibility="{Binding NeedsLaunch, Converter={x:Static views:BoolToVisibilityConverter.Instance}}">
                 <StackPanel>
@@ -39,7 +40,7 @@
                 <StackPanel>
                     <TextBlock Style="{StaticResource SectionHeader}" Text="Actions"/>
                     <StackPanel Orientation="Horizontal">
-                        <Button Content="Root with Latest Magisk" Style="{StaticResource PrimaryButton}" Command="{Binding RootCommand}" IsEnabled="{Binding IsBusy, Converter={x:Static views:NotBoolConverter.Instance}}" xmlns:views="clr-namespace:AndroidEmulatorPlus.Views"/>
+                        <Button Content="Root with Latest Magisk" Style="{StaticResource PrimaryButton}" Command="{Binding RootCommand}" IsEnabled="{Binding IsBusy, Converter={x:Static views:NotBoolConverter.Instance}}"/>
                         <Button Content="✗ Cancel" Style="{StaticResource DangerButton}" Margin="8,0,0,0"
                                 Command="{Binding CancelCommand}"
                                 Visibility="{Binding IsBusy, Converter={x:Static views:BoolToVisibilityConverter.Instance}}"/>

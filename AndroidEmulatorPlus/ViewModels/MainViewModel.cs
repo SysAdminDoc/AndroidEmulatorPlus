@@ -74,7 +74,6 @@ public sealed partial class MainViewModel : ObservableObject
         // C-10: if Settings → "Show welcome wizard…" reset HasSeenWizard, reopen it.
         if (!_settings.Current.HasSeenWizard)
         {
-            var main = (App)System.Windows.Application.Current;
             var sdk = App.Services.GetService(typeof(SdkLocator)) as SdkLocator;
             var avds = App.Services.GetService(typeof(AvdService)) as AvdService;
             if (sdk is not null && avds is not null)

@@ -6,6 +6,12 @@ All notable changes to this project will be documented here. Format follows [Kee
 
 ### Added
 
+- Repository-level `global.json` pins builds to .NET 9 with feature-band
+  roll-forward, matching the `net9.0-windows` target and CI setup.
+- Quote-aware free-form Console command parsing. `adb emu` commands such as
+  `sms send 5551234 "Hello, world"` now preserve the SMS body as one argument;
+  malformed quotes produce a warning instead of a bad command. Covered by
+  `ConsoleCommandParserTests`.
 - `BundleInstallerService` (C-19) extracts the bundle-install + apksigner verify
   pipeline out of `AppsViewModel`. Slimmer view-model; service stays UI-agnostic
   via an `onSignerMismatch` callback.
@@ -54,6 +60,11 @@ All notable changes to this project will be documented here. Format follows [Kee
 
 ### Changed
 
+- `ProcessRunner` now throws `TimeoutException` for internal timeouts while
+  preserving `OperationCanceledException` for user cancellation. SDK manager,
+  AVD creation, rootAVD, and adb pairing log timeout vs cancellation separately.
+- Logcat view updates are batched on a 100 ms dispatcher timer instead of
+  dispatching every incoming line individually.
 - v0.2.0 → 0.2.0 version pinned across csproj (`<Version>` / `<FileVersion>` /
   `<InformationalVersion>`), `MainWindow.xaml` Title + sidebar pill,
   `MainViewModel` startup log line, README badge.
@@ -70,6 +81,14 @@ All notable changes to this project will be documented here. Format follows [Kee
 
 ### Fixed
 
+- `AppsView.xaml` and `RootView.xaml` now declare the shared converter namespace
+  at the root, fixing XAML compile failures in the Apps and Root views.
+- `AvdService.WriteIni` treats incoming update keys case-insensitively, matching
+  the parser and avoiding duplicate INI keys such as `hw.ramSize` /
+  `HW.RAMSIZE`.
+- `ConfirmDialog` gives the typed-confirm input an automation name for screen
+  readers, and the Migrate force-stop tooltip now states that the target
+  emulator app is also stopped before restore.
 - `SettingsService.Save` writes atomically (C-18): `settings.json.tmp` then
   `File.Replace` into place. A crash mid-write can no longer corrupt the file
   App.OnStartup reads before any view binds.

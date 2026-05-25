@@ -55,7 +55,6 @@ public sealed class EmulatorService
         var proc = ProcessRunner.StartDetached(_sdk.EmulatorRequired, args,
             workingDir: System.IO.Path.GetDirectoryName(_sdk.EmulatorRequired));
         _children[avdName] = proc;
-        proc.EnableRaisingEvents = true;
         proc.Exited += (_, _) => { try { _children.TryRemove(avdName, out _); } catch { } };
         return proc;
     }

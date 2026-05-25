@@ -1,4 +1,5 @@
 using AndroidEmulatorPlus.Helpers;
+using System.Text;
 
 namespace AndroidEmulatorPlus.Services;
 
@@ -32,6 +33,76 @@ public sealed class ConsoleService
         var args = new List<string> { "-s", serial, "emu" };
         args.AddRange(emuArgs);
         return ProcessRunner.RunAsync(_sdk.AdbRequired, args, extraEnv: NoPathConv, ct: ct);
+    }
+
+    /// <summary>
+    /// Splits a free-form emulator-console command into argv tokens. Whitespace
+    /// separates tokens, while single or double quotes preserve spaces inside an
+    /// argument, e.g. <c>sms send 5551234 "Hello, world"</c>.
+    /// </summary>
+    public static IReadOnlyList<string> ParseEmuArgs(string input)
+    {
+        var args = new List<string>();
+        var current = new StringBuilder();
+        char? quote = null;
+        var tokenStarted = false;
+        var escaping = false;
+
+        foreach (var ch in input)
+        {
+            if (escaping)
+            {
+                current.Append(ch);
+                tokenStarted = true;
+                escaping = false;
+                continue;
+            }
+
+            if (quote is not null)
+            {
+                if (ch == '\\')
+                {
+                    escaping = true;
+                    tokenStarted = true;
+                    continue;
+                }
+                if (ch == quote)
+                {
+                    quote = null;
+                    tokenStarted = true;
+                    continue;
+                }
+                current.Append(ch);
+                tokenStarted = true;
+                continue;
+            }
+
+            if (ch is '"' or '\'')
+            {
+                quote = ch;
+                tokenStarted = true;
+                continue;
+            }
+
+            if (char.IsWhiteSpace(ch))
+            {
+                if (tokenStarted)
+                {
+                    args.Add(current.ToString());
+                    current.Clear();
+                    tokenStarted = false;
+                }
+                continue;
+            }
+
+            current.Append(ch);
+            tokenStarted = true;
+        }
+
+        if (escaping) current.Append('\\');
+        if (quote is not null) throw new FormatException("Unclosed quote in console command.");
+        if (tokenStarted) args.Add(current.ToString());
+        return args;
     }
 
     public Task<ProcessResult> GeoFixAsync(string serial, double lng, double lat, CancellationToken ct = default)
