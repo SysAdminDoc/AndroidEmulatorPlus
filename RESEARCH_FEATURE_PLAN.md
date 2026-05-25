@@ -1,1042 +1,784 @@
-# Project Research and Feature Plan — Pass 2 (2026-05-25)
+# Project Research and Feature Plan — Pass 3 (2026-05-25, post-batch-25)
 
-Companion research document to [ROADMAP.md](ROADMAP.md). Cross-references the existing
-R-NN / A-NN tags and adds B-NN tags for new items surfaced in this audit. Where an item
-duplicates ROADMAP wording, the entry here adds evidence, verification plan, and
-acceptance criteria — it does **not** restate the action.
-
-Build constraint: the VMware VM this repo lives on has **no .NET SDK**, so every code
-change is best-effort and must be `dotnet build`-verified on a host with the SDK before
-release. The user already has this documented; nothing in this plan assumes local build.
-
----
+Supersedes the pass-2 plan (in git history at commit `b0525db`). Pass 3 audits the
+much larger codebase that resulted from the autonomous implementation loop in commits
+`5676326..8502f22`; most of pass-2's `B-NN` items have shipped. New items in this pass
+use the `C-NN` tag prefix.
 
 ## Executive Summary
 
-AndroidEmulatorPlus collapses a ~30-step CLI workflow (SDK install → AVD create → Magisk
-root → phone-to-emulator data migration → debloat → tune) into a single WPF app. The
-v0.1.0 release is small (12 services, 7 view-models, 6 views) but covers the full
-loop, and the post-v0.1.0 audit pass already shipped 13 of the 41 audit items
-(`Unreleased` block in [CHANGELOG.md](CHANGELOG.md)). The product's strongest shape is
-**"one Windows EXE that owns the whole rooted-emulator-with-real-data workflow"** —
-something Android Studio Device Manager, Genymotion, BlueStacks, and rootAVD itself
-each only partially provide.
+AndroidEmulatorPlus is now a 5000-line, 8-tab Windows WPF emulator manager whose
+v0.2.0-track surface area is competitive with Android Studio's Device Manager + scrcpy
+launcher + Magisk rootAVD wrapper combined. Of the original 41 audit items (R/A/B
+tags), **36 are checked**, the remaining 5 are either pending external validation
+(A-03 rootAVD SHA, R-03 Magisk modules, R-07 Avalonia) or partial (R-09
+bandwidth-aware progress). What's now most valuable is **shipping a v0.2.0
+release** — none of this work is reachable to a user yet because the version pin,
+release tag, manifest population, and signed binary are all outstanding.
 
-Highest-value next moves, in priority order:
+Top opportunities, in order:
 
-1. **Verify a real rootAVD SHA and lock the pin** — finishes the supply-chain hardening
-   half-started in [RootService.cs:12](AndroidEmulatorPlus/Services/RootService.cs#L12).
-   (ROADMAP **A-03**, evidence: pinned constant currently still reads `"master"`.)
-2. **SHA-256 verify Magisk APK + cmdline-tools ZIP** before use (ROADMAP **A-04**, P0).
-3. **Fix the `NotBoolToVisibilityConverter` mis-binding on `IsEnabled`** — Download
-   Cmdline Tools and Root buttons are never actually disabled while busy (new **B-01**,
-   evidence: [InstallView.xaml:83](AndroidEmulatorPlus/Views/InstallView.xaml#L83),
-   [RootView.xaml:25](AndroidEmulatorPlus/Views/RootView.xaml#L25)).
-4. **Ship the rename popup that A-25's backend is waiting on** — the command exists,
-   the XAML doesn't (ROADMAP **A-25**).
-5. **Cancel button + transfer-cache size indicator** during long ops (ROADMAP **A-01
-   cancel** + **A-05**).
-6. **`.xapk` / `.apks` extractor** — the file-dialog filter and the drag-drop list
-   advertise both, but `adb install` will reject them (new **B-02**).
-7. **Snapshot manager** — Studio parity, low-risk read of `snapshots/` (ROADMAP **R-06**).
-8. **First-launch wizard** that chains Install → Create AVD → Root → Migrate
-   (ROADMAP **R-02**).
-9. **Logcat viewer** (ROADMAP **A-15**) — the missing piece for diagnosing failed
-   migrations from inside the app.
-10. **GitHub Actions release build** (ROADMAP **A-36**) — without CI the only artifact
-    today is `bin/Release/.../AndroidEmulatorPlus.exe` on the author's machine.
+1. **C-01** Cut a v0.2.0 release — version bump across the 5 places CLAUDE.md mandates, populate `Resources/known-hashes.json` with verified Magisk + cmdline-tools hashes, lock the rootAVD SHA, then `git tag v0.2.0` to trigger the existing CI release workflow.
+2. **C-02** Audit + fix the bundle-install ordering bug: `AppService.ExtractBundle` orders inner APKs by ascending size, but the base APK is typically *larger* than its config splits — install-multiple may put a split first and fail signature checks on some devices.
+3. **C-03** Wire `SettingsService.HttpProxy` into `DownloadService`'s `HttpClient` — the field is persisted and surfaced in the UI but never honored.
+4. **C-04** Wire `ApkSignerService.InstalledCertShaAsync` into the verify-before-install path so users actually get the "this is a different signer than what's installed" warning the feature was sold as.
+5. **C-05** A-19 `allowBackup=false` pre-flight in the Migrate pipeline (only P1 item never shipped).
+6. **C-06** Add an "App icon" to the WPF window + installer manifest — currently uses the .NET default icon and SmartScreen warns on first run.
+7. **C-07** R-03 Magisk module manager — install Zygisk modules (Shamiko, LSPosed, PlayIntegrityFork) from inside the tool against the rooted emulator.
+8. **C-08** Tests project coverage gaps: `AvdService.Duplicate` (file copy + ini rewrite — highest data-loss risk in the recently-added code is not tested), `AppService.ExtractBundle`, `ConfigService.PreviewWipe`, `PresetService` merge.
+9. **C-09** Lift `Process.Start` re-implementations in `RootService.PatchAsync`, `RootService.DryRunAsync`, `AvdService.CreateAsync`, `SdkmanagerService.AcceptLicensesAsync`, `SdkmanagerService.InstallAsync` into a `ProcessRunner.RunWithStdinAsync` helper. CLAUDE.md says `Helpers/ProcessRunner` is the sole `Process.Start` site; that invariant is broken in 5 places.
+10. **C-10** Add a Show-wizard-again entry to Settings — the first-launch wizard is one-shot and there's no path back.
 
-The product should stay scoped to **"manage emulator + migrate from phone, on Windows."**
-Linux/macOS ports (R-07), scrcpy embedding (A-39), and full Wear/TV profile UIs (A-38)
-should remain P3 until the P0/P1 hardening lands.
+The rest is polish, documentation, and stretch goals (R-07 Avalonia port, R-03 Magisk modules, screenshot-driven README).
 
 ---
 
 ## Evidence Reviewed
 
-### Local files inspected (full read)
+### Local files inspected
 
-- [README.md](README.md), [CHANGELOG.md](CHANGELOG.md), [ROADMAP.md](ROADMAP.md),
-  [CLAUDE.md](CLAUDE.md), [LICENSE](LICENSE), [.gitignore](.gitignore)
-- [AndroidEmulatorPlus.csproj](AndroidEmulatorPlus/AndroidEmulatorPlus.csproj),
-  [App.xaml.cs](AndroidEmulatorPlus/App.xaml.cs),
-  [app.manifest](AndroidEmulatorPlus/app.manifest),
-  [MainWindow.xaml](AndroidEmulatorPlus/MainWindow.xaml),
-  [MainWindow.xaml.cs](AndroidEmulatorPlus/MainWindow.xaml.cs)
-- All 12 services in [Services/](AndroidEmulatorPlus/Services/)
-- All 7 view-models in [ViewModels/](AndroidEmulatorPlus/ViewModels/)
-- All 6 views + code-behinds in [Views/](AndroidEmulatorPlus/Views/) plus all 4 converters
-- All 3 models in [Models/](AndroidEmulatorPlus/Models/)
-- [Themes/Dark.xaml](AndroidEmulatorPlus/Themes/Dark.xaml) (full 292 lines)
-- [Helpers/ProcessRunner.cs](AndroidEmulatorPlus/Helpers/ProcessRunner.cs)
+- All 23 service files in [Services/](AndroidEmulatorPlus/Services/) (line counts:
+  `wc -l Services/*.cs` returns 2603 lines total).
+- All 9 view-models in [ViewModels/](AndroidEmulatorPlus/ViewModels/) (2045 lines).
+- All 32 XAML + xaml.cs files in [Views/](AndroidEmulatorPlus/Views/).
+- [App.xaml](AndroidEmulatorPlus/App.xaml) + [App.xaml.cs](AndroidEmulatorPlus/App.xaml.cs).
+- [MainWindow.xaml](AndroidEmulatorPlus/MainWindow.xaml) + [MainWindow.xaml.cs](AndroidEmulatorPlus/MainWindow.xaml.cs).
+- [AndroidEmulatorPlus.csproj](AndroidEmulatorPlus/AndroidEmulatorPlus.csproj), [app.manifest](AndroidEmulatorPlus/app.manifest).
+- [Themes/Mocha.xaml](AndroidEmulatorPlus/Themes/Mocha.xaml), [Themes/Latte.xaml](AndroidEmulatorPlus/Themes/Latte.xaml), [Themes/Styles.xaml](AndroidEmulatorPlus/Themes/Styles.xaml).
+- All 5 test files in [AndroidEmulatorPlus.Tests/](AndroidEmulatorPlus.Tests/).
+- [.github/workflows/build.yml](.github/workflows/build.yml).
+- All embedded resources: [Resources/known-hashes.json](AndroidEmulatorPlus/Resources/known-hashes.json), [Resources/bloat-presets.json](AndroidEmulatorPlus/Resources/bloat-presets.json).
+- [README.md](README.md), [CHANGELOG.md](CHANGELOG.md), [ROADMAP.md](ROADMAP.md), [CLAUDE.md](CLAUDE.md), [LICENSE](LICENSE), [.gitignore](.gitignore).
 
 ### Git history range
 
-`1b16465..aa213c6` (8 commits, branch `main` only, single remote
-`SysAdminDoc/AndroidEmulatorPlus`). Uncommitted working-copy edits (Magisk asset
-filter, `LatestCmdlineToolsWindowsUrlAsync`, accel-check on Install panel) inspected
-via `git diff`. ROADMAP/CHANGELOG `[x]` entries verified against actual source.
+`b0525db..8502f22` (24 commits since the pass-2 plan landed). No branches besides
+`main`. Single remote `SysAdminDoc/AndroidEmulatorPlus`. Push works from this VM.
 
-### External references (primary docs only)
+### External / primary sources
 
-- Android SDK command-line tools download page — `https://developer.android.com/studio`
-  (scraped at runtime by the new `LatestCmdlineToolsWindowsUrlAsync`).
-- `emulator -accel-check` — documented at
-  `https://developer.android.com/studio/run/emulator-acceleration`. Empirically prints
-  one-line verdicts like "Hyper-V is enabled" or "HAXM is not installed".
-- `avdmanager create avd / move avd / delete avd` syntax — `cmdline-tools/latest/bin/`.
-- `adb pair host:port` + `adb connect host:port` (introduced API 30) — replaces USB-only
-  debugging on modern phones.
-- Magisk releases JSON — `https://api.github.com/repos/topjohnwu/Magisk/releases/latest`.
-- rootAVD — `https://gitlab.com/newbit/rootAVD`.
-- Catppuccin Mocha palette + Latte equivalents — `https://github.com/catppuccin/catppuccin`.
+- Android emulator console docs — `developer.android.com/studio/run/emulator-console`
+  (verifies the `geo fix`, `power capacity`, `gsm call`, `sms send`, `network speed/delay`
+  commands consumed by [ConsoleService.cs](AndroidEmulatorPlus/Services/ConsoleService.cs)).
+- `adb pair` syntax — `developer.android.com/tools/adb` (verifies the `host:port code`
+  positional form used by [AdbService.PairAsync](AndroidEmulatorPlus/Services/AdbService.cs)).
+- `apksigner verify --print-certs` output format — primary docs at
+  `developer.android.com/tools/apksigner` confirm the "Signer #N certificate SHA-256
+  digest" regex used in [ApkSignerService.ExtractCertSha](AndroidEmulatorPlus/Services/ApkSignerService.cs).
+- rootAVD — `gitlab.com/newbit/rootAVD` — the `LISTONLY` mode is documented as
+  `LISTONLY=1` env var in the project README. **Likely:** the bash function name
+  `ListAllAVDs` used in `RootService.DryRunAsync` may not be the canonical entry
+  — needs live validation against the current rootAVD revision.
+- Catppuccin Latte palette hex values — verified against
+  `github.com/catppuccin/catppuccin/blob/main/docs/style-guide.md`.
 
 ### Verification gaps
 
-- **Cannot build locally on this VM** — `dotnet` SDK absent, so every "verify" step
-  below assumes the user runs it on a desktop with .NET 9 SDK installed.
-- **Cannot exercise the runtime flow** — no emulator/phone attached to the agent's
-  environment; behavior claims about `getprop ro.kernel.qemu.avd_name`, `tar` flavor
-  on phones, and `magisk --sqlite` are taken from primary docs / project notes, not
-  observed at runtime here.
-- **rootAVD SHA discovery** needs newbit's GitLab to be reachable and a manual
-  smoke-test on a real AVD; not performed in this pass.
+- **No .NET SDK on this VM** — none of the code added since pass-2 has been
+  `dotnet build`-verified locally. The CI workflow on `windows-latest` is the
+  authoritative build, but it can't run yet (memory note:
+  SysAdminDoc-org GitHub Actions billing is locked).
+- **No runtime exercise** — every "the dialog opens / the button works" claim
+  is from reading the XAML, not from a running app. A 30-minute smoke test on a
+  desktop with .NET 9 SDK + Android SDK should cover all 8 tabs.
+- **rootAVD command surface** — `DryRunAsync` calls bash with `ListAllAVDs` as
+  the function name; that's my reading of newbit's script. Verify before merging
+  C-NN tasks that rely on it.
+- **`Magisk` hash entries** — `Resources/known-hashes.json` ships with an empty
+  `magisk` table. Every Magisk install today is trust-on-first-use until those
+  hashes are populated.
 
 ---
 
 ## Current Product Map
 
-### Core workflow (numbered in the sidebar)
+### Tabs / sidebar workflow
 
-1. **Install / SDK** — detect SDK, install cmdline-tools, accel-check, surface crash
-   diagnostics.
-2. **AVDs** — list AVDs, create new from any locally-installed system image, launch /
-   cold-boot / stop / delete / overflow menu (show on disk, desktop shortcut).
-3. **Root** — clone rootAVD, fetch latest Magisk, patch ramdisk, persist Magisk shell
-   policy, un-root via stock-ramdisk restore.
-4. **Migrate from Phone** — list phone packages, transfer APK + `/data/data/<pkg>` +
-   `/sdcard/Android/data/<pkg>` to emulator with UID remap + `restorecon`.
-5. **Apps / Debloat** — list emulator packages, bulk uninstall, batch APK install
-   (file picker + drag-drop), Google/Samsung bloat presets.
-6. **Configure** — RAM/cores/disk sliders, screen W/H/DPI text-boxes, fastboot toggles,
-   qcow2 resize (optionally with overlay wipe).
+1. **① Install / SDK** — SDK detection, cmdline-tools auto-installer (with SHA-256
+   verify + fallback-URL surface), accel-check (with remediation links), crash log
+   viewer, accept-all-licenses, theme picker.
+2. **② AVDs** — list + create AVDs from local images, "Browse online…" picker
+   (sdkmanager UI), per-card actions: ▶ Launch / ■ Stop / Cold Boot / overflow
+   menu (Launch with options, Show on disk, Rename, Duplicate, Desktop shortcut,
+   Snapshots, Delete). Empty-state card when no AVDs.
+3. **③ Root** — Inline "Launch & root" CTA when no emulator attached, Root with
+   Latest Magisk (Cancel-able), Verify+Persist, Un-Root (with confirm), Dry-run
+   LISTONLY, KernelSU manual-procedure note.
+4. **④ Migrate from Phone** — Source/target status, Wi-Fi pair expander, scope
+   toggles (APK / internal / external / OBB), force-stop-on-phone, package list,
+   progress bar, cache usage card with clear buttons.
+5. **⑤ Apps / Debloat** — Filter, Include system/disabled toggles, Verify
+   signatures toggle, Compute sizes, source/disabled tags per row, preset
+   ItemsControl (JSON-driven), uninstall mode radio (adb / user 0), Export data
+   / Import from ZIP, drag-drop install.
+6. **⑥ Configure** — Target AVD, RAM/cores/disk sliders, Screen preset picker,
+   W/H/DPI text boxes, GPU mode picker, fastboot toggles, Resize disk only /
+   Resize + Wipe Data (typed confirm).
+7. **⑦ Logcat** — Priority + package filter, Start/Stop, Clear buffer / view,
+   Save to file. Virtualizing 5000-line ring.
+8. **⑧ Console** — GPS, battery (capacity + status), telephony (gsm call / sms
+   send), network speed/delay, manual clipboard pull/push, free-form `adb emu`
+   command.
 
-### Cross-cutting
+### Top bar (left → right)
 
-- **Top bar** — SDK pill, phone pill, emulator pill, Screenshot button.
-- **Device monitor** — 3-second `adb devices` poll on a background task
-  ([DeviceMonitor.cs:57](AndroidEmulatorPlus/Services/DeviceMonitor.cs#L57)).
-- **Log panel** — 2000-entry ring + rolling daily file at
-  `%LOCALAPPDATA%\AndroidEmulatorPlus\logs\app-YYYYMMDD.log`, pruned after 14 days.
-- **Theme** — Catppuccin Mocha only; corner radii 4/6/8 (strictly no pills, per
-  CLAUDE.md and [Dark.xaml:285-289](AndroidEmulatorPlus/Themes/Dark.xaml#L285-L289)).
+- App name + version pill (`v0.1.0` — stale).
+- SDK status pill, phone status pill, emulator status pill.
+- 📷 Screenshot, 🎥 Record toggle, 🖥 scrcpy, ⚙ Settings.
+
+### Cross-cutting infrastructure
+
+- **DI** — `Microsoft.Extensions.DependencyInjection` in `App.OnStartup`. 23
+  singletons across services + view-models; 1 transient `MainWindow`.
+- **Persistence** — `%LOCALAPPDATA%\AndroidEmulatorPlus\`:
+  `settings.json` (theme, paths, proxy, hasSeenWizard),
+  `crash.log` (unhandled exceptions),
+  `logs/app-YYYYMMDD.log` (rolling 14 days),
+  `cache/` (rootAVD clone + Magisk APK),
+  `transfer/` (migration tarballs + bundle extracts).
+- **Theme** — runtime-swappable palette (Mocha/Latte). Live-swap requires app
+  restart because Styles.xaml uses StaticResource brush references.
+- **Keyboard shortcuts** — Ctrl+1..8 to navigate, F5 refresh, Ctrl+L clear log,
+  Ctrl+R screenshot.
 
 ### Platforms / distribution
 
 - Windows 10/11 x64, .NET 9 WPF (`net9.0-windows`, x64 explicit).
-- `asInvoker` manifest (no elevation), per-monitor v2 DPI, long-path aware.
-- Distribution: source build only. No GitHub Releases, no installer, no Actions CI.
-- Repo public; one remote (`SysAdminDoc/AndroidEmulatorPlus`).
-
-### Storage / data flows
-
-- AVDs: `%USERPROFILE%\.android\avd\<name>.avd\config.ini` (parsed by
-  [AvdService.ParseIni](AndroidEmulatorPlus/Services/AvdService.cs#L41)).
-- SDK probe order: `$ANDROID_HOME` → `$ANDROID_SDK_ROOT` → `%LOCALAPPDATA%\Android\Sdk`
-  → `%USERPROFILE%\AppData\Local\Android\Sdk` → `C:\Android\Sdk` →
-  `%USERPROFILE%\Android\Sdk` ([SdkLocator.cs:61-74](AndroidEmulatorPlus/Services/SdkLocator.cs#L61-L74)).
-- App cache: `%LOCALAPPDATA%\AndroidEmulatorPlus\cache` (rootAVD clone, Magisk.apk).
-- Migration scratch: `%LOCALAPPDATA%\AndroidEmulatorPlus\transfer\` — can grow to
-  many GB; finally-block cleanup is best-effort.
-- Diagnostics: `…\crash.log` + `…\logs\app-YYYYMMDD.log`.
-- Network: only `dl.google.com`, `api.github.com/topjohnwu/Magisk`, `gitlab.com/newbit`,
-  and now `developer.android.com/studio` (cmdline-tools URL scrape).
-
-### User personas (inferred from README + ROADMAP)
-
-- **Power user replicating their phone** — wants daily-driver app set + persistent
-  logins on a desktop emulator without re-pairing every app.
-- **Sideloading enthusiast** — installs LSPosed/Shamiko, needs a rooted Play-Store-
-  capable AVD that doesn't trip Play Integrity.
-- **QA / developer on Windows** — needs an alternative to the 1.2 GB Android Studio
-  install when they only need the AVD lifecycle.
+- No installer; no signed binary; no current release artifact (the CI pipeline
+  is wired but hasn't run — billing dependency).
+- Source clone + `dotnet build` is the only working install path.
 
 ---
 
 ## Feature Inventory
 
-Format: feature → entry point → main code → maturity → coverage → improvement hooks.
+Format: feature → entry → maturity → notes. (Truncated to the items where pass-3
+research surfaced *new* information.)
 
-### ① Install / SDK
+| Feature | Entry | Maturity | Notes / new findings |
+|---|---|---|---|
+| `.apks` / `.xapk` / `.apkm` bundle install | Apps / drag-drop or file picker | **Likely buggy** | `ExtractBundle` sorts inner APKs by ascending size; with split bundles the base APK is usually *larger* (manifest + main resources) and ends up last. Some `install-multiple` consumers (PackageManager v34+) reject when base isn't first. **C-02**. |
+| APK signature verification | Apps / Verify-signatures toggle | **Partial** | `ApkSignerService.InspectAsync` runs and logs the cert SHA-256. The companion `InstalledCertShaAsync` is defined but never called, so the "warn on mismatch with already-installed package" half (R-08) is missing. **C-04**. |
+| HTTP proxy (Settings) | Settings → Network | **Dead** | `SettingsService.HttpProxy` is read+saved but `DownloadService` ignores it. **C-03**. |
+| First-launch wizard | Auto on startup | **One-shot** | No "show wizard again" entry in Settings; once `HasSeenWizard=true`, the only way back is to edit settings.json. **C-10**. |
+| Welcome wizard "Open settings.json" | Settings dialog → "Open settings.json" | Complete | Works — useful for the C-10 workaround. |
+| Theme switcher | Install tab + Settings | Restart required | Confirmed: StaticResource brushes can't live-swap. Restart prompt is shown. DynamicResource sweep is C-12 below. |
+| Snapshot manager | AVD overflow → Snapshots… | Complete | Read-list always works; Save/Load require the emulator to be running (status text says so). |
+| Migrate cache card | Migrate tab | Mostly complete | Doesn't refresh after Apps-tab Export/Import which also writes to `transfer/`. **C-11**. |
+| Multi-AVD process tracking | EmulatorService | Complete | One race noted: setting `EnableRaisingEvents=true` AFTER `Process.Start` means a sub-second-lived emulator could exit before the subscription, leaving a stale entry. Theoretical; not a real concern for emulators. |
+| Console / `adb emu` | Console tab | Complete | Free-form command splits on whitespace — quoted strings with spaces would break. Document or use a real tokenizer. Minor. |
+| OBB transfer | Migrate / OBB toggle | Complete | `tar /sdcard/Android/obb/<pkg>` — works without root for /sdcard. |
+| ZIP export / import | Apps tab | Complete | Import requires the package to already be installed on the target. Microcopy already says so. |
+| Apps "Compute sizes" | Apps tab | Complete | Computes only for `FilteredApps`. After clearing the filter, previously-non-visible rows still show "—". **C-13**. |
+| Logcat tab | Sidebar ⑦ | Complete | Auto-scrolls; 5000-line virtualized ring. Doesn't persist filter across sessions — fine. |
+| Force-stop on phone (A-30) | Migrate scope | Complete | Logs run before the tar; A-30 satisfied. |
+| Phone tar flavor probe (A-29) | Auto on first internal-data leg | Complete | Cached per serial. Good. |
+| Welcome dialog (R-02) | First launch | Complete | Modal blocking; doesn't pre-check SDK install or AVD creation status visually — only via the status TextBlocks per step. Could autoadvance through completed steps. **C-14**. |
+| `ApkSignerService.InstalledCertShaAsync` | — | **Dead code** | Defined, never called. **C-04** uses it. |
+| `MigrationService.TransferOptions` | — | Previously removed | Confirmed deleted in batch-1. |
+| Theme on Settings dialog | Settings → Appearance | Duplicate UI | Theme picker also lives on the Install tab (batch-14). One canonical home is enough; pick Settings, remove the Install tab card. **C-15** (cleanup). |
 
-| Feature | Entry | Code | Maturity | Tests/docs | Improvement |
-|---|---|---|---|---|---|
-| SDK detection | Auto on startup + Refresh button | [SdkLocator.cs](AndroidEmulatorPlus/Services/SdkLocator.cs) | Complete | None / [README.md](README.md) | Probe winget Android SDK package locations; show winget install hint when missing |
-| Cmdline-tools auto-installer | "Download command-line tools" | [InstallViewModel.cs:117](AndroidEmulatorPlus/ViewModels/InstallViewModel.cs#L117) | Partial — no SHA-256, no progress UI | None | A-04 SHA-256, B-03 progress bar |
-| Crash-log surface | Auto-shown on Install tab | [InstallViewModel.cs:64](AndroidEmulatorPlus/ViewModels/InstallViewModel.cs#L64) | Complete | None | Add per-entry stack-trace preview |
-| accel-check | "Run accel-check" | [EmulatorService.cs:41](AndroidEmulatorPlus/Services/EmulatorService.cs#L41) | Partial — no remediation links | None | ROADMAP **A-24** remediation UI |
-| Open SDK folder / Studio page | Buttons | InstallViewModel | Complete | None | — |
+### Tests project (`AndroidEmulatorPlus.Tests/`)
 
-### ② AVDs
-
-| Feature | Entry | Code | Maturity | Tests/docs | Improvement |
-|---|---|---|---|---|---|
-| List AVDs | Auto on tab nav | [AvdService.List()](AndroidEmulatorPlus/Services/AvdService.cs#L19) | Complete | None | Show running pid + uptime |
-| Create AVD | "Create" button | [AvdService.CreateAsync](AndroidEmulatorPlus/Services/AvdService.cs#L96) | Partial — only lists already-installed images | None | ROADMAP **R-01** sdkmanager picker |
-| Launch / Cold boot | Per-card buttons | [EmulatorService.Launch](AndroidEmulatorPlus/Services/EmulatorService.cs#L18) | Partial — only 2 flags | None | ROADMAP **A-23**, **A-33** multi-AVD tracking |
-| Stop | Per-card button on running AVDs | [AvdViewModel.StopAsync](AndroidEmulatorPlus/ViewModels/AvdViewModel.cs#L112) | Complete | None | — |
-| Running indicator | Auto via device monitor | [AvdViewModel.RefreshRunningStateAsync](AndroidEmulatorPlus/ViewModels/AvdViewModel.cs#L65) | Complete | None | Cache `avd_name` per serial to avoid re-shell on every poll |
-| Show on disk | Overflow menu | [AvdViewModel.ShowOnDisk](AndroidEmulatorPlus/ViewModels/AvdViewModel.cs#L124) | Complete | None | — |
-| Desktop shortcut | Overflow menu | [AvdService.CreateDesktopShortcut](AndroidEmulatorPlus/Services/AvdService.cs#L169) | Complete | None | Add Start-Menu shortcut option |
-| Delete AVD | Overflow menu | [AvdService.DeleteAsync](AndroidEmulatorPlus/Services/AvdService.cs#L144) | Partial — no confirmation dialog | None | Confirm-before-delete; current behavior risks accidental loss |
-| **Rename AVD** | **Backend only — no UI** | [AvdService.RenameAsync](AndroidEmulatorPlus/Services/AvdService.cs#L152), [AvdViewModel.RenameAsync](AndroidEmulatorPlus/ViewModels/AvdViewModel.cs#L144), `RenameTarget` property | **Hidden / dead-bound** | None | ROADMAP **A-25** — XAML popup is the only missing piece |
-| Duplicate AVD | Not implemented | — | Missing | — | ROADMAP **A-26** |
-
-### ③ Root
-
-| Feature | Entry | Code | Maturity | Tests/docs | Improvement |
-|---|---|---|---|---|---|
-| rootAVD clone | Auto on "Root" | [RootService.EnsureRootAvdAsync](AndroidEmulatorPlus/Services/RootService.cs#L37) | Partial — pin constant defaults to `"master"` | None | ROADMAP **A-03** — record a verified SHA |
-| Magisk download | Auto on "Root" | [DownloadService.LatestMagiskAsync](AndroidEmulatorPlus/Services/DownloadService.cs#L49) | Complete (debug/stub now filtered) | None | ROADMAP **A-04** SHA-256 verify |
-| Patch ramdisk | "Root with Latest Magisk" | [RootService.PatchAsync](AndroidEmulatorPlus/Services/RootService.cs#L102) | Partial — 10 min timeout but no cancel button | None | ROADMAP **A-01** cancel button |
-| Verify + persist shell policy | "Verify + Persist Policy" | [RootService.PersistShellPolicyAsync](AndroidEmulatorPlus/Services/RootService.cs#L174) | Complete | None | Surface DB write failure to UI |
-| Un-Root | "Un-Root (Restore Ramdisk)" | [RootService.RestoreRamdisk](AndroidEmulatorPlus/Services/RootService.cs#L193) | Partial — destructive, no confirm | None | Add confirm dialog |
-| Module manager | Not implemented | — | Missing | — | ROADMAP **R-03** |
-
-### ④ Migrate from Phone
-
-| Feature | Entry | Code | Maturity | Tests/docs | Improvement |
-|---|---|---|---|---|---|
-| Phone package list | Auto on Refresh | [MigrateViewModel.RefreshAsync](AndroidEmulatorPlus/ViewModels/MigrateViewModel.cs#L38) | Partial — `-3` only | None | ROADMAP **A-18** |
-| APK transfer | "Start Migration" | [MigrationService.TransferApkAsync](AndroidEmulatorPlus/Services/MigrationService.cs#L26) | Complete | None | Bandwidth-aware progress (R-09) |
-| Internal data tar | "Start Migration" | [MigrationService.TransferInternalDataAsync](AndroidEmulatorPlus/Services/MigrationService.cs#L55) | Partial — `--exclude=` may fail on old toybox | None | ROADMAP **A-29**, **A-30** |
-| External data tar | "Start Migration" | [MigrationService.TransferExternalDataAsync](AndroidEmulatorPlus/Services/MigrationService.cs#L104) | Complete | None | OBB pass (R-04) |
-| `allowBackup=false` warning | Not implemented | — | Missing | — | ROADMAP **A-19** |
-| Migration cache cleanup | Best-effort `finally` | [MigrationService.cs:51](AndroidEmulatorPlus/Services/MigrationService.cs#L51) | Risky — orphaned tarballs survive crashes | None | ROADMAP **A-05** |
-| **Dead `TransferOptions` record** | — | [MigrationService.cs:6](AndroidEmulatorPlus/Services/MigrationService.cs#L6) | **Dead code** | — | Remove or wire up (the `ForceStop` field hints at A-30) |
-
-### ⑤ Apps / Debloat
-
-| Feature | Entry | Code | Maturity | Tests/docs | Improvement |
-|---|---|---|---|---|---|
-| Package list | Auto / Refresh | [AppService.ListAsync](AndroidEmulatorPlus/Services/AppService.cs#L17) | Partial — `-3` toggle exists but no source column | None | A-18 |
-| Bulk uninstall | "Uninstall Selected" | [AppsViewModel.UninstallSelectedAsync](AndroidEmulatorPlus/ViewModels/AppsViewModel.cs#L68) | Complete | None | Add `--user 0` mode (debloat preinstalled without uninstall) |
-| Bloat presets | Buttons | [AppService.BloatPresetGoogle/Samsung](AndroidEmulatorPlus/Services/AppService.cs#L38-L62) | Stale — lists are static, won't track new OEM bloat | None | B-04 dynamic preset file shipped in-tree |
-| File-picker install | "Install APK…" | [AppsViewModel.InstallApkAsync](AndroidEmulatorPlus/ViewModels/AppsViewModel.cs#L91) | **Buggy** — claims `.apks` / `.xapk` support but `adb install` rejects them | None | **B-02** — extract bundles before install |
-| Drag-drop install | Drop on Apps tab | [AppsView.xaml.cs:30](AndroidEmulatorPlus/Views/AppsView.xaml.cs#L30) | Same bug as above | None | Same as B-02 |
-| App label / size (`SizeText`) | Per-row | [AndroidApp.cs:19](AndroidEmulatorPlus/Models/AndroidApp.cs#L19) | **Hidden** — `DataSizeBytes` is never populated; column always shows "—" | None | B-05 — populate from `du /data/data/<pkg>` per row, on demand |
-
-### ⑥ Configure
-
-| Feature | Entry | Code | Maturity | Tests/docs | Improvement |
-|---|---|---|---|---|---|
-| RAM / cores / disk sliders | Configure tab | [ConfigViewModel](AndroidEmulatorPlus/ViewModels/ConfigViewModel.cs) | Complete (raw-byte parse now fixed) | None | Show "current vs new" diff before save |
-| Screen W/H/DPI | Three TextBoxes | ConfigView | Partial — no presets | None | ROADMAP **A-21** |
-| GPU mode | Not implemented | — | Missing | — | ROADMAP **A-22** |
-| Boot flags | Two CheckBoxes | ConfigView | Complete | None | — |
-| qcow2 resize | "Resize disk only" | [ConfigService.ResizeDiskAsync](AndroidEmulatorPlus/Services/ConfigService.cs#L24) | Partial — destructive without confirm | None | ROADMAP **A-07** confirmation dialog |
-| Snapshot manager | Not implemented | — | Missing | — | ROADMAP **R-06** |
-
-### Cross-cutting
-
-| Feature | Entry | Code | Maturity | Improvement |
-|---|---|---|---|---|
-| Screenshot | Top-bar button | [MainViewModel.ScreenshotAsync](AndroidEmulatorPlus/ViewModels/MainViewModel.cs#L61) | Complete | Output to clipboard option |
-| Screen record | Not implemented | — | Missing | ROADMAP **A-14** |
-| Logcat viewer | Not implemented | — | Missing | ROADMAP **A-15** |
-| Settings flyout (theme switch, paths) | Not implemented | — | Missing | ROADMAP **A-37** |
-| Keyboard shortcuts | Not implemented | — | Missing | ROADMAP **A-27** |
-| First-launch wizard | Not implemented | — | Missing | ROADMAP **R-02** |
+- 5 test classes, 13 test methods (counted manually).
+- Covered: `ParseIni/WriteIni`, `ParseSizeGb`, `ParseFailReason`, `SystemImageSortKey`, `ComputeSha256`.
+- **Uncovered**: `AvdService.Duplicate` (highest-risk new code — full file-tree copy + ini rewrite), `AppService.ExtractBundle` (zip + obb detect), `AppService.PushObbAsync`, `ConfigService.PreviewWipe`, `HashVerificationService.VerifyMagisk` / `VerifyCmdlineTools` (manifest plumbing). **C-08**.
 
 ---
 
 ## Competitive and Ecosystem Research
 
-Comparators that share the project's surface area. Each lists what to **adopt** and
-what to **avoid** to keep the product scoped.
+Brief because pass-2 covered the landscape; here I focus on what's *changed* since
+pass-2 or that the now-mature feature set re-opens.
 
-### Android Studio Device Manager (`tools.android.com` / IDE bundled)
+### Android Studio Device Manager
 
-- **Notable capabilities:** SDK Manager UI, AVD Manager UI, hardware-profile editor,
-  snapshot manager, cold-boot/wipe-data/duplicate AVD, Pair Devices over Wi-Fi
-  (`adb pair`), Resizable preview device, Device Mirroring (mirrors a real device
-  window into the IDE), AVD launch flags dialog (proxy, DNS, camera).
-- **Learn:** snapshot manager (R-06), AVD duplicate (A-26), Pair over Wi-Fi (new
-  **B-06**), launch-flags dialog (A-23), `sdkmanager` system-image install on demand
-  (R-01), hardware-profile preset dropdown (A-21).
-- **Avoid:** entire IDE shell, Project tooling, Studio Bot / Gemini panel, telemetry —
-  AndroidEmulatorPlus's pitch is the *opposite* of "install 1.2 GB to manage AVDs".
+- **Now-covered by this app**: snapshot manager (R-06), AVD duplicate (A-26),
+  device profile picker (Wear / TV / Auto via A-38), system-image install on
+  demand (R-01), launch flags (A-23).
+- **Still distinctive in Studio**: device mirroring (renders the emulator window
+  into the IDE), pair-over-Wi-Fi UX with QR code, resizable preview AVD, Studio
+  Bot. Out of scope.
 
-### Genymotion Desktop (`genymotion.com`)
+### Genymotion Desktop
 
-- **Notable capabilities:** sensor + GPS + battery + identifiers + network shaping
-  panels, "Drag-drop OBB to install", Cloud-hosted variant (irrelevant here),
-  per-device theming.
-- **Learn:** sensor panel (A-40), OBB drop install (R-04, B-02).
-- **Avoid:** their custom QEMU fork (vendor lock-in), licensing model, account/login
-  flow.
+- Now-covered: GPS / battery / telephony / network panels (A-40).
+- Still distinctive: cloud-hosted variants, account-tied licensing.
 
-### scrcpy (`github.com/Genymobile/scrcpy`)
+### scrcpy
 
-- **Notable capabilities:** real-time mirror + control of phone or emulator,
-  clipboard sync, file drop, audio forwarding (since v2), screen record, screenshot.
-- **Learn:** drag-drop APK install pattern (already adopted), screen-record toggle
-  pattern (A-14), clipboard sync from emulator to host (new **B-07**).
-- **Avoid:** embedding scrcpy in-process (A-39 is fine as a *launcher*, but linking
-  the renderer in WPF is out of scope and SDL-heavy).
+- **Now-launched as external tool** (A-39). Embedding the SDL surface is out of
+  scope, but a "auto-launch scrcpy after AVD boot" toggle would land cleanly —
+  **C-16**.
 
-### BlueStacks / LDPlayer / Nox
+### SAI (Split APKs Installer, Android)
 
-- **Notable capabilities:** macro recorder, key-mapping overlay, multi-instance,
-  Google Play login pre-baked, "high-FPS gaming" presets.
-- **Learn:** instance-management view that supports running >1 AVD concurrently
-  (ROADMAP **A-33**), multi-AVD process tracking.
-- **Avoid:** custom kernels, telemetry, ad-supported launchers, key-mapping macros
-  (off-mission), modified Google Play sign-in.
+- The bundle install path (B-02) is modeled on SAI's `.apks` and `.xapk`
+  conventions. Pass-2 already noted this. Pass-3 finds the base-APK-first
+  ordering issue (**C-02**).
 
-### WSA-PacMan (`github.com/alesimula/wsa_pacman`, archived 2025)
+### Magisk Manager (the Android app)
 
-- **Notable capabilities:** drag-drop APK install, package list, uninstall, version
-  display. Single-purpose WPF/Flutter app for Windows Subsystem for Android.
-- **Learn:** the focused single-EXE shape this project already mirrors — keep that
-  identity.
-- **Avoid:** the archived/abandoned path: don't accumulate features faster than
-  hardening.
+- R-03 (module manager) is still the canonical gap. With root flow now stable
+  and Verify-Persist policy working, this is the highest-value P2 left.
 
-### Magisk Manager (the Android app, `topjohnwu/Magisk`)
+### WSA (sunset)
 
-- **Notable capabilities:** module browser, install-from-zip, deny-list, Zygisk
-  toggle, log export.
-- **Learn:** the module-manager view layout (R-03), the "Install from storage" zip
-  flow.
-- **Avoid:** reimplementing the patch engine — this project correctly delegates to
-  rootAVD; keep that boundary.
-
-### rootAVD (`gitlab.com/newbit/rootAVD`)
-
-- **Notable capabilities:** the actual ramdisk patcher being wrapped.
-- **Learn:** the script's `LISTONLY` and `EXTRACT_ONLY` flags can be re-used for a
-  "Dry-run patch" preview (new **B-08**).
-- **Avoid:** vendoring it (license + maintenance burden); the current `git clone` +
-  pinned SHA approach is correct.
-
-### Android-emulator-cli ecosystem (`emulator -accel-check`, `adb pair`, `sdkmanager`)
-
-These are first-party CLIs already in the SDK. The pattern is: every feature this
-project adds should map to an existing SDK CLI rather than reinventing logic. This
-keeps the WPF surface a *driver*, not a *replacement*.
+- Pattern reference for the focused single-EXE shape. The product has held that
+  identity — good.
 
 ---
 
 ## Highest-Value New Features
 
-Each entry lists user problem, evidence, behavior, code touch-points, risks,
-verification, complexity (S/M/L/XL), priority. New IDs use **B-NN**.
+### C-01 — Cut v0.2.0 release (P0, M)
 
-### B-01 — Fix `IsEnabled` mis-binding on busy buttons (P0, S)
+- **User problem**: nothing the autonomous loop shipped is reachable to a user
+  yet. No tag, no signed binary, no download.
+- **Evidence**: [AndroidEmulatorPlus.csproj:12](AndroidEmulatorPlus/AndroidEmulatorPlus.csproj#L12)
+  still shows `<Version>0.1.0</Version>`; [MainWindow.xaml:6](AndroidEmulatorPlus/MainWindow.xaml#L6)
+  shows `Title="AndroidEmulatorPlus v0.1.0"`. [CHANGELOG.md](CHANGELOG.md)
+  `[Unreleased]` has 25+ entries.
+- **Behavior**: Bump in the 5 places CLAUDE.md mandates (csproj `<Version>`, `<FileVersion>`,
+  `<InformationalVersion>`, `MainViewModel.cs` startup log, `MainWindow.xaml`
+  `Title=`, sidebar version pill, `README.md` shields-io badge, `CHANGELOG.md`).
+  Populate `Resources/known-hashes.json` with the current Magisk + cmdline-tools
+  SHAs after smoke-test. Lock `RootService.RootAvdPinnedRef` to a real SHA
+  (A-03). Tag `v0.2.0` to trigger the release workflow.
+- **Touches**: csproj, MainWindow.xaml, MainViewModel.cs, README.md, CHANGELOG.md,
+  RootService.cs, Resources/known-hashes.json.
+- **Risk**: needs a desktop with .NET SDK + a clean Android emulator install for
+  smoke-test.
+- **Verify**: GitHub Releases page shows a `v0.2.0` tag with the win-x64
+  self-contained ZIP attached.
+- **Complexity**: M, P0.
 
-- **Problem:** "Download command-line tools" and "Root with Latest Magisk" stay
-  clickable even while `IsBusy` is true. The user can re-enter a download or a
-  rootAVD patch mid-flight.
-- **Evidence:** [InstallView.xaml:83](AndroidEmulatorPlus/Views/InstallView.xaml#L83)
-  and [RootView.xaml:25](AndroidEmulatorPlus/Views/RootView.xaml#L25) both do
-  `IsEnabled="{Binding IsBusy, Converter=NotBoolToVisibilityConverter, ConverterParameter=invert}"`.
-  `NotBoolToVisibilityConverter` returns `Visibility`, not `bool`, and `IsEnabled`
-  doesn't coerce; WPF logs a binding error and falls back to `True`.
-- **Behavior:** Add `NotBoolConverter` (returns `!bool`) and use it. Or expose
-  `IsIdle => !IsBusy` on the VM and bind directly — simpler.
-- **Touches:** [Views/Converters.cs](AndroidEmulatorPlus/Views/Converters.cs);
-  InstallView.xaml, RootView.xaml.
-- **Risk:** Trivial. Cosmetic regression risk only.
-- **Verify:** With the app running, kick off the cmdline-tools download; the button
-  should grey out per the `IsEnabled=False` template trigger
-  ([Dark.xaml:111-114](AndroidEmulatorPlus/Themes/Dark.xaml#L111-L114)).
+### C-02 — Base APK first in `install-multiple` (P0, S)
 
-### B-02 — Bundle (`.apks` / `.xapk`) extractor before `adb install` (P0, M)
+- **Problem**: `AppService.ExtractBundle` returns APKs ordered by ascending file
+  size. For `.apks` / `.xapk` bundles where the base APK contains the manifest +
+  main resources, the base is typically *larger* than the per-config splits and
+  ends up last. `pm install-multiple` ordering is significant for some
+  validators (notably APK signature scheme V2 verification of `pm install-create`
+  sessions on API 33+).
+- **Evidence**: [AppService.cs:62](AndroidEmulatorPlus/Services/AppService.cs#L62)
+  `.OrderBy(static p => p.Length)`.
+- **Behavior**: Reorder so the entry literally named `base.apk` (or, failing
+  that, the largest) comes first, and config splits follow.
+- **Touches**: `AppService.ExtractBundle`. New helper to pick the base.
+- **Risk**: None — strict ordering change.
+- **Verify**: Drop a SAI-export `.apks` produced from a modern app with config
+  splits; install succeeds.
+- **Complexity**: S, P0.
 
-- **Problem:** Install dialog and drag-drop accept `.apks` / `.xapk`, but
-  `adb install bundle.xapk` fails — these are ZIPs containing multiple APKs (and OBBs
-  for `.xapk`).
-- **Evidence:**
-  [AppsViewModel.cs:95](AndroidEmulatorPlus/ViewModels/AppsViewModel.cs#L95) advertises
-  the filter; [AppsView.xaml.cs:13](AndroidEmulatorPlus/Views/AppsView.xaml.cs#L13)
-  whitelists the extensions; install code just calls `_apps.InstallApkAsync` per
-  file ([AppsViewModel.cs:114](AndroidEmulatorPlus/ViewModels/AppsViewModel.cs#L114)).
-- **Behavior:** When extension is `.apks` / `.xapk` / `.apkm`, unzip into a temp
-  folder under `…\AndroidEmulatorPlus\transfer\extract-<rand>\`, collect all `*.apk`
-  inside (including config splits), then `adb install-multiple` them.
-  For `.xapk`, also push `*.obb` into `/sdcard/Android/obb/<pkg>/`.
-- **Touches:** new `AppService.ExtractBundleAsync`, refactor
-  `AppService.InstallApkAsync` to take an IEnumerable, update `AppsViewModel.InstallApkFilesAsync`,
-  delete extracted dir in `finally`.
-- **Risk:** Long-path / unicode-name APKs inside the ZIP; ensure
-  `ZipFile.ExtractToDirectory` is allowed by the long-path manifest. OBB ownership
-  belongs to the emulator's media uid; `adb push` runs as shell which can write to
-  `/sdcard` regardless.
-- **Verify:** Drop a public split-APK bundle (e.g. an `.apks` from SAI's export)
-  onto Apps tab → all splits install, app launches.
-- **Complexity:** M.
+### C-03 — Apply `SettingsService.HttpProxy` to `DownloadService` (P1, S)
 
-### B-03 — Progress bar for the cmdline-tools download (P1, S)
+- **Problem**: Proxy field is editable in Settings but `DownloadService`
+  instantiates `new HttpClient(new HttpClientHandler { AllowAutoRedirect = true })`
+  with no proxy configuration. Field is dead.
+- **Evidence**: [DownloadService.cs:15](AndroidEmulatorPlus/Services/DownloadService.cs#L15)
+  vs [SettingsService.cs:29](AndroidEmulatorPlus/Services/SettingsService.cs#L29).
+- **Behavior**: `DownloadService` ctor takes a `SettingsService`, reads the
+  proxy URL, and configures the handler:
+  ```csharp
+  var handler = new HttpClientHandler { AllowAutoRedirect = true };
+  if (Uri.TryCreate(settings.Current.HttpProxy, UriKind.Absolute, out var p))
+      handler.Proxy = new WebProxy(p) { UseDefaultCredentials = true };
+  _http = new HttpClient(handler);
+  ```
+- **Touches**: `DownloadService`, App.xaml.cs DI bootstrap.
+- **Risk**: Stale `HttpClient` reuses old proxy if settings change at runtime —
+  document that the proxy applies on next launch (consistent with theme).
+- **Verify**: Set an HTTP proxy that logs requests; click Download
+  command-line tools; proxy log shows the request.
+- **Complexity**: S, P1.
 
-- **Problem:** The download stretches ~150 MB on a slow link; the user sees only a
-  "Downloading…" label.
-- **Evidence:** [InstallViewModel.cs:131-133](AndroidEmulatorPlus/ViewModels/InstallViewModel.cs#L131-L133)
-  calls `_dl.DownloadAsync` without an `IProgress<>`; the service already supports
-  one ([DownloadService.cs:20](AndroidEmulatorPlus/Services/DownloadService.cs#L20)).
-- **Behavior:** Bind a `[ObservableProperty] double DownloadFraction` plus a
-  `ProgressBar` on the Install card.
-- **Touches:** InstallViewModel, InstallView.xaml.
-- **Risk:** None.
-- **Verify:** Throttle the network, observe bar fills.
-- **Complexity:** S.
+### C-04 — Cross-check signed cert against installed package (P1, M)
 
-### B-04 — Versioned debloat preset file (P1, M)
+- **Problem**: The Verify-signatures toggle already runs apksigner but never
+  reads the installed app's cert. The "warn on signer mismatch" half of R-08 —
+  which is the actually-useful half, because it catches re-signed APKs trying
+  to upgrade a Play-Store-installed app — is missing.
+- **Evidence**: [ApkSignerService.InstalledCertShaAsync](AndroidEmulatorPlus/Services/ApkSignerService.cs#L50)
+  is defined but unused. `AppsViewModel.VerifyBeforeInstallAsync` has a TODO
+  comment about needing aapt to derive the package name.
+- **Behavior**: Use `aapt2 dump packagename <apk>` (or fall back to `apksigner
+  verify --print-certs --verbose` + AndroidManifest extraction) to get the
+  package id, then `pm dump <pkg>` on the device, then string-compare the
+  cert SHAs. On mismatch raise a `ConfirmDialog` "This APK is signed by a
+  different developer than the version installed on your device. Continue?"
+- **Touches**: `ApkSignerService`, `AppsViewModel.VerifyBeforeInstallAsync`.
+  `aapt2` lives in `build-tools/<ver>/aapt2.exe` (add to `SdkLocator`).
+- **Risk**: aapt2 output format varies between build-tools versions; pin a regex
+  + fall back gracefully.
+- **Verify**: Re-sign a known APK with a new dev cert; install attempt warns.
+- **Complexity**: M, P1.
 
-- **Problem:** [AppService.cs:38-62](AndroidEmulatorPlus/Services/AppService.cs#L38-L62)
-  hard-codes Google and Samsung lists. Pixel-only preinstalls (Pixel Stand, At a
-  Glance, Wallpaper & style v9000) and OEM presets (Xiaomi, OnePlus, OPPO) aren't
-  covered; the lists rot as Google renames packages.
-- **Behavior:** Ship `Presets/bloat.json` as embedded resource; allow user override
-  at `%LOCALAPPDATA%\AndroidEmulatorPlus\presets\bloat.json`. Each entry: `{ id, name,
-  description, packages[] }`. Render preset buttons from JSON.
-- **Touches:** new `PresetService`, `AppService.BloatPresetGoogle/Samsung` deleted,
-  AppsView preset row becomes an `ItemsControl`.
-- **Risk:** JSON parsing error must not crash the app — load via try/catch with
-  fall-back to bundled defaults.
-- **Verify:** Drop a custom preset JSON into `%LOCALAPPDATA%\…\presets\`, see new
-  buttons appear after refresh.
-- **Complexity:** M.
+### C-05 — `allowBackup=false` pre-flight (P1, M, was A-19)
 
-### B-05 — Per-app data size on Apps tab (P2, M)
+- **Problem**: Apps that explicitly opt out of backup will refuse the restored
+  data after migration. Pass-2's A-19 never shipped. This is the only P1 item
+  still open.
+- **Evidence**: ROADMAP A-19 unchecked.
+- **Behavior**: Before each package's `TransferInternalDataAsync`, run
+  `adb shell pm dump <pkg> | grep -i allowBackup` (or `dumpsys package <pkg>`).
+  When false, mark the row with ⚠ and skip the data leg unless the user opted
+  "Force migrate all". Persist the per-row decision on the model.
+- **Touches**: `MigrationService` (probe helper), `MigrateViewModel`,
+  `MigrateView` (column for ⚠).
+- **Verify**: Add `com.discord` (allowBackup=false) to the source list; row shows
+  ⚠; data leg is skipped by default; checkbox to force shows in the row.
+- **Complexity**: M, P1.
 
-- **Problem:** [AndroidApp.SizeText](AndroidEmulatorPlus/Models/AndroidApp.cs#L19)
-  formats `DataSizeBytes`, but nothing ever writes to it — the "size" column always
-  shows `—`. Dead UI surface that promises information.
-- **Behavior:** On demand (per-row hover or a "Compute sizes" button), run
-  `du -s /data/data/<pkg>` for selected rows (root required) and `dumpsys diskstats`
-  fallback. Cache results in the VM.
-- **Touches:** AppsViewModel, AppService.
-- **Risk:** `du` on `/data/data/<pkg>` requires root; show "(root needed)" instead of
-  `—` when not rooted.
-- **Verify:** On a rooted emulator with one large app installed, click "Compute
-  sizes" and confirm the value matches `adb shell su -c du -s /data/data/<pkg>`.
-- **Complexity:** M.
+### C-06 — Application icon + window icon (P1, S)
 
-### B-06 — `adb pair` Wi-Fi pairing for phones (P2, M)
+- **Problem**: WPF default icon means SmartScreen warns on first run and the
+  alt-tab card looks unbranded.
+- **Evidence**: No `<ApplicationIcon>` in csproj; `MainWindow.xaml` has no
+  `Icon=`; no `.ico` in repo.
+- **Behavior**: Add `AndroidEmulatorPlus/Assets/aep.ico` (multi-size: 16, 24,
+  32, 48, 64, 256), set `<ApplicationIcon>Assets\aep.ico</ApplicationIcon>` in
+  csproj, set `Icon="Assets/aep.ico"` on `MainWindow`.
+- **Touches**: csproj, MainWindow.xaml, new Assets folder.
+- **Risk**: Icon design.
+- **Verify**: alt-tab card shows icon; exe in Explorer shows icon.
+- **Complexity**: S, P1.
 
-- **Problem:** USB debugging is increasingly cumbersome (cable, sometimes elevated
-  driver install). Modern Android phones support `adb pair host:port` (API 30+)
-  followed by `adb connect host:port`. Once paired, the phone appears in
-  `adb devices` just like a USB device — and the Migrate tab's whole flow works
-  unchanged.
-- **Evidence:** [README.md:38](README.md#L38) currently requires "a USB-connected
-  Android phone".
-- **Behavior:** Add a "Pair phone over Wi-Fi…" card on the Migrate tab. Prompts for
-  `host:port` and 6-digit code from the phone, calls `adb pair` then `adb connect`.
-  Persist the host in settings (when introduced) for next time.
-- **Touches:** new `AdbService.PairAsync` + `ConnectAsync`, MigrateView card.
-- **Risk:** Network reachability (firewalled hotel Wi-Fi). Surface adb errors verbatim
-  to the log.
-- **Verify:** On a phone with Developer Options → Wireless debugging → Pair using
-  pairing code, enter the host:port and code; phone shows up in the top-bar pill.
-- **Complexity:** M.
+### C-07 — R-03 Magisk module manager (P2, L)
 
-### B-07 — Bidirectional clipboard sync with the emulator (P3, M)
+- **Problem**: Last remaining big feature from the original R-roadmap. With
+  Verify+Persist working, the rooted emulator is a stable target for module
+  install.
+- **Behavior**: New "③.b Modules" sub-tab on the Root tab (or expander).
+  Pre-curated module list (Shamiko, LSPosed, PlayIntegrityFork, Zygisk
+  DenyList) with their GitHub release URLs. Install flow:
+  `adb push <zip> /sdcard/`, then `magisk --install-module /sdcard/<zip>`
+  (or `magisk -Z install`). Reboot prompt afterward. List installed modules
+  via `magisk module list`.
+- **Touches**: new `MagiskService`, new `ModulesViewModel` + View.
+- **Risk**: Curated list maintenance — ship as JSON like B-04 to keep updates
+  out of code.
+- **Verify**: Install Shamiko on a fresh API 35 Google Play AVD; reboot; check
+  `magisk module list` returns it.
+- **Complexity**: L, P2.
 
-- **Problem:** Migrating account passwords / 2FA tokens from phone to emulator is
-  awkward without a clipboard bridge. scrcpy users expect this.
-- **Behavior:** Periodic `adb shell cmd clipboard get-primary` poll vs.
-  `cmd clipboard set-primary "$text"`; only inject when the host clipboard text
-  changes (debounce). Off by default; toggle in a future settings flyout.
-- **Touches:** new `ClipboardService`, MainViewModel top-bar toggle.
-- **Risk:** Privacy — the emulator could read host clipboard. Default off, never
-  store, require explicit opt-in per session.
-- **Verify:** Copy text on host → tap a text field on the emulator → paste
-  contains host text. And vice-versa.
-- **Complexity:** M.
+### C-08 — Test coverage for high-risk new code (P2, M)
 
-### B-08 — "Dry-run root" preview using rootAVD's `LISTONLY` mode (P3, S)
+- **Problem**: `AvdService.Duplicate` does a recursive file copy + ini path
+  rewrite. Bugs here trash AVDs. Untested.
+- **Evidence**: [AvdService.cs:184-247](AndroidEmulatorPlus/Services/AvdService.cs#L184-L247).
+- **Behavior**: New test class:
+  - `Duplicate_copies_avd_dir_and_rewrites_ini` — create a fake AVD layout
+    under a temp dir, run Duplicate, assert config.ini's AvdId is rewritten and
+    the .avd folder is byte-identical otherwise.
+  - `Duplicate_refuses_collision` — assert InvalidOperationException when the
+    target name exists.
+  - `ExtractBundle_returns_base_then_splits` — fixture .apks with base+splits;
+    assert base.apk is first after C-02 fix.
+  - `PreviewWipe_lists_snapshots_and_overlays`.
+  - `PresetService_user_override_replaces_by_id` — fixture user JSON, assert
+    the id-based merge.
+- **Touches**: `AndroidEmulatorPlus.Tests/` (new test files).
+- **Verify**: `dotnet test`.
+- **Complexity**: M, P2.
 
-- **Problem:** Today the only feedback before patching is a vague description.
-  rootAVD has a `LISTONLY=1` mode that prints what it *would* patch, including
-  ramdisk path resolution.
-- **Behavior:** Add "Preview" button next to "Root with Latest Magisk" that runs
-  `rootAVD.sh LISTONLY` and dumps to the log.
-- **Touches:** RootService, RootViewModel, RootView.
-- **Risk:** None — read-only.
-- **Verify:** Click Preview, log shows resolved ramdisk path matching
-  `image.sysdir.1` from config.ini.
-- **Complexity:** S.
+### C-09 — Lift remaining `Process.Start` into `ProcessRunner` (P2, M)
 
-### B-09 — Settings flyout: paths, theme, network, telemetry-off statement (P2, L)
+- **Problem**: CLAUDE.md says `Helpers/ProcessRunner` is the only place
+  `Process.Start` lives. After this pass the invariant is violated in 5 places
+  (each with stdin reasons): `RootService.PatchAsync` (lines 159-178),
+  `RootService.DryRunAsync` (lines 113-136), `AvdService.CreateAsync` (lines
+  109-141), `SdkmanagerService.AcceptLicensesAsync` (lines 42-69),
+  `SdkmanagerService.InstallAsync` (lines 96-122), `ScreenRecordService.Start`
+  (lines 44-58), `LogcatService.Start` (lines 25-60), `AdbService.PairAsync`
+  (lines 145-165).
+- **Behavior**: Add to `ProcessRunner`:
+  - `RunWithStdinAsync(exe, args, IEnumerable<string> stdinLines, …)` —
+    consumed by SdkmanagerService and AvdService.
+  - `StreamAsync(exe, args, Action<string> onLine, …)` — consumed by
+    RootService and LogcatService and ScreenRecordService.
+- **Touches**: `ProcessRunner.cs`, 8 callers.
+- **Risk**: Subtle behavior changes — guard with the existing tests + per-VM
+  smoke.
+- **Complexity**: M, P2.
 
-- **Problem:** Several preferences are scattered or hard-coded — SDK probe order,
-  cache root, screenshot output dir, theme. There is no single place to override or
-  inspect them.
-- **Evidence:** `SdkLocator.FindSdkRoot`, `MainViewModel.ScreenshotAsync`'s
-  `MyPictures` path, theme dictionary all hard-coded.
-- **Behavior:** Modal-less side panel (corner-radius 8/10 per CLAUDE.md). Fields:
-  SDK root override, cache root override, screenshot output, theme (Mocha/Latte,
-  pending A-37), proxy for `_http`, "Reset to defaults". Persist in
-  `%LOCALAPPDATA%\AndroidEmulatorPlus\settings.json`.
-- **Touches:** new `SettingsService`, several services accept overrides via
-  constructor, App.xaml.cs DI bootstrap, new `SettingsView`.
-- **Risk:** JSON migration when settings schema changes — version the file.
-- **Verify:** Move SDK to `D:\Android\Sdk`, set override, restart → app finds it.
-- **Complexity:** L.
+### C-10 — Show-wizard-again in Settings (P2, S)
 
-### B-10 — Cancel button on long-running ops (P1, M)
+- **Problem**: First-launch wizard is one-shot. Settings dialog has no way to
+  reopen it.
+- **Behavior**: Add a "Show welcome wizard…" button to Settings; clicking sets
+  `HasSeenWizard=false`, saves, and immediately opens the wizard.
+- **Touches**: SettingsDialog.xaml + xaml.cs, SettingsService.
+- **Complexity**: S, P2.
 
-- **Problem:** ROADMAP **A-01** already added a timeout to rootAVD, but there is no
-  user-visible Cancel. The same applies to AVD create (5 min timeout), cmdline-tools
-  download, and migration.
-- **Behavior:** A single shared `[ObservableProperty] CancellationTokenSource? _busyCts`
-  on each VM that runs long ops; binding-controlled Cancel button replaces the
-  primary action while `IsBusy`. Pass the token through to services (most already
-  accept `CancellationToken`).
-- **Touches:** RootViewModel, AvdViewModel (CreateAsync), InstallViewModel
-  (DownloadCmdlineToolsAsync), MigrateViewModel (MigrateAsync). Several services
-  already accept `CancellationToken ct` parameters that are currently passed
-  `default`.
-- **Risk:** Cleanup paths must `finally`-delete the in-flight cache dir + zip.
-- **Verify:** Click Root → Cancel within 3 seconds → process tree killed (Task
-  Manager), log says "cancelled".
-- **Complexity:** M.
+### C-11 — Refresh Migrate cache after Apps tab Export/Import (P2, S)
 
-### B-11 — Per-AVD `Process` tracking (P1, S — derived from A-33)
+- **Problem**: ExportAppDataAsync / ImportAppDataAsync write to `transfer/`. The
+  Migrate tab's cache card doesn't auto-recalculate after these operations, so
+  the user doesn't see the impact.
+- **Evidence**: `MigrateViewModel.RefreshCache` is called in `OnAppliedMigrate`
+  but not from the Apps tab.
+- **Behavior**: Either expose `RefreshCache` via the shared `CacheDiagnosticsService`
+  state, or have `AppsViewModel` `_ = MigrateVm.RefreshCacheCommand.Execute(null)`.
+- **Touches**: `AppsViewModel`, `MigrateViewModel` (publish a cache-changed event,
+  or expose `CacheDiagnosticsService` invalidate via singleton).
+- **Complexity**: S, P2.
 
-- **Problem:** [EmulatorService._current](AndroidEmulatorPlus/Services/EmulatorService.cs#L10)
-  is a single field. Launching a second AVD overwrites it; `TryKill` then orphans the
-  first.
-- **Behavior:** `ConcurrentDictionary<string AvdName, Process>` and a `KillFor(name)`
-  helper. On `App.OnExit`, walk the dictionary.
-- **Touches:** EmulatorService. (Most callers don't need to change — Stop is already
-  done via `adb emu kill` not via Process tree.)
-- **Risk:** Same `Process` object may stay alive after emulator self-exits; check
-  `HasExited` and prune.
-- **Verify:** Launch two AVDs from the AVDs tab; close the app; both emulator
-  windows close.
-- **Complexity:** S.
+### C-12 — DynamicResource brush sweep for live theme swap (P2, M)
+
+- **Problem**: Theme requires app restart because Styles.xaml binds via
+  StaticResource.
+- **Behavior**: Replace `StaticResource …Brush` with `DynamicResource …Brush`
+  in `Themes/Styles.xaml` and in every view that references brushes (~60
+  sites). Then add a `ThemeService.ApplyAsync(theme)` that swaps
+  `Application.Resources.MergedDictionaries[0]` between Mocha/Latte. Persist
+  the choice still; remove the "restart required" warning.
+- **Touches**: Themes/Styles.xaml + every view file + new ThemeService.
+- **Risk**: A few view styles bind via Setter, which may not auto-refresh
+  DynamicResource — verify per-element.
+- **Complexity**: M, P2.
+
+### C-13 — Compute sizes covers all rows (P3, S)
+
+- **Problem**: Apps tab "Compute sizes" iterates only `FilteredApps`. If the
+  user filters first, computes sizes, then clears the filter, the unfiltered
+  rows show "—".
+- **Behavior**: Iterate the full `Apps` collection.
+- **Touches**: `AppsViewModel.ComputeSizesAsync`.
+- **Complexity**: S, P3.
+
+### C-14 — Welcome wizard auto-skips completed steps (P3, S)
+
+- **Problem**: The wizard's status TextBlocks show "✓ SDK detected" when SDK is
+  present, but the user still has to scroll past Step 1 to find what they need.
+- **Behavior**: Hide completed-step cards by default; offer a "Show all steps"
+  toggle.
+- **Touches**: `WelcomeDialog`.
+- **Complexity**: S, P3.
+
+### C-15 — Remove duplicate Theme picker on Install tab (P3, S)
+
+- **Problem**: Theme picker lives in BOTH the Install tab (batch-14) and
+  Settings (batch-23). Two homes for one setting is a maintenance and UI risk.
+- **Behavior**: Delete the Install tab's Appearance card; keep only Settings.
+  Settings is now the canonical place.
+- **Touches**: InstallView.xaml, InstallViewModel.cs.
+- **Complexity**: S, P3.
+
+### C-16 — "Auto-launch scrcpy after boot" toggle (P3, S)
+
+- **Problem**: Power users who prefer scrcpy's input handling over the emulator
+  window currently launch it manually after each AVD launch.
+- **Behavior**: Add a `LaunchOptions.AutoScrcpy` flag (`Settings.AutoScrcpy`
+  default in Settings dialog). When set, after `Launch` returns and adb reports
+  the device online, call `ScrcpyService.Launch(serial)`.
+- **Touches**: SettingsService, EmulatorService, LaunchOptionsDialog,
+  AvdViewModel.LaunchCommand.
+- **Complexity**: S, P3.
+
+### C-17 — README screenshots + landing image (P2, M)
+
+- **Problem**: README has no visual content; first-impression is a wall of
+  text. Comparable tools (Genymotion, BlueStacks) lead with screenshots.
+- **Behavior**: Add `docs/screenshots/` with one PNG per tab; embed inline in
+  README. Use the new Mocha + Latte themes to show both palettes.
+- **Touches**: README.md, new docs/screenshots/ folder.
+- **Complexity**: M, P2.
 
 ---
 
 ## Existing Feature Improvements
 
-### Migration — phone-side tar fallback (ROADMAP A-29 expanded)
+### Free-form `adb emu` command tokenizer (Console tab)
 
-- **Current:** `MigrationService.TransferInternalDataAsync` always uses
-  `tar --exclude=…/cache --exclude=…/code_cache --exclude=…/no_backup`. Modern
-  Android ships toybox tar (since Android 6) and `--exclude=` is supported there,
-  but older / non-standard phones (rare custom ROMs, very old devices) may not.
-- **Recommended change:** Detect tar flavor via `tar --version` once per session,
-  cache per-device, fall back to `find /data/data/<pkg> -type d \( -name cache -o
-  -name code_cache -o -name no_backup \) -prune -o -print | tar -cf <out> -T -`.
-- **Touches:** MigrationService, AdbService (cache device→tar-flavor map).
-- **Backwards compat:** Pure additive; canonical happy path unchanged.
-- **Verify:** Smoke-test against an older AOSP build (or a rooted Android 7 image);
-  internal data still transfers.
-- **Complexity:** M, P2.
+- **Current**: `FreeFormArgs.Split(' ', StringSplitOptions.RemoveEmptyEntries)`
+  ([ConsoleViewModel.cs:91](AndroidEmulatorPlus/ViewModels/ConsoleViewModel.cs#L91)).
+- **Problem**: Quoted strings break: `sms send 5551234 "Hello, world"` becomes
+  4 tokens.
+- **Recommended**: Tiny quote-aware split. Microsoft.Win32 has no built-in; a
+  10-line regex `("([^"]*)")|(\S+)` does it.
+- **Complexity**: S, P3.
 
-### Migration — pre-flight `allowBackup=false` warning (ROADMAP A-19)
+### `MainWindow.Loaded` wizard timing
 
-- **Current:** No warning before attempting data tar; many apps (banking,
-  fingerprint-protected vaults, anything with `android:allowBackup="false"`) will
-  refuse the restored data after migration.
-- **Recommended change:** Before each package's data tar, `adb shell dumpsys package
-  <pkg> | grep ALLOW_BACKUP` (or `pm dump`); if flag absent, mark the row with a ⚠
-  badge and skip data transfer unless user opted "Force".
-- **Touches:** MigrationService, MigrateViewModel.
-- **Backwards compat:** Adds a column; safe.
-- **Verify:** Add `com.discord` (allowBackup=false) → row shows ⚠ and only APK
-  transfers by default.
-- **Complexity:** M, P1.
+- **Current**: WelcomeDialog opens from `MainWindow_Loaded`. Loaded fires
+  *after* the window renders, so the wizard appears on top of an already-drawn
+  main window.
+- **Recommended**: ContentRendered or post-Loaded with a short Dispatcher post
+  to ensure transitions look smooth on slow machines.
+- **Complexity**: S, P3.
 
-### Configure — confirm-before-destroy disk wipe (ROADMAP A-07 expanded)
+### `Apps` tab uninstall mode radio buttons
 
-- **Current:** "Resize + Wipe Data" deletes all qcow2 overlays + the snapshots
-  directory after a one-line warning subtitle ([ConfigView.xaml:74](AndroidEmulatorPlus/Views/ConfigView.xaml#L74)).
-  Logging shipped, but no interactive confirmation.
-- **Recommended change:** Custom `ConfirmDialog` (modal-less border styled to match
-  cards) listing every snapshot name and the qcow2 file sizes, plus a typed
-  `WIPE`-to-confirm field — mirrors GitHub's destructive-action pattern.
-- **Touches:** new `ConfirmDialog` UserControl, ConfigViewModel.
-- **Backwards compat:** Adds a step; safe.
-- **Verify:** Try Resize + Wipe with two named snapshots → dialog lists both and
-  is required.
-- **Complexity:** M, P1.
+- **Current**: The radios use `EqualsConverter` to bind `IsChecked`. On click
+  they trigger separate commands `SetUninstallModeUser` / `SetUninstallModeUser0`.
+- **Recommended**: Bind `IsChecked` two-way directly using a `BooleanInverter`
+  pattern or use `RadioButton.CommandParameter` with one command.
+- **Complexity**: S, P3.
 
-### AVDs — confirm-before-delete
+### `ProcessRunner.RunAsync` cancellation semantics
 
-- **Current:** Overflow menu → "Delete AVD…" calls `_avds.DeleteAsync` immediately
-  ([AvdViewModel.cs:97](AndroidEmulatorPlus/ViewModels/AvdViewModel.cs#L97)). The
-  ellipsis in the menu hints at a dialog but there isn't one.
-- **Recommended:** Same `ConfirmDialog` as above, listing the AVD folder + size.
-- **Complexity:** S, P1.
+- **Current**: When `timeout` fires, throws OperationCanceledException through
+  the caller's `ct.IsCancellationRequested` check is bypassed because the
+  inner timeout CTS is linked but its own cancel doesn't surface as
+  `ct.IsCancellationRequested == true`.
+- **Evidence**: [ProcessRunner.cs:62-75](AndroidEmulatorPlus/Helpers/ProcessRunner.cs#L62-L75).
+- **Recommended**: Throw a more specific exception (`TimeoutException`) on
+  timeout so callers can distinguish user-cancel vs timeout. Currently the
+  Root flow can't tell.
+- **Complexity**: S, P3.
 
-### Root — auto-launch missing emulator (ROADMAP A-28)
+### `LogcatService.Start` flushes lines on UI thread
 
-- **Current:** `RootViewModel.RootAsync` aborts with "Launch the AVD first" if no
-  emulator is attached. Dead-end message.
-- **Recommended:** Inline "Launch <name>" button on the warning; on click, call
-  `EmulatorService.Launch` + `AdbService.WaitForBootAsync`, then re-enter `RootAsync`.
-- **Complexity:** S, P2.
-
-### Apps — `--user 0` mode for preinstalled debloat
-
-- **Current:** Uninstall uses `adb uninstall <pkg>` (then `-k` for keep-data). For
-  preinstalled OEM apps marked as system, `adb uninstall` fails with
-  `DELETE_FAILED_INTERNAL_ERROR`. The community workaround is
-  `pm uninstall --user 0 <pkg>` (per-user uninstall — survives until factory reset,
-  reversible with `pm install-existing`).
-- **Recommended:** Add a "Disable for current user (reversible)" checkbox alongside
-  Uninstall; pipes through to `pm uninstall --user 0` or `pm disable-user --user 0`.
-- **Touches:** AppService.UninstallAsync signature, AppsView controls.
-- **Verify:** Try to uninstall `com.samsung.android.bixby.agent` on a Samsung
-  system image → fails without flag, succeeds with flag, reappears after `pm
-  install-existing`.
-- **Complexity:** M, P2.
-
-### Logging — colour-coded `Detail` is hard to read against `OverlayBrush`
-
-- **Current:** `Detail` log level uses `#FF6C7086` (overlay) on `#FF11111B` (crust).
-  Contrast ratio is ~3.0:1 — below WCAG AA for normal text.
-- **Recommended:** Move Detail to `SubtextBrush` (`#FFA6ADC8`, ratio ~9.5:1) and
-  reserve Overlay for timestamps/dim metadata only.
-- **Touches:** [MainWindow.xaml:148-150](AndroidEmulatorPlus/MainWindow.xaml#L148-L150).
-- **Complexity:** S, P2.
-
-### Image selector — "latest" picks by lexical order
-
-- **Current:** [AvdViewModel.RefreshAsync](AndroidEmulatorPlus/ViewModels/AvdViewModel.cs#L58)
-  defaults `NewImage` to `AvailableImages.LastOrDefault()`. The list is built by
-  directory walk in [AvdService.ListSystemImagesAsync](AndroidEmulatorPlus/Services/AvdService.cs#L79)
-  — alphabetical. `android-9` sorts before `android-25`, so a system with only API
-  9 and API 25 installed will default to API 9.
-- **Recommended:** Sort by parsed API level descending; tie-break by variant
-  (`google_apis_playstore` > `google_apis` > `default`).
-- **Complexity:** S, P2.
+- **Current**: Each line raises `LineReceived` from a background thread;
+  `LogcatViewModel.OnLine` dispatches each to UI via `BeginInvoke`. With high
+  log rates (thousands/sec on busy apps) the UI thread can stall.
+- **Recommended**: Batch lines in a 100ms timer; flush on tick.
+- **Complexity**: M, P2.
 
 ---
 
 ## Reliability, Security, Privacy, and Data Safety
 
-### Real bugs / risks
+### Real bugs found in pass-3
 
-- **B-01 IsEnabled mis-binding** — see above. P0.
-- **B-02 bundle extractor missing** — `.apks` / `.xapk` fail silently. P0.
-- **A-04 supply chain** — Magisk APK and cmdline-tools ZIP fetched over HTTPS but
-  never hash-verified. A compromised mirror or GitHub release replacement could
-  inject malware into a rooting flow. P0.
-- **A-03 unpinned rootAVD** — pin constant still `"master"`; one bad push from
-  newbit can brick every user's root flow with no detection here. P0.
-- **A-05 migration cache leak** — `transfer\` can grow multi-GB and is never
-  surfaced.
-- **A-07 destructive resize without typed confirm** — silent snapshot destruction.
-- **Process tree leaks** — closing the app doesn't kill running emulator children
-  (B-11).
-- **No re-entrancy guard** on the busy buttons (B-01 root cause).
+- **C-02 base-APK-last** — see above.
+- **C-03 dead HttpProxy** — see above.
+- **C-04 mismatched signer warning never fires** — see above.
+- **A-03 still open** — rootAVD pin is `"master"`; one breaking newbit push
+  silently bricks the root flow. Lock the SHA as part of C-01.
+- **Magisk SHA-256 manifest is empty** — every Magisk install today is
+  trust-on-first-use. C-01 populates it.
 
-### Permissions / network / filesystem
+### Process tree races
 
-- No elevation required (`asInvoker`) — correct.
-- Outbound: `dl.google.com`, `api.github.com/topjohnwu/Magisk`, `gitlab.com/newbit`,
-  `developer.android.com/studio`. All HTTPS, all justified. Document this in
-  README's Privacy section (currently absent).
-- Reads `$ANDROID_HOME`, `%LOCALAPPDATA%\Android\Sdk`, `%USERPROFILE%\.android\avd`.
-  Standard Android-developer paths. Long-path manifest is set, so deep AVD paths are
-  safe.
-- Writes only inside `%LOCALAPPDATA%\AndroidEmulatorPlus\` and `%USERPROFILE%\
-  Pictures\AndroidEmulatorPlus\` and `%USERPROFILE%\Desktop\Emulator - <name>.cmd`.
-  The desktop shortcut location is appropriate but should be configurable (B-09).
+- **EmulatorService.Launch** sets `EnableRaisingEvents=true` after Process.Start.
+  Theoretical race: process exits before subscription; stale dictionary entry
+  forever. Practical risk near zero (emulators don't exit in microseconds).
+  Worth a 1-line fix: hand the Process to ProcessRunner.StartDetached which
+  sets the flag at create time.
 
-### Recovery / rollback
+### Settings file safety
 
-- **Stock ramdisk backup** is well-handled
-  ([RootService.cs:66-67](AndroidEmulatorPlus/ViewModels/RootViewModel.cs#L66-L67),
-  [RootService.RestoreRamdisk](AndroidEmulatorPlus/Services/RootService.cs#L193)).
-- **AVD delete** has no recovery — should at minimum rename `.avd` dir to
-  `.avd.deleted-<ts>` and let the user purge manually.
-- **Migration partial-failure recovery** — if extract fails mid-flow, the emulator's
-  `/data/data/<pkg>` may be half-restored. Force-stop is called pre-extract on the
-  emulator but not on the phone (ROADMAP **A-30**).
+- `SettingsService.Save` overwrites the file in place with a single
+  `File.WriteAllText`. A crash mid-write corrupts settings.json. Mitigation:
+  write to `.tmp` and `File.Move` atomically. **C-18** (low priority).
 
-### Logging / diagnostics
+### Privacy / network
 
-- `LogService` mirrors to `app-YYYYMMDD.log` ✓ (already shipped).
-- `crash.log` for unhandled exceptions ✓ (already shipped).
-- **Missing:** version pin for the running rootAVD SHA in the log header — a
-  future incident report would need this. Add to `LogService` first-write line.
+- Outbound domains documented in README. After C-03 (proxy) ships, also
+  document that the proxy applies on next launch.
 
 ---
 
 ## UX, Accessibility, and Trust
 
-### Onboarding
+### Wizard auto-advance
 
-- First launch: no SDK → only "Install" tab is functionally useful; the user has to
-  read the SubheaderText to know to go there. **Recommendation:** auto-navigate to
-  Install when `_sdk.IsReady == false`; current code initializes `ActiveSection =
-  "Avd"` ([MainViewModel.cs:20](AndroidEmulatorPlus/ViewModels/MainViewModel.cs#L20))
-  which lands on an empty list and "Refresh" with no AVDs. ROADMAP **R-02** wizard
-  covers this.
+- C-14 above.
 
-### Empty / loading / error states
+### Theme on multiple cards
 
-- **AVDs tab** with no AVDs: empty ItemsControl renders zero cards, no guidance.
-  Add an empty-state card "No AVDs yet — create one below or open the Install tab".
-- **Apps tab** with no emulator: only a log warning "No emulator running." The
-  Apps tab itself still shows the filter/preset bar as if it were ready. Disable
-  the actions row + show an inline message.
-- **Migrate tab**: similar — when phone is absent, the packages list is empty
-  silently.
-- **Install tab error path** for `LatestCmdlineToolsWindowsUrlAsync` — logs the
-  warning but still proceeds with fallback; UI never says "using fallback URL"
-  visibly. Surface a small Subtext note on the Install card.
+- C-15 above.
 
-### Destructive / irreversible actions
+### Detail log brush
 
-- **Resize + Wipe Data** — see A-07 above.
-- **Delete AVD** — see "confirm-before-delete" above.
-- **Un-Root** — destructive ramdisk overwrite, no confirm. Add one.
-- **Clear crash.log** — minor but should confirm; current click instantly deletes.
+- Already fixed in batch-1 (B-16). Confirmed on
+  [MainWindow.xaml:148-150](AndroidEmulatorPlus/MainWindow.xaml#L148-L150).
 
-### Settings clarity
+### Microcopy gaps
 
-- Configuration is split between `config.ini` (hardware) and undisplayed AVD `.ini`
-  + missing app settings altogether. B-09 unifies this.
+- The Apps tab "Compute sizes" button has a tooltip but no inline note that root
+  is required. Users who click without root see only a one-line log warning.
+- "Export data…" / "Import from ZIP…" buttons on the Apps tab also silently
+  fail when not rooted; same surfaced log warning. Add an inline disabled
+  state when no rooted emulator is attached.
 
-### Accessibility
+### Screen-reader / keyboard
 
-- WPF Window has `MinWidth=980 MinHeight=640` — fine for typical desktop, slim for
-  laptop 1366×768.
-- Theme is dark-only; corporate users on screen-shares need Latte (ROADMAP **A-37**).
-- Status pills use foreground `SubtextBrush` over `SurfaceBrush` — contrast ~6.6:1,
-  passes AA.
-- Drag-drop has visual `DragDropEffects.Copy` cursor only; no visible drop-target
-  rectangle. Add a temporary highlighted border on `OnDragEnter`.
-- **Detail log lines** below WCAG AA (see "Logging" above).
-- No keyboard navigation between sidebar items (Tab works but no Ctrl+1..6 shortcut;
-  ROADMAP **A-27**).
-- TextBoxes for screen W/H/DPI accept arbitrary text and only fall back via
-  `int.TryParse` ([ConfigViewModel.cs:51-53](AndroidEmulatorPlus/ViewModels/ConfigViewModel.cs#L51-L53)) —
-  no inline validation, the slider mode (A-21) fixes this.
-
-### Microcopy / trust
-
-- "Persists `shell→allow` policy in Magisk DB so `adb shell su` works headlessly
-  thereafter" — accurate.
-- "(no SDK detected)" — fine.
-- Install card's "If nothing is installed" — friendly.
-- Migrate tab — clear about root requirements.
-- **Add:** privacy footnote on Install tab: "AndroidEmulatorPlus contacts
-  dl.google.com, api.github.com, gitlab.com, and developer.android.com only for
-  downloads. No telemetry."
+- Most controls are vanilla WPF and have implicit accessibility names. The
+  custom `ConfirmDialog` typed-confirm field could use `AutomationProperties.Name`
+  for screen-reader clarity.
 
 ---
 
 ## Architecture and Maintainability
 
-### Module / boundary improvements
+### Module bloat
 
-- **ProcessRunner** is the right chokepoint, but RootService bypasses it for the
-  rootAVD shell-out ([RootService.PatchAsync:121-141](AndroidEmulatorPlus/Services/RootService.cs#L121-L141))
-  and AvdService bypasses it for `cmd.exe /c avdmanager`
-  ([AvdService.CreateAsync:109-141](AndroidEmulatorPlus/Services/AvdService.cs#L109-L141)).
-  Both have legitimate reasons (stdin piping, custom env, stream events). Consider
-  adding `ProcessRunner.RunWithStdinAsync` and `ProcessRunner.StreamAsync` overloads
-  so all `Process.Start` calls go through one file. This is the second
-  CLAUDE.md-cited invariant ("Helpers/ProcessRunner is the only place Process.Start
-  lives") that the code already violates twice.
+- `AppsViewModel` is now 367 lines — pretty big. Extract `BundleInstaller`
+  (the ExtractBundle + OBB push + cleanup orchestration) into its own service
+  or static helper to keep the view-model focused on UI state.
+- `AvdViewModel` is 350 lines and growing — same treatment for the rename /
+  duplicate / launch-with-options dialog plumbing. **C-19** (refactor).
 
-### Refactor candidates
+### Dead / partial code
 
-- **MigrationService** has three near-identical pipelines (TransferApk /
-  TransferInternalData / TransferExternalData), each with its own
-  `try/Directory.Delete/File.Delete` pattern. Extract a `using var scratch = new
-  TransferScratch(pkg, _log)` IDisposable to centralize cleanup + size reporting.
-- **InstallViewModel** owns its own `DiagnosticsRoot` constant copy — duplicate of
-  `LogService.LogDirectory`'s parent. Move to one place (Settings, B-09).
-- **`MigrationService.TransferOptions` record** is unused. Delete or wire it up
-  (ROADMAP A-30 wants `ForceStop` enabled).
+- `ApkSignerService.InstalledCertShaAsync` — dead (use it in C-04).
+- `SettingsService.HttpProxy` — dead until C-03.
+- `EmulatorService.RunningAvdNames` — public but no consumer; could become
+  the data source for a "Running emulators" status panel later.
 
-### Test gaps (ROADMAP A-35 expanded)
+### Test gaps
 
-There is no `AndroidEmulatorPlus.Tests/` project. Target coverage:
-
-- `AvdService.ParseIni` / `WriteIni` round-trip (preserves comments, quoting,
-  out-of-order keys).
-- `MigrationService.ParseFailReason` — fed canned `adb install` failure strings.
-- `DownloadService.LatestMagiskAsync` asset-name filter — fed canned GitHub
-  releases JSON with debug/stub/canary mix.
-- `DownloadService.LatestCmdlineToolsWindowsUrlAsync` — fed canned HTML from
-  developer.android.com (file in `Tests/Fixtures/`).
-- `ConfigViewModel.ParseSizeGb` — including the raw-byte case fixed in 3c7b738.
-- `RootService.RelativeRamdiskPath` — Windows path separators, drive-letter root.
-
-Use `xunit` + `Microsoft.NET.Test.Sdk`. No mocking framework needed; all targets
-are pure or take constructor-injected fakes.
-
-### Documentation gaps
-
-- README has no Privacy / Network section (see microcopy above).
-- README's "Typical workflow" jumps from "Migrate" to "Apps" with no mention that
-  the emulator's Magisk must be granted shell first (and that the app does that
-  for you via Verify+Persist). One sentence in step 4 suffices.
-- CHANGELOG `Unreleased` has two `### Fixed` blocks (a merge artifact); collapse to
-  one before tagging the next release.
-- No CONTRIBUTING.md, but contributions look intentionally not solicited; that's
-  fine if intentional.
+- See C-08 above.
 
 ### Release / build / deployment
 
-- **No CI** — ROADMAP A-36. The build constraint (no SDK on this VM) makes CI
-  *required* for a sustainable release cadence, not a nice-to-have.
-- **No GitHub Release** — the only versioned artifact is the local
-  `bin\Release\…\AndroidEmulatorPlus.exe`. Pair A-36 with a release-attach step.
-- **No installer** — power users can run the .exe directly with .NET 9 Runtime
-  installed; a self-contained publish (`--self-contained true`) bumps the EXE to
-  ~70 MB but removes the .NET dependency. Worth a P2 toggle in the workflow.
-- **No code-signing** — SmartScreen will warn on first run. A bare-minimum
-  self-signed cert or an Open Source Initiative cert is a future P3.
+- CI workflow is wired (`.github/workflows/build.yml`) but **has not actually
+  been observed running**. With SysAdminDoc billing locked the workflow
+  commits but never executes. Verifying it works on a clean GitHub Account
+  + fork is part of C-01's smoke.
+- No GitHub Releases yet — also addressed by C-01.
+- No installer (MSIX or NSIS). Tracked as C-20 for future. The self-contained
+  single-file EXE that CI produces is fine for v0.2.
 
 ---
 
 ## Prioritized Roadmap
 
-Cross-references to ROADMAP.md preserved by their original IDs. New items use
-**B-NN**. Items already `[x]` in ROADMAP are excluded.
+Each item uses the C-NN tag introduced in this pass.
 
-### Phase 1 — P0 hardening (do these before any new feature)
+### Phase 1 — Ship v0.2.0
 
-- [ ] **P0 B-01** — Fix `IsEnabled` mis-binding on busy buttons
-  - Why: Buttons that should disable while busy stay clickable, allowing re-entry into
-    a download or rootAVD patch.
-  - Evidence: [InstallView.xaml:83](AndroidEmulatorPlus/Views/InstallView.xaml#L83),
-    [RootView.xaml:25](AndroidEmulatorPlus/Views/RootView.xaml#L25)
-  - Touches: Views/Converters.cs (add `NotBoolConverter`), InstallView.xaml,
-    RootView.xaml.
-  - Acceptance: Button shows the `IsEnabled=False` opacity (0.45) and cursor=Arrow
-    while `IsBusy=True`.
-  - Verify: Click Root → button is greyed out for the duration; second click is
-    ignored.
-- [ ] **P0 B-02** — `.apks` / `.xapk` extractor before install
-  - Why: File-dialog filter and drag-drop advertise both formats but `adb install`
-    rejects them.
-  - Evidence: [AppsViewModel.cs:95](AndroidEmulatorPlus/ViewModels/AppsViewModel.cs#L95),
-    [AppsView.xaml.cs:13](AndroidEmulatorPlus/Views/AppsView.xaml.cs#L13)
-  - Touches: AppService (new `ExtractBundleAsync`), AppsViewModel.InstallApkFilesAsync.
-  - Acceptance: A dropped `.xapk` installs all splits + pushes `*.obb`.
-  - Verify: Drop a public split-APK bundle (SAI-export `.apks`); app reports
-    "Success" and the package shows in the inventory.
-- [ ] **P0 A-04** — SHA-256 verify Magisk APK + cmdline-tools ZIP
-  - Why: Supply-chain risk on a tool that rewrites a ramdisk and ships an SDK.
-  - Evidence: [DownloadService.cs:19-39](AndroidEmulatorPlus/Services/DownloadService.cs#L19-L39)
-    has no hash branch.
-  - Touches: DownloadService (new `DownloadAndVerifyAsync`), RootService,
-    InstallViewModel.
-  - Acceptance: Mismatched hash deletes the partial file + raises an error in the
-    UI.
-  - Verify: Manually corrupt the downloaded `Magisk.apk` between download and
-    install; flow aborts with a clear error.
-- [ ] **P0 A-03** — Lock rootAVD pin to a verified SHA
-  - Why: A breaking `master` push to newbit's repo silently bricks the root flow.
-  - Evidence: [RootService.cs:12](AndroidEmulatorPlus/Services/RootService.cs#L12)
-    `RootAvdPinnedRef = "master"` (the *hook* shipped, the *pin* didn't).
-  - Touches: RootService.cs constant.
-  - Acceptance: `git -C <CacheRoot>/rootAVD rev-parse HEAD` equals the pinned SHA.
-  - Verify: Smoke-test root flow against API 35 Google Play AVD, then commit the
-    SHA that produced a successful patch.
-- [ ] **P0 A-05** — Migration cache size indicator + Clear button
-  - Why: `transfer\` orphaned tarballs survive crashes; no visibility.
-  - Touches: MigrateView, new `IDiagnosticsService` (size + clear).
-  - Acceptance: Card shows total bytes; Clear empties the directory.
-  - Verify: Abort a migration mid-flight via task-manager kill on adb; relaunch the
-    app, the card shows the orphaned size; click Clear; size returns to 0.
-- [ ] **P0 A-07** — Typed confirmation before disk wipe
-  - Why: Resize+Wipe silently destroys named snapshots.
-  - Touches: ConfigView, new `ConfirmDialog`.
-  - Acceptance: User must type `WIPE` to proceed.
-  - Verify: Try Resize+Wipe with a saved snapshot; dialog lists it and requires
-    typed confirmation.
+- [ ] **P0 C-01** — Cut v0.2.0 release
+  - Why: 24 unreleased commits, no downloadable binary.
+  - Evidence: `csproj <Version>0.1.0</Version>`; `CHANGELOG [Unreleased]` has 25+ entries.
+  - Touches: csproj, MainWindow.xaml, MainViewModel.cs (startup log), README.md badge,
+    CHANGELOG.md, RootService.RootAvdPinnedRef, Resources/known-hashes.json.
+  - Acceptance: `git tag v0.2.0 && git push --tags` triggers the release workflow;
+    a `.zip` artifact appears on GitHub Releases; downloaded EXE launches on a clean
+    Windows 11 VM with .NET 9 Runtime installed and v0.2.0 in its title bar.
+  - Verify: open the Releases page; download; run.
+- [ ] **P0 C-02** — Order base APK before splits in `ExtractBundle`
+  - Why: install-multiple ordering matters for some validators; ascending-size
+    puts the base last because the base is typically larger than per-config splits.
+  - Evidence: `AppService.cs:62` `.OrderBy(static p => p.Length)`.
+  - Touches: `AppService.cs`.
+  - Acceptance: a SAI-export `.apks` from a modern Play Store app installs cleanly
+    without "INSTALL_FAILED_INVALID_APK".
+  - Verify: drop a real `.apks` (e.g. an export of WhatsApp); Apps tab reports success.
 
-### Phase 2 — P1 workflow gaps
+### Phase 2 — Plug the loose ends
 
-- [ ] **P1 A-25 UI** — Inline rename popup on AVD card
-  - Why: Backend (`RenameAsync` + `RenameTarget` + `RenameCommand`) already wired in
-    [AvdViewModel.cs:144](AndroidEmulatorPlus/ViewModels/AvdViewModel.cs#L144); no
-    XAML calls it.
-  - Touches: AvdView.xaml overflow menu item + Popup with TextBox.
-  - Acceptance: Right-click → Rename → typed name → `<old>.ini` renamed to `<new>.ini`
-    in `~/.android/avd/`.
-  - Verify: After rename, AVD launches under the new name and `getprop
-    ro.kernel.qemu.avd_name` returns the new name.
-- [ ] **P1 R-01** — System-image picker that can `sdkmanager` new images on demand
-  - Why: Today CreateAVD only enumerates already-installed images.
-  - Touches: AvdService.ListSystemImagesAsync (online-list flag), new
-    `SdkmanagerService`.
-  - Acceptance: User can pick `system-images;android-36;google_apis_playstore;x86_64`
-    and the app downloads + installs it before creating the AVD.
-  - Verify: On a fresh SDK, create an AVD from an image not yet on disk.
-- [ ] **P1 A-08** — confirm-before-delete on AVD
-  - Why: Adjacent to the recently shipped overflow menu; one more click prevents
-    accidental loss.
-  - Touches: AvdView overflow menu, ConfirmDialog.
-  - Acceptance: Delete requires confirmation showing the AVD folder size.
-- [ ] **P1 A-15** — Logcat viewer
-  - Why: Migration failure diagnosis often lives in logcat — without it, users
-    bounce between this app and Studio.
-  - Touches: new `LogcatService` (streams `adb logcat -v threadtime`), new
-    LogcatView.
-  - Acceptance: Filter by package + level; Clear + Save buttons.
-  - Verify: Reproduce an install-failed scenario; offending stack appears in the
-    viewer.
-- [ ] **P1 A-19** — `allowBackup=false` pre-flight warning
-  - Why: Saves users a doomed migration attempt for banking/2FA apps.
-  - Touches: MigrationService, MigrateViewModel.
-  - Acceptance: Affected rows show ⚠ and skip data tar by default.
-- [ ] **P1 A-01 cancel** — Cancel button on rootAVD patch (and others)
-  - Why: Timeout exists; user agency doesn't. B-10 generalizes this.
-  - Touches: RootViewModel, AvdViewModel, InstallViewModel, MigrateViewModel.
-  - Acceptance: Cancel button replaces primary action during `IsBusy`; click kills
-    the process tree and rolls back partial state.
-- [ ] **P1 A-16** — Auto-accept SDK licenses
-  - Why: Wizard / R-01 system-image installer blocks on `sdkmanager --licenses`.
-  - Touches: SdkmanagerService.
-  - Acceptance: Pipes `y\n` repeatedly; user never sees a prompt.
-- [ ] **P1 A-14** — Screen record toggle
-  - Why: Parity with scrcpy; useful for bug reports.
-  - Touches: AdbService, MainViewModel top-bar.
-  - Acceptance: Start → emulator records to `/sdcard`; Stop → pulled to
-    `Pictures\AndroidEmulatorPlus\screencast-<ts>.mp4`.
-- [ ] **P1 A-18** — `-s` / `-d` toggles + source column on Apps tab
-  - Why: Users care about preinstalled OEM apps marked system, not just
-    third-party.
-  - Touches: AppService.ListAsync, AppsView.
-  - Acceptance: Toggle "Include system" + "Include disabled" + per-row badge.
-- [ ] **P1 B-10** — Centralize CancellationToken plumbing (umbrella for A-01 cancel)
-- [ ] **P1 B-11** — Multi-AVD `Process` tracking (sub-task of A-33).
-- [ ] **P1 A-36** — GitHub Actions release build
-  - Why: Without CI there is no signed/published artifact, and ROADMAP A-35 tests
-    have nowhere to run.
-  - Touches: `.github/workflows/build.yml`.
-  - Acceptance: Push to `main` → workflow builds `Release | x64`, archives the
-    self-contained publish, attaches to a draft Release.
-  - Verify: First push; the workflow tab shows green; artifact downloads run on a
-    clean Windows 11 VM.
+- [ ] **P1 C-03** — HTTP proxy applied to DownloadService
+  - Why: Settings field is persisted but ignored.
+  - Touches: DownloadService ctor takes SettingsService; HttpClientHandler.Proxy
+    is set from the override.
+  - Acceptance: set a proxy in Settings, restart, run the cmdline-tools download;
+    the proxy log shows the request.
+- [ ] **P1 C-04** — Cert-mismatch warning before install
+  - Why: R-08 was half-implemented — verifies but never compares against installed.
+  - Touches: ApkSignerService.InstalledCertShaAsync wired into
+    AppsViewModel.VerifyBeforeInstallAsync; aapt2 path added to SdkLocator;
+    new ConfirmDialog on mismatch.
+  - Acceptance: re-sign a known APK with a new cert; install attempt raises a
+    confirm dialog showing both SHAs.
+- [ ] **P1 C-05** — `allowBackup=false` pre-flight (was A-19)
+  - Why: only P1 item never shipped.
+  - Touches: MigrationService probe + MigrateView column.
+  - Acceptance: a com.discord-style package is marked ⚠ and its data leg is
+    skipped by default.
+- [ ] **P1 C-06** — Application icon + window icon
+  - Why: branding + SmartScreen first impression.
+  - Touches: Assets/aep.ico, csproj, MainWindow.xaml.
+  - Acceptance: alt-tab card and Explorer thumbnail show a non-default icon.
 
-### Phase 3 — P2 polish
+### Phase 3 — Polish + parity
 
-- [ ] **P2 A-21** — Screen preset picker (Pixel 7/7 Pro/Tablet/Fold, Custom).
-- [ ] **P2 A-22** — GPU mode picker on Configure (`hw.gpu.mode`).
-- [ ] **P2 A-23** — Launch flags overflow on AVD card (proxy / DNS / no-window /
-  noaudio / camera).
-- [ ] **P2 A-24 remediation links** — On accel-check failure, show links to MS
-  docs (Windows Hypervisor Platform) and Intel HAXM / AMD-V instructions.
-- [ ] **P2 A-26** — Duplicate AVD (copy `.avd` + `.ini`, rewrite `path=`).
-- [ ] **P2 A-27** — Keyboard shortcuts (Ctrl+1..6, F5, Ctrl+L).
-- [ ] **P2 A-28** — Inline "Launch <name>" CTA on the Root warning.
-- [ ] **P2 A-37** — Catppuccin Latte palette + theme switcher.
-- [ ] **P2 B-04** — Versioned debloat preset JSON.
-- [ ] **P2 B-05** — Per-app data size on Apps tab.
-- [ ] **P2 B-06** — `adb pair` Wi-Fi pairing dialog.
-- [ ] **P2 B-09** — Settings flyout (paths, theme, network, telemetry-off).
-- [ ] **P2 A-35** — Unit test project + first 6 tests.
-- [ ] **P2 R-06** — Snapshot manager (list/load/delete).
-- [ ] **P2 R-08** — APK signature verification with `apksigner.bat`.
-- [ ] **P2 R-09** — Per-package bandwidth-aware progress.
-- [ ] **P2 R-04** — Optional OBB pass during migration.
-- [ ] **P2 R-05** — Per-app data export to ZIP (cold archive + Restore).
-- [ ] **P2 A-29** — Phone-side tar flavor detect + `find -prune` fallback.
-- [ ] **P2 A-30** — Force-stop on phone before data tar (gated by checkbox).
-- [ ] **P2 A-33** — Multi-AVD `Process` dictionary.
-- [ ] **P2 A-34** — Kill emulator children on app close.
-- [ ] **P2** — Microcopy / WCAG fixes (detail log brush, empty states, drop-target
-  hover border, README Privacy section).
+- [ ] **P2 C-07** — R-03 Magisk module manager
+  - Touches: new MagiskService, ModulesViewModel + View, sub-tab or expander on Root.
+  - Acceptance: install Shamiko on a rooted API 35 AVD; `magisk module list` returns it.
+- [ ] **P2 C-08** — Tests for Duplicate, ExtractBundle, PreviewWipe, PresetService
+  merge, HashVerificationService manifest plumbing
+  - Touches: `AndroidEmulatorPlus.Tests/` new files + Fixtures.
+  - Acceptance: `dotnet test` reports the 5 new fixtures green.
+- [ ] **P2 C-09** — Lift Process.Start callers into ProcessRunner helpers
+  - Touches: ProcessRunner.RunWithStdinAsync + StreamAsync; 8 callers.
+  - Acceptance: only ProcessRunner contains `Process.Start` (grep verifies).
+- [ ] **P2 C-10** — Show-wizard-again button in Settings
+  - Touches: SettingsDialog.
+  - Acceptance: clicking the button re-opens the welcome wizard.
+- [ ] **P2 C-11** — Migrate cache refresh after Apps tab export/import
+  - Touches: AppsViewModel calls a shared cache-changed event.
+- [ ] **P2 C-12** — DynamicResource sweep for live theme swap
+  - Touches: Themes/Styles.xaml + every view brush reference + ThemeService.
+- [ ] **P2 C-17** — README screenshots + landing image
+  - Touches: docs/screenshots/, README.md.
 
-### Phase 4 — P3 / larger bets
+### Phase 4 — P3 polish
 
-- [ ] **P3 R-02** — First-launch wizard (Install → Create → Root → Migrate).
-- [ ] **P3 R-03** — Magisk module manager view.
-- [ ] **P3 A-38** — Wear OS / Android TV / Auto AVD profiles.
-- [ ] **P3 A-39** — scrcpy launcher integration.
-- [ ] **P3 A-40** — Sensor / GPS / battery / telephony simulation tab.
-- [ ] **P3 A-41** — KernelSU alternative-root path.
-- [ ] **P3 B-07** — Bidirectional clipboard sync (off by default).
-- [ ] **P3 B-08** — Dry-run root preview via rootAVD `LISTONLY`.
-- [ ] **P3 R-07** — Linux/macOS port via Avalonia.
+- [ ] **P3 C-13** — Compute sizes covers all rows
+- [ ] **P3 C-14** — Welcome wizard auto-skips completed steps
+- [ ] **P3 C-15** — Remove duplicate Theme picker on Install tab
+- [ ] **P3 C-16** — "Auto-launch scrcpy after boot" toggle
+- [ ] **P3 C-18** — Atomic write for settings.json (write-tmp + rename)
+- [ ] **P3 C-19** — Refactor AppsViewModel / AvdViewModel into smaller services
+- [ ] **P3 C-20** — MSIX or NSIS installer
+- [ ] **P3 R-07** — Avalonia port (Linux + macOS)
 
 ---
 
 ## Quick Wins
 
-Items < 30 minutes each, no architectural impact:
+These items can ship inside C-01 (the version bump) or in a single dedicated commit:
 
-- Delete unused `MigrationService.TransferOptions` record
-  ([MigrationService.cs:6](AndroidEmulatorPlus/Services/MigrationService.cs#L6)) or
-  wire it through to enable A-30.
-- Fix the duplicated `### Fixed` blocks in CHANGELOG `Unreleased`.
-- Add `[rootAVD pin: <SHA>]` to the LogService first-write session header.
-- Bump `Detail` log lines' brush from `OverlayBrush` to `SubtextBrush` for AA
-  contrast.
-- Add an empty-state TextBlock to AVDs tab when `Avds.Count == 0`.
-- Surface "using fallback URL" in InstallView when the cmdline-tools scrape misses.
-- Sort `AvailableImages` by parsed API level descending; default `NewImage` to the
-  highest API.
-- README: add a one-line Privacy / Network section listing the 4 domains the app
-  reaches.
-- README: add a screenshot section (after taking new screenshots, file under
-  `docs/screenshots/`).
+- Reconcile `ROADMAP.md`'s "Quick wins" section — entries B-12..B-20 are listed as
+  unchecked but all 8 actually shipped in batch-1 (commit `5676326`).
+- Bump `MainWindow.xaml` title and sidebar version pill alongside the csproj
+  `<Version>` (CLAUDE.md mandates this).
+- Add `<ApplicationManifest>` icon to make Explorer pretty even before C-06's
+  full icon set lands.
+- Trim the bundle staging dir in `AppService.ExtractBundle`'s exception path — it
+  currently leaves the work dir if the zip extraction itself throws. The finally
+  block only catches the success path.
+- Fix `MigrateView.xaml` "Force-stop on source phone" tooltip wording — currently
+  reads "Closes the app on the phone …" but the implementation also runs on the
+  *emulator* side (already in place via existing `am force-stop`). Minor.
 
 ---
 
 ## Larger Bets
 
-- **First-launch wizard** (R-02) — touches all 6 views; needs a state machine.
-- **Snapshot manager** (R-06) — new model, new view, careful destructive flows.
-- **Module manager** (R-03) — new tab; depends on a rooted emulator detection from
-  RootViewModel and a `magisk --install-module` driver.
-- **Settings flyout + persisted settings** (B-09) — touches every service that
-  currently reads env or hard-coded paths.
-- **Avalonia port** (R-07) — XAML stays mostly compatible, but `Process` PInvoke
-  paths and `Microsoft.Win32.OpenFileDialog` need shims. Defer until P0/P1 stabilize.
+- **C-07 Magisk module manager** — touches Root flow, list-of-modules curation,
+  install/uninstall lifecycle.
+- **C-12 DynamicResource sweep** — touches every brush reference in the
+  codebase, ~60 sites.
+- **R-07 Avalonia port** — XAML mostly compatible, but `Process` plumbing,
+  `Microsoft.Win32.OpenFileDialog`, `OpenFolderDialog`, `SaveFileDialog`,
+  `System.Windows.Clipboard` all need shims. Defer until v0.3+.
 
 ---
 
 ## Explicit Non-Goals
 
-- **App-store distribution** — winget yes, Microsoft Store no. The Store would
-  require AppX packaging and lifecycle changes that don't fit the "single EXE +
-  shell out to CLIs" identity.
-- **Custom kernel / forked emulator** — BlueStacks-style. The product's promise is
-  the *real* Android emulator with a real Play Store; custom kernels undo that.
-- **Telemetry** — even crash telemetry. The app's audience is exactly the user that
-  doesn't want it; the local `crash.log` is sufficient.
-- **GUI for `gradle` / `apksigner sign` / app development** — out of scope. This is
-  an emulator manager, not an IDE.
-- **macro recorder / key-mapping** — BlueStacks niche; off-mission and
-  maintenance-heavy.
-- **Embedded scrcpy renderer** — keep the integration to launching the external
-  scrcpy.exe per A-39. Hosting an SDL surface in WPF is a maintenance trap.
+- **Embedding the scrcpy SDL surface** — A-39 launches scrcpy externally; that's
+  the right boundary.
+- **Custom kernel / forked emulator** — BlueStacks-style. Out of mission.
+- **Telemetry of any kind** — including crash telemetry. README's Privacy
+  section is the project's stake in the ground.
+- **macOS / Linux first-class support** — Avalonia is tracked but deferred.
+- **App-store distribution (Microsoft Store)** — out of scope for v0.2; winget
+  manifest could land in v0.3+.
 
 ---
 
 ## Open Questions
 
-These actually block prioritization or implementation:
+These genuinely block prioritization or implementation:
 
-1. **Is the SysAdminDoc remote permitted to receive pushes from this VM?** Per
-   `memory/sysadmindoc-git-auth.md`, some repos hit 403 from this environment. The
-   roadmap items that include "commit and push" need an answer; for now this plan
-   assumes commits only, push on the main desktop PC.
-2. **What is the verified rootAVD SHA?** Required to close A-03. Needs a manual
-   smoke-test on API 35 + API 36 system images that the maintainer trusts before
-   committing the constant.
-3. **Should `B-09 Settings` persist as JSON in `%LOCALAPPDATA%` or follow
-   Windows Settings (Application Data + Roaming)?** Roaming makes sense for paths
-   that should follow the user across machines (SDK root), but the cache root
-   should not. Default proposal: local-only `settings.json`, no roaming. Confirm
-   before implementing.
-4. **Distribution channel for releases — winget, GitHub Releases, or both?**
-   Affects the A-36 workflow yaml structure. Default proposal: GitHub Releases
-   first (lowest friction), winget manifest after a stable v0.2.0.
+1. **rootAVD SHA**: A-03 needs a verified rootAVD revision to lock the pin.
+   Smoke-test on API 35 + 36 Google Play AVDs is the gating step.
+2. **rootAVD LISTONLY entry-point name**: `RootService.DryRunAsync` calls
+   `bash rootAVD.sh ListAllAVDs`. Verify this matches newbit's current
+   script — the README likely says `LISTONLY=1` as an env var; if so, change
+   the implementation to set that env var instead.
+3. **Magisk APK hash policy**: TOFU mode is shipping; should v0.2 ship with
+   *one* known-good Magisk hash baked in (the latest as of release) so the
+   manifest isn't empty? Or stay TOFU and expect users to populate?
+4. **Icon design**: who designs / commissions the AEP icon? Pixel-art Android
+   robot variant is the obvious shape; need a source.
+5. **GitHub Actions billing**: SysAdminDoc org runners are blocked at
+   allocation per the memory note. Does v0.2.0 release through the CI
+   pipeline, or as a one-off local `dotnet publish` on the maintainer's
+   desktop?
