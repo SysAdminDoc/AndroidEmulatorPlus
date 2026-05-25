@@ -16,6 +16,7 @@ public sealed partial class AvdViewModel : ObservableObject
     private readonly DeviceMonitor _monitor;
     private readonly LogService _log;
     private readonly SdkLocator _sdk;
+    private readonly SdkmanagerService _sdkman;
 
     public ObservableCollection<Avd> Avds { get; } = new();
     [ObservableProperty] private Avd? _selected;
@@ -48,7 +49,7 @@ public sealed partial class AvdViewModel : ObservableObject
     };
 
     public AvdViewModel(AvdService avds, EmulatorService emu, AdbService adb,
-        DeviceMonitor monitor, LogService log, SdkLocator sdk)
+        DeviceMonitor monitor, LogService log, SdkLocator sdk, SdkmanagerService sdkman)
     {
         _avds = avds;
         _emu = emu;
@@ -56,7 +57,27 @@ public sealed partial class AvdViewModel : ObservableObject
         _monitor = monitor;
         _log = log;
         _sdk = sdk;
+        _sdkman = sdkman;
         _monitor.Changed += _ => _ = RefreshRunningStateAsync();
+    }
+
+    /// <summary>
+    /// Opens the system-image picker dialog. If the user installs an image, refresh
+    /// AvailableImages so it lands in the Create form's dropdown.
+    /// </summary>
+    [RelayCommand]
+    private async Task BrowseSystemImagesAsync()
+    {
+        var dlg = new Views.SystemImagePickerDialog(_sdkman)
+        {
+            Owner = System.Windows.Application.Current?.MainWindow,
+        };
+        if (dlg.ShowDialog() == true && !string.IsNullOrEmpty(dlg.InstalledPackage))
+        {
+            await RefreshAsync();
+            NewImage = AvailableImages.FirstOrDefault(i => string.Equals(i, dlg.InstalledPackage, StringComparison.OrdinalIgnoreCase)) ?? NewImage;
+            _log.Success($"System image installed: {dlg.InstalledPackage}");
+        }
     }
 
     [RelayCommand]

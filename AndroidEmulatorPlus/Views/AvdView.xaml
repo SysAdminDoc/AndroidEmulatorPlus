@@ -119,7 +119,17 @@
                         <ComboBox ItemsSource="{Binding AvailableDevices}" SelectedItem="{Binding NewDevice}" IsEditable="True"/>
                     </StackPanel>
                     <StackPanel Grid.Column="2" Margin="8,0">
-                        <TextBlock Text="System image" Foreground="{StaticResource SubtextBrush}" Margin="0,0,0,4"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="System image" Foreground="{StaticResource SubtextBrush}" Margin="0,0,0,4"/>
+                            <Button Grid.Column="1" Content="Browse online…" Style="{StaticResource FlatButton}"
+                                    MinWidth="0" Padding="8,2" MinHeight="0"
+                                    Command="{Binding BrowseSystemImagesCommand}"
+                                    ToolTip="sdkmanager --list, then install a new system image"/>
+                        </Grid>
                         <ComboBox ItemsSource="{Binding AvailableImages}" SelectedItem="{Binding NewImage}"/>
                     </StackPanel>
                     <Button Grid.Column="3" Content="Create" Style="{StaticResource PrimaryButton}" Margin="12,18,0,0"

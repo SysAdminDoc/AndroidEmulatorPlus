@@ -21,7 +21,7 @@ Build constraint: this VMware VM has no .NET SDK; changes here are best-effort a
 
 ## Phase 2 — P1 workflow gaps
 
-- [ ] **P1 R-01** — System-image picker that can `sdkmanager` new images on demand (today: Create AVD only enumerates images already on disk).
+- [x] **P1 R-01** — "Browse online…" button on the AVDs tab opens a system-image picker dialog backed by `sdkmanager --list`. Auto-license-accept available; install runs via `sdkmanager <pkg>` with `y\n` spam; refreshes AvailableImages on success.
 - [ ] **P1 R-02** — First-launch wizard: install SDK → create AVD → root → migrate, all guided.
 - [ ] **P1 R-06** — Snapshot manager — list / pick / load / delete saved emulator states (boot snapshots vs. user-named).
 - [ ] **P1 R-08** — APK signature verification before install (warn on mismatch with already-installed package); use `apksigner.bat` from build-tools.

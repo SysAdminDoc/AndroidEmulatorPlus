@@ -41,6 +41,7 @@ All notable changes to this project will be documented here. Format follows [Kee
 - Debloat presets moved into `Resources/bloat-presets.json` (embedded). Ships Google / Samsung / Pixel-extras / Xiaomi-MIUI / OnePlus-OxygenOS presets. Users can override or extend by dropping `%LOCALAPPDATA%\AndroidEmulatorPlus\presets\bloat.json` with the same schema — same `id` replaces, new ids append. The Apps tab now renders one button per preset via `ItemsControl`.
 - Wi-Fi pairing card on the Migrate tab (Expander, collapsed by default). Calls `adb pair host:port + code` and `adb connect host:port`; works around older platform-tools that prompt for the code via stdin. Once connected, the phone shows up in the device monitor and the migration flow works exactly like a USB phone.
 - New `AndroidEmulatorPlus.Tests` xunit project: `ParseIni`/`WriteIni` round-trip (incl. case-insensitive overwrites), `ConfigViewModel.ParseSizeGb` (incl. raw-byte branch fixed in 3c7b738), `MigrationService.ParseFailReason`, `AvdViewModel.SystemImageSortKey`, `HashVerificationService.ComputeSha256`. CI already picks it up when present.
+- "Browse online…" button on the AVDs tab opens a new `SystemImagePickerDialog`: filterable list from `sdkmanager --list`, Accept-all-licenses helper, install via `sdkmanager <pkg>` with auto-`y` spam. On success the just-installed image lands selected in the Create form.
 
 ### Changed
 
