@@ -90,24 +90,32 @@ public sealed partial class AppsViewModel : ObservableObject
     [RelayCommand]
     private async Task InstallApkAsync()
     {
-        var emu = _monitor.Current.FirstOrDefault(d => d.IsEmulator);
-        if (emu is null) { _log.Warning("No emulator running."); return; }
         var dlg = new OpenFileDialog
         {
             Filter = "Android packages (*.apk;*.apks;*.xapk)|*.apk;*.apks;*.xapk",
             Multiselect = true,
         };
         if (dlg.ShowDialog() != true) return;
+        await InstallApkFilesAsync(dlg.FileNames);
+    }
+
+    public async Task InstallApkFilesAsync(IReadOnlyList<string> files)
+    {
+        if (files.Count == 0) return;
+        var emu = _monitor.Current.FirstOrDefault(d => d.IsEmulator);
+        if (emu is null) { _log.Warning("No emulator running."); return; }
         IsBusy = true;
+        int ok = 0, fail = 0;
         try
         {
-            foreach (var f in dlg.FileNames)
+            foreach (var f in files)
             {
                 _log.Info($"Installing {System.IO.Path.GetFileName(f)}…");
                 var r = await _apps.InstallApkAsync(emu.Serial, f);
-                if (r.Combined.Contains("Success")) _log.Success("ok");
-                else _log.Error("install failed: " + r.Combined.Trim());
+                if (r.Combined.Contains("Success")) { _log.Success("ok"); ok++; }
+                else { _log.Error("install failed: " + r.Combined.Trim()); fail++; }
             }
+            if (files.Count > 1) _log.Success($"Batch install: {ok} ok, {fail} fail.");
             await RefreshAsync();
         }
         finally { IsBusy = false; }

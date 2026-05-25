@@ -1,6 +1,7 @@
 <UserControl x:Class="AndroidEmulatorPlus.Views.AppsView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             AllowDrop="True" DragOver="OnDragOver" Drop="OnDrop">
     <Grid Margin="32,24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -12,7 +13,7 @@
         <StackPanel Grid.Row="0">
             <TextBlock Style="{StaticResource HeaderText}" Text="Apps / Debloat"/>
             <TextBlock Style="{StaticResource SubheaderText}" TextWrapping="Wrap">
-                Inventory of installed apps on the running emulator. Bulk-uninstall, batch-install APKs, or apply a debloat preset.
+                Inventory of installed apps on the running emulator. Bulk-uninstall, batch-install APKs, or apply a debloat preset. Tip: drag <Run FontWeight="SemiBold">.apk</Run> / <Run FontWeight="SemiBold">.apks</Run> / <Run FontWeight="SemiBold">.xapk</Run> files anywhere on this tab to install them.
             </TextBlock>
         </StackPanel>
 
