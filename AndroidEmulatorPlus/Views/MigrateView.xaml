@@ -20,20 +20,59 @@
         </StackPanel>
 
         <Border Grid.Row="1" Style="{StaticResource Card}">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-                <StackPanel Margin="0,0,12,0">
-                    <TextBlock Text="Source (phone)" Foreground="{StaticResource OverlayBrush}" FontSize="11"/>
-                    <TextBlock Text="{Binding PhoneStatus}" Margin="0,4,0,0" Foreground="{StaticResource LavenderBrush}"/>
-                </StackPanel>
-                <StackPanel Grid.Column="1" Margin="12,0,0,0">
-                    <TextBlock Text="Target (emulator)" Foreground="{StaticResource OverlayBrush}" FontSize="11"/>
-                    <TextBlock Text="{Binding EmuStatus}" Margin="0,4,0,0" Foreground="{StaticResource LavenderBrush}"/>
-                </StackPanel>
-            </Grid>
+            <StackPanel>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Margin="0,0,12,0">
+                        <TextBlock Text="Source (phone)" Foreground="{StaticResource OverlayBrush}" FontSize="11"/>
+                        <TextBlock Text="{Binding PhoneStatus}" Margin="0,4,0,0" Foreground="{StaticResource LavenderBrush}"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Margin="12,0,0,0">
+                        <TextBlock Text="Target (emulator)" Foreground="{StaticResource OverlayBrush}" FontSize="11"/>
+                        <TextBlock Text="{Binding EmuStatus}" Margin="0,4,0,0" Foreground="{StaticResource LavenderBrush}"/>
+                    </StackPanel>
+                </Grid>
+                <Expander Header="Pair a phone over Wi-Fi (Android 11+)" Foreground="{StaticResource SubtextBrush}" Margin="0,12,0,0" IsExpanded="False">
+                    <StackPanel Margin="0,10,0,0">
+                        <TextBlock Foreground="{StaticResource OverlayBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,8">
+                            On the phone: Developer options → Wireless debugging → Pair using pairing code. Copy the displayed <Run FontFamily="Cascadia Mono">host:port</Run> + 6-digit code below. After pairing, copy the OTHER <Run FontFamily="Cascadia Mono">host:port</Run> from the same screen into Connect.
+                        </TextBlock>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Margin="0,0,6,0">
+                                <TextBlock Text="Pair host:port" Foreground="{StaticResource SubtextBrush}" Margin="0,0,0,4" FontSize="11"/>
+                                <TextBox Text="{Binding PairHost, UpdateSourceTrigger=PropertyChanged}" FontFamily="Cascadia Mono"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Margin="6,0">
+                                <TextBlock Text="6-digit code" Foreground="{StaticResource SubtextBrush}" Margin="0,0,0,4" FontSize="11"/>
+                                <TextBox Text="{Binding PairCode, UpdateSourceTrigger=PropertyChanged}" FontFamily="Cascadia Mono"/>
+                            </StackPanel>
+                            <Button Grid.Column="2" Content="Pair" Style="{StaticResource FlatButton}" Margin="6,18,0,0" VerticalAlignment="Bottom"
+                                    Command="{Binding PairCommand}"/>
+                        </Grid>
+                        <Grid Margin="0,10,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Margin="0,0,6,0">
+                                <TextBlock Text="Connect host:port" Foreground="{StaticResource SubtextBrush}" Margin="0,0,0,4" FontSize="11"/>
+                                <TextBox Text="{Binding ConnectHost, UpdateSourceTrigger=PropertyChanged}" FontFamily="Cascadia Mono"/>
+                            </StackPanel>
+                            <Button Grid.Column="1" Content="Connect" Style="{StaticResource PrimaryButton}" Margin="6,18,0,0" VerticalAlignment="Bottom"
+                                    Command="{Binding ConnectCommand}"/>
+                        </Grid>
+                        <TextBlock Text="{Binding PairStatus}" Foreground="{StaticResource YellowBrush}" Margin="0,8,0,0" TextWrapping="Wrap" FontSize="12"/>
+                    </StackPanel>
+                </Expander>
+            </StackPanel>
         </Border>
 
         <Border Grid.Row="2" Style="{StaticResource Card}">

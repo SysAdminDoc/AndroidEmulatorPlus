@@ -39,6 +39,7 @@ All notable changes to this project will be documented here. Format follows [Kee
 - Cancel button shipped on Root, Migrate, and Install (cmdline-tools download). Each long-running flow owns a `CancellationTokenSource` plumbed into the underlying service calls; cancelled flows log a warning and roll back partial state.
 - `EmulatorService` now tracks every emulator child in a ConcurrentDictionary keyed by AVD name. Closing the app calls `KillAll()` so orphaned emulator windows no longer outlive the parent process.
 - Debloat presets moved into `Resources/bloat-presets.json` (embedded). Ships Google / Samsung / Pixel-extras / Xiaomi-MIUI / OnePlus-OxygenOS presets. Users can override or extend by dropping `%LOCALAPPDATA%\AndroidEmulatorPlus\presets\bloat.json` with the same schema — same `id` replaces, new ids append. The Apps tab now renders one button per preset via `ItemsControl`.
+- Wi-Fi pairing card on the Migrate tab (Expander, collapsed by default). Calls `adb pair host:port + code` and `adb connect host:port`; works around older platform-tools that prompt for the code via stdin. Once connected, the phone shows up in the device monitor and the migration flow works exactly like a USB phone.
 
 ### Changed
 

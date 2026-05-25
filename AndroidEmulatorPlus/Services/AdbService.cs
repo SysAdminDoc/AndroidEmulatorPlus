@@ -156,6 +156,63 @@ public sealed class AdbService
             new[] { "-s", serial, "emu", "kill" },
             extraEnv: NoPathConv, ct: ct);
 
+    /// <summary>
+    /// Pairs with an Android 11+ phone over Wi-Fi using a host:port + 6-digit code from
+    /// Developer options → Wireless debugging → Pair using pairing code. Equivalent
+    /// to <c>adb pair host:port code</c>. The pairing port is one-shot; after pairing
+    /// succeeds, the phone exposes a separate <i>connect</i> port (also visible in the
+    /// Wireless debugging UI) — pass that to <see cref="ConnectAsync"/>.
+    /// </summary>
+    public async Task<ProcessResult> PairAsync(string hostPort, string code, CancellationToken ct = default)
+    {
+        // adb pair takes the code interactively on stdin or as a second positional arg
+        // on newer platform-tools (35.0.0+). The positional form is portable enough.
+        var psi = new System.Diagnostics.ProcessStartInfo
+        {
+            FileName = _sdk.AdbRequired,
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            RedirectStandardInput = true,
+        };
+        psi.ArgumentList.Add("pair");
+        psi.ArgumentList.Add(hostPort);
+        psi.ArgumentList.Add(code);
+        foreach (var kv in NoPathConv) psi.Environment[kv.Key] = kv.Value;
+
+        using var proc = System.Diagnostics.Process.Start(psi)!;
+        // Some older builds still prompt; supply the code via stdin as a fallback.
+        try { await proc.StandardInput.WriteLineAsync(code); proc.StandardInput.Close(); } catch { }
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        linked.CancelAfter(TimeSpan.FromSeconds(30));
+        try
+        {
+            var stdoutTask = proc.StandardOutput.ReadToEndAsync(linked.Token);
+            var stderrTask = proc.StandardError.ReadToEndAsync(linked.Token);
+            await proc.WaitForExitAsync(linked.Token);
+            return new ProcessResult(proc.ExitCode, await stdoutTask, await stderrTask);
+        }
+        catch (OperationCanceledException)
+        {
+            try { if (!proc.HasExited) proc.Kill(entireProcessTree: true); } catch { }
+            return new ProcessResult(-1, "", "adb pair timed out after 30s");
+        }
+    }
+
+    /// <summary>Calls <c>adb connect host:port</c>.</summary>
+    public Task<ProcessResult> ConnectAsync(string hostPort, CancellationToken ct = default)
+        => ProcessRunner.RunAsync(_sdk.AdbRequired,
+            new[] { "connect", hostPort },
+            extraEnv: NoPathConv, timeout: TimeSpan.FromSeconds(15), ct: ct);
+
+    /// <summary>Calls <c>adb disconnect host:port</c> (or all if omitted).</summary>
+    public Task<ProcessResult> DisconnectAsync(string? hostPort = null, CancellationToken ct = default)
+    {
+        var args = hostPort is null ? new[] { "disconnect" } : new[] { "disconnect", hostPort };
+        return ProcessRunner.RunAsync(_sdk.AdbRequired, args, extraEnv: NoPathConv, ct: ct);
+    }
+
     /// <summary>Captures a PNG screenshot from the device and pulls it to <paramref name="destPath"/>.</summary>
     public async Task<bool> ScreenshotAsync(string serial, string destPath, CancellationToken ct = default)
     {

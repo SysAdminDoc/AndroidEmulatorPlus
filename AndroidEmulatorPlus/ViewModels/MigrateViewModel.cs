@@ -27,6 +27,10 @@ public sealed partial class MigrateViewModel : ObservableObject
     [ObservableProperty] private string _summary = "";
     [ObservableProperty] private string _cacheSummary = "—";
     [ObservableProperty] private bool _hasCache;
+    [ObservableProperty] private string _pairHost = "";
+    [ObservableProperty] private string _pairCode = "";
+    [ObservableProperty] private string _connectHost = "";
+    [ObservableProperty] private string _pairStatus = "";
 
     private CancellationTokenSource? _cts;
 
@@ -184,6 +188,56 @@ public sealed partial class MigrateViewModel : ObservableObject
     private void Cancel()
     {
         try { _cts?.Cancel(); } catch { }
+    }
+
+    /// <summary>
+    /// B-06: Pair with an Android 11+ phone over Wi-Fi. The user supplies the
+    /// pairing host:port + 6-digit code from "Wireless debugging → Pair using
+    /// pairing code"; if successful, they then enter the connect host:port (the
+    /// other line on the same Wireless debugging screen).
+    /// </summary>
+    [RelayCommand]
+    private async Task PairAsync()
+    {
+        var host = (PairHost ?? "").Trim();
+        var code = (PairCode ?? "").Trim();
+        if (string.IsNullOrEmpty(host) || string.IsNullOrEmpty(code))
+        {
+            PairStatus = "Both host:port and the 6-digit code are required.";
+            return;
+        }
+        PairStatus = "Pairing…";
+        var r = await _adb.PairAsync(host, code);
+        if (r.Success && r.Combined.Contains("Successfully", StringComparison.OrdinalIgnoreCase))
+        {
+            PairStatus = "✓ Paired. Now enter the connect host:port below.";
+            _log.Success($"Paired with {host}.");
+        }
+        else
+        {
+            PairStatus = "✗ Pair failed — " + r.Combined.Trim();
+            _log.Error("adb pair: " + r.Combined.Trim());
+        }
+    }
+
+    [RelayCommand]
+    private async Task ConnectAsync()
+    {
+        var host = (ConnectHost ?? "").Trim();
+        if (string.IsNullOrEmpty(host)) { PairStatus = "Enter the connect host:port."; return; }
+        PairStatus = "Connecting…";
+        var r = await _adb.ConnectAsync(host);
+        if (r.Combined.Contains("connected", StringComparison.OrdinalIgnoreCase)
+            && !r.Combined.Contains("cannot", StringComparison.OrdinalIgnoreCase))
+        {
+            PairStatus = "✓ Connected. " + r.StdOut.Trim();
+            _log.Success($"adb connect {host}: " + r.StdOut.Trim());
+        }
+        else
+        {
+            PairStatus = "✗ Connect failed — " + r.Combined.Trim();
+            _log.Error("adb connect: " + r.Combined.Trim());
+        }
     }
 
     partial void OnFilterChanged(string value) => OnPropertyChanged(nameof(FilteredPackages));
