@@ -1,0 +1,41 @@
+{
+  "_comment": "Curated Magisk module catalog. Each entry's downloadUrl is the latest-release link from the module's GitHub repo at curation time; update via maintainer smoke-test. User overrides at %LOCALAPPDATA%\\AndroidEmulatorPlus\\presets\\magisk-modules.json with the same schema merge by id.",
+  "version": 1,
+  "modules": [
+    {
+      "id": "shamiko",
+      "name": "Shamiko",
+      "description": "Hides Magisk root from app-side detectors. Pairs with Zygisk DenyList for the cleanest hide.",
+      "homepage": "https://github.com/LSPosed/LSPosed.github.io/releases",
+      "downloadUrl": "https://github.com/LSPosed/LSPosed.github.io/releases/latest"
+    },
+    {
+      "id": "lsposed",
+      "name": "LSPosed (Zygisk)",
+      "description": "Xposed-style runtime patching framework. Requires Zygisk enabled in Magisk settings.",
+      "homepage": "https://github.com/LSPosed/LSPosed/releases",
+      "downloadUrl": "https://github.com/LSPosed/LSPosed/releases/latest"
+    },
+    {
+      "id": "playintegrityfork",
+      "name": "Play Integrity Fork",
+      "description": "Spoofs Play Integrity device verdict to passing for Play Store / banking apps. Frequent updates — check the homepage.",
+      "homepage": "https://github.com/osm0sis/PlayIntegrityFork/releases",
+      "downloadUrl": "https://github.com/osm0sis/PlayIntegrityFork/releases/latest"
+    },
+    {
+      "id": "tricky-store",
+      "name": "Tricky Store",
+      "description": "Spoofs keystore attestation. Useful for apps that key off Strong Integrity.",
+      "homepage": "https://github.com/5ec1cff/TrickyStore/releases",
+      "downloadUrl": "https://github.com/5ec1cff/TrickyStore/releases/latest"
+    },
+    {
+      "id": "zygisk-detach",
+      "name": "Zygisk Detach",
+      "description": "Detaches Play Store updates from specific apps so they don't auto-update behind your back.",
+      "homepage": "https://github.com/j-hc/zygisk-detach/releases",
+      "downloadUrl": "https://github.com/j-hc/zygisk-detach/releases/latest"
+    }
+  ]
+}

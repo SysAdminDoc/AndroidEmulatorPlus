@@ -26,6 +26,7 @@
   <ItemGroup>
     <EmbeddedResource Include="Resources\known-hashes.json" />
     <EmbeddedResource Include="Resources\bloat-presets.json" />
+    <EmbeddedResource Include="Resources\magisk-modules.json" />
   </ItemGroup>
 
 </Project>

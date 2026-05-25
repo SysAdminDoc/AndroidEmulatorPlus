@@ -44,6 +44,7 @@ public partial class App : Application
         sc.AddSingleton<ApkSignerService>();
         sc.AddSingleton<ScrcpyService>();
         sc.AddSingleton<ConsoleService>();
+        sc.AddSingleton<MagiskService>();
         sc.AddSingleton<ScreenRecordService>();
         sc.AddSingleton<DeviceMonitor>();
 

@@ -47,6 +47,8 @@
                         <Button Content="Un-Root (Restore Ramdisk)" Style="{StaticResource DangerButton}" Command="{Binding UnRootCommand}" Margin="8,0,0,0"/>
                         <Button Content="Dry run (LISTONLY)" Style="{StaticResource FlatButton}" Command="{Binding DryRunCommand}" Margin="8,0,0,0"
                                 ToolTip="Runs rootAVD LISTONLY to preview which AVDs would be patched. No files are changed."/>
+                        <Button Content="Modules…" Style="{StaticResource FlatButton}" Command="{Binding OpenModulesCommand}" Margin="8,0,0,0"
+                                ToolTip="Magisk module manager — install Shamiko, LSPosed, PlayIntegrityFork, etc. on the rooted emulator (R-03)."/>
                     </StackPanel>
                     <TextBlock Foreground="{StaticResource SubtextBrush}" Margin="0,14,0,0" TextWrapping="Wrap">
                         Workflow:  ① Launch the AVD from the AVDs tab.  ② Press "Root with Latest Magisk".

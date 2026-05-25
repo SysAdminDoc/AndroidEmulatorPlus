@@ -46,9 +46,12 @@ be `dotnet build`-verified on a host with the SDK before tagging a release.
 
 ## Phase 3 — Polish + parity
 
-- [ ] **P2 C-07** — R-03 Magisk module manager. Install Zygisk modules
-  (Shamiko, LSPosed, PlayIntegrityFork) from inside the tool against a
-  rooted emulator. New `MagiskService` + sub-tab / expander on the Root tab.
+- [x] **P2 C-07** — Magisk module manager (R-03). `MagiskService` drives
+  `magisk --install-module` from a curated catalog (Shamiko / LSPosed /
+  PlayIntegrityFork / Tricky Store / Zygisk Detach) or arbitrary local zip.
+  Lists installed modules via `magisk module list` (fallback: walks
+  `/data/adb/modules/`). Toggle-enabled and Remove (mark-on-reboot) flows.
+  Surfaced via `Modules…` button on the Root tab.
 - [x] **P2 C-08** — New tests: `OrderBaseFirstTests` (5 cases on the C-02
   reorder helper), `DuplicateAvdTests` (replays the duplicate contract against
   a temp `.android/avd` tree and verifies the ini rewrites + transient cleanup),
@@ -69,7 +72,7 @@ be `dotnet build`-verified on a host with the SDK before tagging a release.
   the UI thread.
 - [ ] **P2 C-12** — DynamicResource sweep so theme switches live without restart.
 - [ ] **P2 C-17** — README screenshots + landing image (one PNG per tab, Mocha + Latte).
-- [ ] **P2 R-03 (covered by C-07)** — Magisk module manager.
+- [x] **P2 R-03** — Covered by C-07 (above).
 
 ## Phase 4 — P3 polish & stretch
 

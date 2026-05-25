@@ -15,6 +15,7 @@ public sealed partial class RootViewModel : ObservableObject
     private readonly DeviceMonitor _monitor;
     private readonly SdkLocator _sdk;
     private readonly EmulatorService _emu;
+    private readonly MagiskService _magisk;
 
     public ObservableCollection<Avd> Avds { get; } = new();
     [ObservableProperty] private Avd? _selectedAvd;
@@ -26,7 +27,7 @@ public sealed partial class RootViewModel : ObservableObject
     private CancellationTokenSource? _cts;
 
     public RootViewModel(RootService root, AdbService adb, AvdService avds, LogService log,
-        DeviceMonitor monitor, SdkLocator sdk, EmulatorService emu)
+        DeviceMonitor monitor, SdkLocator sdk, EmulatorService emu, MagiskService magisk)
     {
         _root = root;
         _adb = adb;
@@ -35,7 +36,21 @@ public sealed partial class RootViewModel : ObservableObject
         _monitor = monitor;
         _sdk = sdk;
         _emu = emu;
+        _magisk = magisk;
         _monitor.Changed += _ => UpdateNeedsLaunch();
+    }
+
+    /// <summary>C-07 / R-03: opens the Magisk module manager against the running emulator.</summary>
+    [RelayCommand]
+    private void OpenModules()
+    {
+        var emu = _monitor.Current.FirstOrDefault(d => d.IsEmulator && d.IsOnline);
+        if (emu is null) { _log.Warning("Modules: no emulator attached."); return; }
+        var dlg = new Views.MagiskModulesDialog(_magisk, emu.Serial)
+        {
+            Owner = System.Windows.Application.Current?.MainWindow,
+        };
+        dlg.ShowDialog();
     }
 
     private void UpdateNeedsLaunch()
