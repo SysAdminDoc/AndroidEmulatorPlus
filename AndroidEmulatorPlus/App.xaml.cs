@@ -46,6 +46,7 @@ public partial class App : Application
         sc.AddSingleton<ScrcpyService>();
         sc.AddSingleton<ConsoleService>();
         sc.AddSingleton<MagiskService>();
+        sc.AddSingleton<BundleInstallerService>();
         sc.AddSingleton<ScreenRecordService>();
         sc.AddSingleton<DeviceMonitor>();
 

@@ -93,8 +93,11 @@ be `dotnet build`-verified on a host with the SDK before tagging a release.
 - [x] **P3 C-18** — `SettingsService.Save` writes to `settings.json.tmp` then
   `File.Replace` into place, so a crash mid-write can't corrupt the file
   App.OnStartup reads.
-- [ ] **P3 C-19** — Refactor `AppsViewModel` (367 lines) and `AvdViewModel`
-  (350 lines) — extract bundle-install + AVD-dialog plumbing into helpers.
+- [x] **P3 C-19** (partial) — `BundleInstallerService` extracts the bundle
+  install + apksigner verify pipeline out of `AppsViewModel`. The cert-mismatch
+  prompt remains in the view-model via a callback so the service is UI-agnostic.
+  AvdViewModel refactor deferred (its dialog plumbing already lives in
+  per-dialog xaml.cs files).
 - [ ] **P3 R-07** — Linux + macOS builds (Avalonia port).
 
 ## Pending external validation
@@ -112,7 +115,8 @@ be `dotnet build`-verified on a host with the SDK before tagging a release.
    script (the canonical form might be `LISTONLY=1` env var).
 3. **Magisk hash policy** — ship empty TOFU table or bake in one known-good
    Magisk hash at release time?
-4. **Icon design** — who supplies the AEP icon? Pixel-art Android robot
-   variant is the obvious shape.
+4. **Icon design** — placeholder generated via System.Drawing shipped in
+   `Assets/aep.ico`. Refine with a designer-provided source asset before
+   v1.0.
 5. **GitHub Actions billing** — SysAdminDoc runners blocked at allocation;
    does v0.2.0 release via CI or local `dotnet publish`?

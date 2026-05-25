@@ -14,8 +14,8 @@ public sealed partial class AppsViewModel : ObservableObject
     private readonly DeviceMonitor _monitor;
     private readonly LogService _log;
     private readonly PresetService _presets;
-    private readonly ApkSignerService _signer;
     private readonly CacheDiagnosticsService _cache;
+    private readonly BundleInstallerService _bundleInstaller;
 
     public ObservableCollection<AndroidApp> Apps { get; } = new();
     public ObservableCollection<BloatPreset> BloatPresets { get; } = new();
@@ -25,15 +25,15 @@ public sealed partial class AppsViewModel : ObservableObject
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private string _uninstallMode = "user"; // "user" (adb uninstall), "user0" (pm uninstall --user 0)
 
-    public AppsViewModel(AppService apps, AdbService adb, DeviceMonitor monitor, LogService log, PresetService presets, ApkSignerService signer, CacheDiagnosticsService cache)
+    public AppsViewModel(AppService apps, AdbService adb, DeviceMonitor monitor, LogService log, PresetService presets, CacheDiagnosticsService cache, BundleInstallerService bundleInstaller)
     {
         _apps = apps;
         _adb = adb;
         _monitor = monitor;
         _log = log;
         _presets = presets;
-        _signer = signer;
         _cache = cache;
+        _bundleInstaller = bundleInstaller;
         foreach (var p in _presets.Presets) BloatPresets.Add(p);
     }
 
@@ -182,23 +182,11 @@ public sealed partial class AppsViewModel : ObservableObject
         {
             foreach (var f in files)
             {
-                var ext = System.IO.Path.GetExtension(f).ToLowerInvariant();
                 _log.Info($"Installing {System.IO.Path.GetFileName(f)}…");
-                bool success;
-                if (ext is ".apks" or ".xapk" or ".apkm")
-                {
-                    if (!await VerifyBeforeInstallAsync(emu.Serial, f)) { fail++; continue; }
-                    success = await InstallBundleAsync(emu.Serial, f);
-                }
-                else
-                {
-                    if (!await VerifyBeforeInstallAsync(emu.Serial, f)) { fail++; continue; }
-                    var r = await _apps.InstallApkAsync(emu.Serial, f);
-                    success = r.Combined.Contains("Success");
-                    if (!success) _log.Error("install failed: " + r.Combined.Trim());
-                }
-                if (success) { _log.Success("ok"); ok++; }
-                else fail++;
+                var success = await _bundleInstaller.InstallFileAsync(
+                    emu.Serial, f, VerifySignaturesBeforeInstall,
+                    onSignerMismatch: OnSignerMismatchAsync);
+                if (success) { _log.Success("ok"); ok++; } else fail++;
             }
             if (files.Count > 1) _log.Success($"Batch install: {ok} ok, {fail} fail.");
             await RefreshAsync();
@@ -207,79 +195,21 @@ public sealed partial class AppsViewModel : ObservableObject
     }
 
     /// <summary>
-    /// R-08 / C-04: When enabled, verify the APK's signature with apksigner.
-    /// If aapt2 is available, also resolve the package name and compare the
-    /// signer cert SHA against whatever cert the device already has for that
-    /// package — raise a ConfirmDialog when they differ (re-signed APK trying
-    /// to upgrade a Play-Store-installed app).
+    /// C-04: prompt the user when the APK signer differs from what's already
+    /// installed on the device. Runs on the UI thread because it opens a
+    /// modal ConfirmDialog.
     /// </summary>
-    private async Task<bool> VerifyBeforeInstallAsync(string serial, string path)
+    private Task<bool> OnSignerMismatchAsync(string pkg, string? detail)
     {
-        if (!VerifySignaturesBeforeInstall) return true;
-        if (!_signer.IsAvailable)
-        {
-            _log.Warning("Sig verify skipped: apksigner.bat not found in SDK build-tools.");
-            return true;
-        }
-        string apkToInspect = path;
-        var ext = System.IO.Path.GetExtension(path).ToLowerInvariant();
-        string? tempDir = null;
-        try
-        {
-            if (ext is ".apks" or ".xapk" or ".apkm")
-            {
-                tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"aep-verify-{Guid.NewGuid():N}");
-                System.IO.Directory.CreateDirectory(tempDir);
-                System.IO.Compression.ZipFile.ExtractToDirectory(path, tempDir);
-                var apks = System.IO.Directory.EnumerateFiles(tempDir, "*.apk", System.IO.SearchOption.AllDirectories).ToList();
-                apkToInspect = Services.AppService.OrderBaseFirst(apks).FirstOrDefault() ?? path;
-            }
-
-            var info = await _signer.InspectAsync(apkToInspect);
-            if (!info.Verified)
-            {
-                _log.Error($"apksigner verify FAILED for {System.IO.Path.GetFileName(path)}: {info.Raw.Trim()}");
-                return false;
-            }
-            if (info.Sha256 is null) return true;
-
-            _log.Detail($"signer cert SHA-256 {info.Sha256[..12]}…");
-
-            // C-04: cross-check against the installed cert. Requires aapt2 (to
-            // get the package name) and the package to be installed on the device.
-            var pkg = await _signer.ReadPackageNameAsync(apkToInspect);
-            if (pkg is null) return true; // aapt2 missing or APK malformed — skip cross-check
-
-            var installedSha = await _signer.InstalledCertShaAsync(_adb, serial, pkg);
-            if (installedSha is null) return true; // not currently installed — nothing to compare
-
-            if (string.Equals(info.Sha256, installedSha, System.StringComparison.OrdinalIgnoreCase))
-            {
-                _log.Detail($"signer matches installed cert for {pkg}");
-                return true;
-            }
-
-            // Mismatch — confirm before proceeding. This is the canonical
-            // re-signed-APK / supply-chain warning.
-            var ok = Views.ConfirmDialog.Show(
-                owner: null,
-                header: $"⚠ Signer mismatch for '{pkg}'",
-                body: "The signing certificate of this APK does NOT match the certificate of the version already installed on the device. " +
-                      "Continuing will replace the installed app with one signed by a different developer — common for re-signed / patched APKs and a red flag for sideloads.",
-                detail: $"Package:    {pkg}\nNew cert:   {info.Sha256}\nInstalled:  {installedSha}",
-                confirmButtonText: "Install anyway");
-            if (!ok) _log.Warning($"Install of {pkg} skipped (signer mismatch).");
-            return ok;
-        }
-        catch (Exception ex)
-        {
-            _log.Warning("Sig verify skipped: " + ex.Message);
-            return true;
-        }
-        finally
-        {
-            if (tempDir is not null) try { System.IO.Directory.Delete(tempDir, true); } catch { }
-        }
+        var ok = Views.ConfirmDialog.Show(
+            owner: null,
+            header: $"⚠ Signer mismatch for '{pkg}'",
+            body: "The signing certificate of this APK does NOT match the certificate of the version already installed on the device. " +
+                  "Continuing will replace the installed app with one signed by a different developer — common for re-signed / patched APKs and a red flag for sideloads.",
+            detail: detail,
+            confirmButtonText: "Install anyway");
+        if (!ok) _log.Warning($"Install of {pkg} skipped (signer mismatch).");
+        return Task.FromResult(ok);
     }
 
     [RelayCommand]
