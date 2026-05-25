@@ -6,6 +6,7 @@
         Title="AndroidEmulatorPlus v0.2.0"
         Width="1280" Height="820"
         MinWidth="980" MinHeight="640"
+        Icon="Assets/aep.ico"
         WindowStartupLocation="CenterScreen">
     <Window.InputBindings>
         <KeyBinding Modifiers="Ctrl" Key="D1" Command="{Binding NavigateCommand}" CommandParameter="Install"/>

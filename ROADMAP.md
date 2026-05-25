@@ -41,8 +41,10 @@ be `dotnet build`-verified on a host with the SDK before tagging a release.
   package after the phone list loads; flagged rows show a yellow ⚠ no-backup
   pill. The migration loop skips the data leg for them unless
   "Force-migrate no-backup apps" is set.
-- [ ] **P1 C-06** — Application icon (`Assets/aep.ico`) + window icon + csproj
-  `<ApplicationIcon>`. Fixes branded alt-tab card + Explorer thumbnail.
+- [x] **P1 C-06** — `Assets/aep.ico` shipped (multi-resolution 16/24/32/48/64/128/256,
+  Catppuccin Mocha base + Lavender ring + green Android-robot motif, generated
+  via System.Drawing). csproj `<ApplicationIcon>` + `<Resource>` entry; MainWindow
+  `Icon="Assets/aep.ico"`.
 
 ## Phase 3 — Polish + parity
 
