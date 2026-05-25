@@ -40,6 +40,7 @@ public partial class App : Application
         sc.AddSingleton<LogcatService>();
         sc.AddSingleton<SdkmanagerService>();
         sc.AddSingleton<PresetService>();
+        sc.AddSingleton<SnapshotService>();
         sc.AddSingleton<ScreenRecordService>();
         sc.AddSingleton<DeviceMonitor>();
 

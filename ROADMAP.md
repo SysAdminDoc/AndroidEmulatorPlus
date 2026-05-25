@@ -23,7 +23,7 @@ Build constraint: this VMware VM has no .NET SDK; changes here are best-effort a
 
 - [x] **P1 R-01** — "Browse online…" button on the AVDs tab opens a system-image picker dialog backed by `sdkmanager --list`. Auto-license-accept available; install runs via `sdkmanager <pkg>` with `y\n` spam; refreshes AvailableImages on success.
 - [ ] **P1 R-02** — First-launch wizard: install SDK → create AVD → root → migrate, all guided.
-- [ ] **P1 R-06** — Snapshot manager — list / pick / load / delete saved emulator states (boot snapshots vs. user-named).
+- [x] **P1 R-06** — Snapshots… overflow entry opens a dialog listing `&lt;avd&gt;.avd/snapshots/` with sizes and modified time. Save / Load go through `adb emu avd snapshot save|load` (requires the AVD to be running); Delete works any time and uses a typed confirmation.
 - [ ] **P1 R-08** — APK signature verification before install (warn on mismatch with already-installed package); use `apksigner.bat` from build-tools.
 - [ ] **P1 R-09** — Bandwidth-aware adb push/pull with progress per-package, not just per-batch.
 - [x] **P1 A-01 cancel** — Cancel button shipped on Root, Migrate, and Install (cmdline-tools download). Each viewmodel owns a `CancellationTokenSource` plumbed into the long-running service calls; `OperationCanceledException` reports cleanly.

@@ -17,6 +17,7 @@ public sealed partial class AvdViewModel : ObservableObject
     private readonly LogService _log;
     private readonly SdkLocator _sdk;
     private readonly SdkmanagerService _sdkman;
+    private readonly SnapshotService _snapshots;
 
     public ObservableCollection<Avd> Avds { get; } = new();
     [ObservableProperty] private Avd? _selected;
@@ -49,7 +50,7 @@ public sealed partial class AvdViewModel : ObservableObject
     };
 
     public AvdViewModel(AvdService avds, EmulatorService emu, AdbService adb,
-        DeviceMonitor monitor, LogService log, SdkLocator sdk, SdkmanagerService sdkman)
+        DeviceMonitor monitor, LogService log, SdkLocator sdk, SdkmanagerService sdkman, SnapshotService snapshots)
     {
         _avds = avds;
         _emu = emu;
@@ -58,7 +59,19 @@ public sealed partial class AvdViewModel : ObservableObject
         _log = log;
         _sdk = sdk;
         _sdkman = sdkman;
+        _snapshots = snapshots;
         _monitor.Changed += _ => _ = RefreshRunningStateAsync();
+    }
+
+    [RelayCommand]
+    private void ManageSnapshots(Avd? avd)
+    {
+        if (avd is null) return;
+        var dlg = new Views.SnapshotDialog(_snapshots, avd.Name, avd.RunningSerial)
+        {
+            Owner = System.Windows.Application.Current?.MainWindow,
+        };
+        dlg.ShowDialog();
     }
 
     /// <summary>
