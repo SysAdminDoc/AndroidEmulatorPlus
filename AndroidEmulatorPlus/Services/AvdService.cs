@@ -158,6 +158,79 @@ public sealed class AvdService
             new[] { "/c", _sdk.AvdManagerBat, "move", "avd", "-n", oldName, "-r", newName }, ct: ct);
     }
 
+    /// <summary>
+    /// Copies <c>&lt;sourceName&gt;.avd/</c> and rewrites <c>&lt;sourceName&gt;.ini</c> to
+    /// produce a fresh AVD under <paramref name="newName"/>. avdmanager has no
+    /// 'duplicate' verb, so this is a file-level copy + ini rewrite. The new AVD
+    /// inherits the source's snapshots and userdata.
+    /// </summary>
+    public void Duplicate(string sourceName, string newName)
+    {
+        if (_sdk.AvdHome is null) throw new InvalidOperationException("AVD home unknown.");
+        var srcDir = Path.Combine(_sdk.AvdHome, sourceName + ".avd");
+        var srcIni = Path.Combine(_sdk.AvdHome, sourceName + ".ini");
+        var dstDir = Path.Combine(_sdk.AvdHome, newName + ".avd");
+        var dstIni = Path.Combine(_sdk.AvdHome, newName + ".ini");
+        if (!Directory.Exists(srcDir) || !File.Exists(srcIni))
+            throw new FileNotFoundException($"Source AVD not found: {sourceName}");
+        if (Directory.Exists(dstDir) || File.Exists(dstIni))
+            throw new InvalidOperationException($"An AVD named '{newName}' already exists.");
+
+        _log.Info($"Duplicating AVD '{sourceName}' → '{newName}' (this may take a few seconds for large userdata)…");
+        CopyDirectory(srcDir, dstDir);
+
+        // The top-level .ini lists `path=` and `path.rel=` pointing at the AVD dir.
+        var iniLines = File.ReadAllLines(srcIni)
+            .Select(l => RewriteIniPath(l, sourceName, newName))
+            .ToArray();
+        File.WriteAllLines(dstIni, iniLines);
+
+        // The inner config.ini owns AvdId / avd.ini.displayname / hw.ini.* references that
+        // a few emulator versions read. Rewrite them so the duplicate is self-consistent.
+        var dstConfig = Path.Combine(dstDir, "config.ini");
+        if (File.Exists(dstConfig))
+        {
+            var lines = File.ReadAllLines(dstConfig)
+                .Select(l =>
+                {
+                    if (l.StartsWith("AvdId=", StringComparison.OrdinalIgnoreCase)) return "AvdId=" + newName;
+                    if (l.StartsWith("avd.ini.displayname=", StringComparison.OrdinalIgnoreCase)) return "avd.ini.displayname=" + newName;
+                    return l;
+                })
+                .ToArray();
+            File.WriteAllLines(dstConfig, lines);
+        }
+
+        // hardware-qemu.ini / multiinstance.lock may reference the old AVD path; drop them
+        // so the emulator re-creates them on first launch.
+        foreach (var transient in new[] { "hardware-qemu.ini", "multiinstance.lock", "running.lock", "tmpAdbCmds.bin" })
+        {
+            try { File.Delete(Path.Combine(dstDir, transient)); } catch { }
+        }
+        _log.Success($"Duplicated → '{newName}'.");
+    }
+
+    private static string RewriteIniPath(string line, string oldName, string newName)
+    {
+        // `path=...\<old>.avd` and `path.rel=avd/<old>.avd` are the two we care about; the
+        // simple substring replace is safe because AVD names cannot contain backslashes.
+        if (line.StartsWith("path=", StringComparison.OrdinalIgnoreCase)
+         || line.StartsWith("path.rel=", StringComparison.OrdinalIgnoreCase))
+        {
+            return line.Replace($"{oldName}.avd", $"{newName}.avd");
+        }
+        return line;
+    }
+
+    private static void CopyDirectory(string src, string dst)
+    {
+        Directory.CreateDirectory(dst);
+        foreach (var dir in Directory.EnumerateDirectories(src, "*", SearchOption.AllDirectories))
+            Directory.CreateDirectory(dir.Replace(src, dst));
+        foreach (var f in Directory.EnumerateFiles(src, "*", SearchOption.AllDirectories))
+            File.Copy(f, f.Replace(src, dst), overwrite: true);
+    }
+
     public string? FolderFor(string avdName)
     {
         if (_sdk.AvdHome is null) return null;

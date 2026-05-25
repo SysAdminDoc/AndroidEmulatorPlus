@@ -27,10 +27,24 @@ public sealed partial class AvdViewModel : ObservableObject
     [ObservableProperty] private string _newDevice = "pixel_7";
     [ObservableProperty] private string? _newImage;
     public ObservableCollection<string> AvailableImages { get; } = new();
+    /// <summary>
+    /// Device profile IDs accepted by `avdmanager create avd -d`. The phones come first,
+    /// then tablets, then form-factor devices (Wear / TV / Auto). avdmanager accepts a
+    /// raw id (e.g. <c>pixel_7</c>) as well as numeric profile ids; we keep the IDs.
+    /// </summary>
     public ObservableCollection<string> AvailableDevices { get; } = new()
     {
-        "pixel_7", "pixel_7_pro", "pixel_8", "pixel_8_pro", "pixel_fold", "pixel_tablet",
-        "Nexus 6P", "Nexus 5X", "small_phone",
+        // Phones
+        "pixel_7", "pixel_7_pro", "pixel_8", "pixel_8_pro", "pixel_9", "pixel_9_pro",
+        "pixel_fold", "Nexus 6P", "Nexus 5X", "small_phone",
+        // Tablets
+        "pixel_tablet", "pixel_c",
+        // Wear OS
+        "wearos_small_round", "wearos_large_round", "wearos_square", "wearos_rect",
+        // Android TV
+        "tv_1080p", "tv_4k", "tv_720p",
+        // Android Automotive
+        "automotive_1024p_landscape", "automotive_distant_display",
     };
 
     public AvdViewModel(AvdService avds, EmulatorService emu, AdbService adb,
@@ -127,6 +141,44 @@ public sealed partial class AvdViewModel : ObservableObject
         var opt = Views.LaunchOptionsDialog.Show(null, avd.Name);
         if (opt is null) return;
         _emu.Launch(avd.Name, opt);
+    }
+
+    [RelayCommand]
+    private async Task DuplicateAsync(Avd? avd)
+    {
+        if (avd is null) return;
+        if (avd.IsRunning)
+        {
+            _log.Warning("Stop the emulator before duplicating its AVD (open files cannot be copied).");
+            return;
+        }
+        var existing = new HashSet<string>(Avds.Select(a => a.Name), StringComparer.OrdinalIgnoreCase);
+        var newName = Views.PromptDialog.Show(
+            owner: null,
+            header: $"Duplicate '{avd.Name}'",
+            body: "Pick a name for the copy. The duplicate inherits userdata and snapshots from the source.",
+            initial: $"{avd.Name}-copy",
+            okText: "Duplicate",
+            validate: text =>
+            {
+                var t = (text ?? "").Trim();
+                if (string.IsNullOrEmpty(t)) return "Name cannot be empty.";
+                if (t == avd.Name) return "Pick a different name.";
+                if (!System.Text.RegularExpressions.Regex.IsMatch(t, @"^[A-Za-z0-9._-]+$"))
+                    return "Only letters, digits, '.', '_' and '-' are allowed.";
+                if (existing.Contains(t)) return $"An AVD named '{t}' already exists.";
+                return null;
+            });
+        if (newName is null) return;
+        newName = newName.Trim();
+        IsBusy = true;
+        try
+        {
+            await Task.Run(() => _avds.Duplicate(avd.Name, newName));
+            await RefreshAsync();
+        }
+        catch (Exception ex) { _log.Error("Duplicate failed: " + ex.Message); }
+        finally { IsBusy = false; }
     }
 
     [RelayCommand]

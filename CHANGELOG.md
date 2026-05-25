@@ -30,6 +30,8 @@ All notable changes to this project will be documented here. Format follows [Kee
 - AVD card overflow now includes "Launch with options…" — a dialog that exposes cold boot, wipe data, headless (`-no-window`), `-no-audio`, `-http-proxy`, `-dns-server`, and front/back camera selection. All emit standard emulator flags through `EmulatorService.LaunchOptions`.
 - "Accept all SDK licenses" button on the Install tab pipes `y\n` × 60 into `sdkmanager --licenses` so subsequent `sdkmanager install …` runs unattended (capped at 3 minutes).
 - Accel-check card surfaces a remediation panel on failure: Windows Hypervisor Platform docs, "Turn Windows features on/off" (launches optionalfeatures.exe), Android emulator-acceleration docs.
+- "Duplicate…" entry on the AVD card overflow menu: file-level copy of `<name>.avd/` and the matching `.ini`, with transient files (hardware-qemu.ini, multiinstance.lock, running.lock) removed so the clone boots cleanly. Validates the new name (regex + collision check) via PromptDialog and refuses when the source AVD is currently running.
+- Device profile dropdown gained Wear OS (`wearos_small_round`, `wearos_large_round`, `wearos_square`, `wearos_rect`), Android TV (`tv_720p`, `tv_1080p`, `tv_4k`), Android Automotive (`automotive_1024p_landscape`, `automotive_distant_display`), and `pixel_tablet`/`pixel_c` tablet profiles.
 
 ### Changed
 

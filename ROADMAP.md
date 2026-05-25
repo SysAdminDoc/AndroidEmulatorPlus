@@ -46,7 +46,7 @@ Build constraint: this VMware VM has no .NET SDK; changes here are best-effort a
 - [x] **P2 A-22** — Configure tab ships a `hw.gpu.mode` picker (host / swiftshader_indirect / angle_indirect / guest / off) with inline guidance.
 - [x] **P2 A-23** — AVD overflow menu adds "Launch with options…": cold boot, wipe, headless, no-audio, http-proxy, dns-server, front/back camera.
 - [x] **P2 A-24 remediation** — On accel-check failure the Install card now exposes three buttons: Windows Hypervisor Platform docs, "Turn Windows features on/off" (optionalfeatures.exe), Android Studio emulator-acceleration docs.
-- [ ] **P2 A-26** — Duplicate AVD (copy `<name>.avd` directory + `<name>.ini`, rewrite `path=` references).
+- [x] **P2 A-26** — Duplicate AVD entry on overflow menu: file-level copy of `<name>.avd/` + ini rewrite + transient-file cleanup so the duplicate boots clean.
 - [ ] **P2 A-27** — Keyboard shortcuts: F5 = Refresh active tab, Ctrl+1..6 = switch sections, Ctrl+L = clear log.
 - [x] **P2 A-28** — Inline "Launch & root" CTA on the Root tab when no emulator is attached; launches selected AVD, waits for boot, then re-enters the root flow.
 - [ ] **P2 A-29** — Detect tar flavor on the phone and fall back to a `find … -prune` pipeline for tar implementations without `--exclude=`.
@@ -64,7 +64,7 @@ Build constraint: this VMware VM has no .NET SDK; changes here are best-effort a
 ## Phase 4 — P3 / larger bets
 
 - [ ] **P3 R-07** — Linux + macOS builds (Avalonia port).
-- [ ] **P3 A-38** — Wear OS / Android Auto / Android TV AVD device profiles.
+- [x] **P3 A-38** — Wear OS (`wearos_*`), Android TV (`tv_*`), Android Automotive (`automotive_*`), and tablet (`pixel_tablet`, `pixel_c`) profiles added to the Create AVD device dropdown.
 - [ ] **P3 A-39** — Integrated scrcpy launcher.
 - [ ] **P3 A-40** — Sensor / GPS / battery / telephony simulation tab (via `telnet localhost 5554` console).
 - [ ] **P3 A-41** — KernelSU alternative-root path.
