@@ -16,6 +16,7 @@ public sealed partial class MainViewModel : ObservableObject
     public AppsViewModel AppsVm { get; }
     public ConfigViewModel ConfigVm { get; }
     public InstallViewModel InstallVm { get; }
+    public LogcatViewModel LogcatVm { get; }
 
     [ObservableProperty] private string _activeSection = "Avd";
 
@@ -23,15 +24,18 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty] private string _phoneStatusText = "no phone";
     [ObservableProperty] private string _emulatorStatusText = "no emulator";
     [ObservableProperty] private bool _hasEmulatorAttached;
+    [ObservableProperty] private bool _isRecording;
+    [ObservableProperty] private string _recordButtonText = "🎥 Record";
 
     private readonly SdkLocator _sdk;
     private readonly DeviceMonitor _devices;
     private readonly AdbService _adb;
+    private readonly ScreenRecordService _record;
 
     public MainViewModel(LogService log,
         AvdViewModel avd, RootViewModel root, MigrateViewModel mig,
-        AppsViewModel apps, ConfigViewModel cfg, InstallViewModel install,
-        SdkLocator sdk, DeviceMonitor devices, AdbService adb)
+        AppsViewModel apps, ConfigViewModel cfg, InstallViewModel install, LogcatViewModel logcat,
+        SdkLocator sdk, DeviceMonitor devices, AdbService adb, ScreenRecordService record)
     {
         Log = log;
         AvdVm = avd;
@@ -40,9 +44,11 @@ public sealed partial class MainViewModel : ObservableObject
         AppsVm = apps;
         ConfigVm = cfg;
         InstallVm = install;
+        LogcatVm = logcat;
         _sdk = sdk;
         _devices = devices;
         _adb = adb;
+        _record = record;
         _devices.Changed += OnDevicesChanged;
         RefreshSdk();
         Log.Info("AndroidEmulatorPlus v0.1.0 ready.");
@@ -95,5 +101,35 @@ public sealed partial class MainViewModel : ObservableObject
         if (section == "Root")   RootVm.RefreshCommand.Execute(null);
         if (section == "Migrate")MigrateVm.RefreshCommand.Execute(null);
         if (section == "Install")InstallVm.RefreshCommand.Execute(null);
+    }
+
+    /// <summary>
+    /// A-14: Start/stop screen recording from the top-bar toggle. Saves to
+    /// %USERPROFILE%/Pictures/AndroidEmulatorPlus/ once stopped.
+    /// </summary>
+    [RelayCommand]
+    private async Task RecordAsync()
+    {
+        if (_record.IsRecording)
+        {
+            var dir = System.IO.Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
+                "AndroidEmulatorPlus");
+            var local = await _record.StopAsync(dir);
+            IsRecording = false;
+            RecordButtonText = "🎥 Record";
+            if (local is not null)
+            {
+                try { Process.Start(new ProcessStartInfo(System.IO.Path.GetDirectoryName(local)!) { UseShellExecute = true }); }
+                catch { }
+            }
+            return;
+        }
+        var emu = _devices.Current.FirstOrDefault(d => d.IsEmulator && d.IsOnline);
+        if (emu is null) { Log.Warning("No emulator attached."); return; }
+        var remote = _record.Start(emu.Serial);
+        if (remote is null) return;
+        IsRecording = true;
+        RecordButtonText = "■ Stop recording";
     }
 }

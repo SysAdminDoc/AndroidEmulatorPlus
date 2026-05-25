@@ -23,6 +23,7 @@
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock Text="AndroidEmulatorPlus" FontWeight="SemiBold" FontSize="15"
@@ -50,6 +51,11 @@
                         Command="{Binding ScreenshotCommand}"
                         IsEnabled="{Binding HasEmulatorAttached}"
                         ToolTip="Capture a PNG from the attached emulator"/>
+                <Button Grid.Column="5" Style="{StaticResource FlatButton}" Margin="8,4,0,4"
+                        Content="{Binding RecordButtonText}" MinWidth="0" Padding="10,4"
+                        Command="{Binding RecordCommand}"
+                        IsEnabled="{Binding HasEmulatorAttached}"
+                        ToolTip="Start / stop screenrecord on the attached emulator (capped at 3 min by Android)"/>
             </Grid>
         </Border>
 
@@ -82,6 +88,9 @@
                     <RadioButton Style="{StaticResource SidebarButton}" Content="⑥ Configure"
                                  IsChecked="{Binding ActiveSection, Converter={x:Static views:EqualsConverter.Instance}, ConverterParameter=Config, Mode=OneWay}"
                                  Command="{Binding NavigateCommand}" CommandParameter="Config"/>
+                    <RadioButton Style="{StaticResource SidebarButton}" Content="⑦ Logcat"
+                                 IsChecked="{Binding ActiveSection, Converter={x:Static views:EqualsConverter.Instance}, ConverterParameter=Logcat, Mode=OneWay}"
+                                 Command="{Binding NavigateCommand}" CommandParameter="Logcat"/>
                 </StackPanel>
             </Border>
 
@@ -99,6 +108,8 @@
                                 Visibility="{Binding DataContext.ActiveSection, RelativeSource={RelativeSource AncestorType=Window}, Converter={x:Static views:VisibleIfEqualConverter.Instance}, ConverterParameter=Apps}"/>
                 <views:ConfigView DataContext="{Binding ConfigVm}"
                                   Visibility="{Binding DataContext.ActiveSection, RelativeSource={RelativeSource AncestorType=Window}, Converter={x:Static views:VisibleIfEqualConverter.Instance}, ConverterParameter=Config}"/>
+                <views:LogcatView DataContext="{Binding LogcatVm}"
+                                  Visibility="{Binding DataContext.ActiveSection, RelativeSource={RelativeSource AncestorType=Window}, Converter={x:Static views:VisibleIfEqualConverter.Instance}, ConverterParameter=Logcat}"/>
             </Grid>
         </Grid>
 

@@ -27,8 +27,8 @@ Build constraint: this VMware VM has no .NET SDK; changes here are best-effort a
 - [ ] **P1 R-08** — APK signature verification before install (warn on mismatch with already-installed package); use `apksigner.bat` from build-tools.
 - [ ] **P1 R-09** — Bandwidth-aware adb push/pull with progress per-package, not just per-batch.
 - [ ] **P1 A-01 cancel** — Cancel button on long-running ops (rootAVD patch, AVD create, cmdline-tools download, migration). Timeout shipped; user-visible Cancel did not.
-- [ ] **P1 A-14** — Screen record button (`adb shell screenrecord /sdcard/<ts>.mp4` + pull on stop) with start/stop toggle.
-- [ ] **P1 A-15** — Logcat viewer (filter by package + level), with a "Clear" and "Save" button.
+- [x] **P1 A-14** — Top-bar Record toggle drives `adb shell screenrecord`; on stop pulls the mp4 to `~/Pictures/AndroidEmulatorPlus/` and opens Explorer.
+- [x] **P1 A-15** — Dedicated Logcat tab (sidebar ⑦). Streams `adb logcat -v threadtime`, supports priority + package filter, Clear buffer (`logcat -c`), Clear view, Save to file.
 - [ ] **P1 A-16** — Auto-accept SDK licenses. Pipe `y\n` repeatedly to `sdkmanager --licenses`.
 - [ ] **P1 A-18** — `-s` (system) + `-d` (disabled-only) toggles on Apps tab; show package source per row.
 - [ ] **P1 A-19** — Detect `allowBackup=false` per package and warn before attempting data migration.

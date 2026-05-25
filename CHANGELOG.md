@@ -21,6 +21,8 @@ All notable changes to this project will be documented here. Format follows [Kee
 - Reusable `ConfirmDialog` for destructive actions. Resize+Wipe Data now requires typing `WIPE` and shows every snapshot + qcow2 overlay about to be destroyed. Delete AVD shows the on-disk folder + size; Un-Root shows the ramdisk path and the backup path it will restore from.
 - Rename AVD action lands in the AVD card's overflow menu via a new reusable `PromptDialog` (regex-validated, blocks name collisions, refuses to rename a running AVD).
 - Root tab now shows an inline "Launch & root" card when an AVD is selected but no emulator is attached. The button launches the AVD, polls adb for up to 2 minutes for the device, waits for `sys.boot_completed`, and re-enters the root flow — no more dead-end "Launch the AVD first" warning.
+- New Logcat tab (sidebar ⑦) streams `adb logcat -v threadtime` from the attached emulator with priority + package filter. Buttons: Start / Stop, Clear buffer (`logcat -c`), Clear view, Save to .log file. Auto-scrolls and caps the in-view ring at 5000 lines.
+- New top-bar "🎥 Record" toggle drives `adb shell screenrecord`. Stops, pulls the mp4 to `%USERPROFILE%\Pictures\AndroidEmulatorPlus\` and opens the folder. (Android caps `screenrecord` at 3 minutes; this is intentional and surfaced in the tooltip.)
 
 ### Changed
 

@@ -28,6 +28,8 @@ public partial class App : Application
         sc.AddSingleton<DownloadService>();
         sc.AddSingleton<HashVerificationService>();
         sc.AddSingleton<CacheDiagnosticsService>();
+        sc.AddSingleton<LogcatService>();
+        sc.AddSingleton<ScreenRecordService>();
         sc.AddSingleton<DeviceMonitor>();
 
         sc.AddSingleton<MainViewModel>();
@@ -37,6 +39,7 @@ public partial class App : Application
         sc.AddSingleton<AppsViewModel>();
         sc.AddSingleton<ConfigViewModel>();
         sc.AddSingleton<InstallViewModel>();
+        sc.AddSingleton<LogcatViewModel>();
 
         sc.AddTransient<MainWindow>();
 
@@ -51,6 +54,13 @@ public partial class App : Application
         Services.GetRequiredService<DeviceMonitor>().Start();
 
         base.OnStartup(e);
+    }
+
+    protected override void OnExit(ExitEventArgs e)
+    {
+        try { Services.GetService<LogcatService>()?.Dispose(); } catch { }
+        try { Services.GetService<ScreenRecordService>()?.Dispose(); } catch { }
+        base.OnExit(e);
     }
 
     private void OnUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
