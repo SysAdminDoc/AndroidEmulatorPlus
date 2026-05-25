@@ -49,9 +49,11 @@ be `dotnet build`-verified on a host with the SDK before tagging a release.
 - [ ] **P2 C-07** — R-03 Magisk module manager. Install Zygisk modules
   (Shamiko, LSPosed, PlayIntegrityFork) from inside the tool against a
   rooted emulator. New `MagiskService` + sub-tab / expander on the Root tab.
-- [ ] **P2 C-08** — Tests for `AvdService.Duplicate`, `AppService.ExtractBundle`,
-  `ConfigService.PreviewWipe`, `PresetService` merge, `HashVerificationService`
-  manifest plumbing.
+- [x] **P2 C-08** — New tests: `OrderBaseFirstTests` (5 cases on the C-02
+  reorder helper), `DuplicateAvdTests` (replays the duplicate contract against
+  a temp `.android/avd` tree and verifies the ini rewrites + transient cleanup),
+  `PresetServiceTests` (id-based merge + embedded JSON schema), and
+  `AllowBackupParsingTests` (4 known `pm dump` shapes).
 - [x] **P2 C-09** — New `ProcessRunner.RunWithStdinAsync` and `StreamAsync`
   helpers; refactored `SdkmanagerService.AcceptLicenses`/`Install`,
   `AvdService.CreateAsync`, `RootService.PatchAsync`/`DryRunAsync`,
