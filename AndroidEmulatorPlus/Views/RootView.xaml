@@ -45,6 +45,8 @@
                                 Visibility="{Binding IsBusy, Converter={x:Static views:BoolToVisibilityConverter.Instance}}"/>
                         <Button Content="Verify + Persist Policy" Style="{StaticResource FlatButton}" Command="{Binding VerifyCommand}" Margin="8,0,0,0"/>
                         <Button Content="Un-Root (Restore Ramdisk)" Style="{StaticResource DangerButton}" Command="{Binding UnRootCommand}" Margin="8,0,0,0"/>
+                        <Button Content="Dry run (LISTONLY)" Style="{StaticResource FlatButton}" Command="{Binding DryRunCommand}" Margin="8,0,0,0"
+                                ToolTip="Runs rootAVD LISTONLY to preview which AVDs would be patched. No files are changed."/>
                     </StackPanel>
                     <TextBlock Foreground="{StaticResource SubtextBrush}" Margin="0,14,0,0" TextWrapping="Wrap">
                         Workflow:  ① Launch the AVD from the AVDs tab.  ② Press "Root with Latest Magisk".
@@ -52,6 +54,18 @@
                     </TextBlock>
                     <TextBlock Foreground="{StaticResource OverlayBrush}" Margin="0,10,0,0" TextWrapping="Wrap" FontSize="12">
                         Backups (.original) of the stock ramdisk are kept inside the system-image folder. Un-Root copies them back.
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource SectionHeader}" Text="KernelSU (alternative root)"/>
+                    <TextBlock Foreground="{StaticResource SubtextBrush}" TextWrapping="Wrap">
+                        KernelSU requires a custom kernel image patched into the AVD's system-image, which is out of scope for this tool's rootAVD-based flow. To experiment manually:
+                        <LineBreak/>1. Build or download a KernelSU-patched kernel for the matching API level.
+                        <LineBreak/>2. Replace <Run FontFamily="Cascadia Mono">&lt;sys-image&gt;/kernel-ranchu</Run> with the patched kernel.
+                        <LineBreak/>3. Cold-boot the AVD and install the KernelSU manager APK from <Run FontFamily="Cascadia Mono">github.com/tiann/KernelSU/releases</Run>.
                     </TextBlock>
                 </StackPanel>
             </Border>

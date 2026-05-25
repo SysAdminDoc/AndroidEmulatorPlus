@@ -160,6 +160,22 @@ public sealed partial class RootViewModel : ObservableObject
         try { _cts?.Cancel(); } catch { }
     }
 
+    /// <summary>B-08: rootAVD LISTONLY dry-run preview.</summary>
+    [RelayCommand]
+    private async Task DryRunAsync()
+    {
+        IsBusy = true;
+        Step = "Dry run…";
+        try
+        {
+            await _root.EnsureRootAvdAsync(new Progress<string>(s => Step = s), default);
+            await _root.DryRunAsync(new Progress<string>(s => Step = s), l => _log.Detail(l), default);
+            _log.Info("Dry-run complete (no files were patched).");
+        }
+        catch (Exception ex) { _log.Error(ex.Message); }
+        finally { IsBusy = false; Step = ""; }
+    }
+
     [RelayCommand]
     private async Task VerifyAsync()
     {

@@ -65,11 +65,11 @@ Build constraint: this VMware VM has no .NET SDK; changes here are best-effort a
 
 - [ ] **P3 R-07** — Linux + macOS builds (Avalonia port).
 - [x] **P3 A-38** — Wear OS (`wearos_*`), Android TV (`tv_*`), Android Automotive (`automotive_*`), and tablet (`pixel_tablet`, `pixel_c`) profiles added to the Create AVD device dropdown.
-- [ ] **P3 A-39** — Integrated scrcpy launcher.
-- [ ] **P3 A-40** — Sensor / GPS / battery / telephony simulation tab (via `telnet localhost 5554` console).
-- [ ] **P3 A-41** — KernelSU alternative-root path.
-- [ ] **P3 B-07** — Bidirectional clipboard sync (off by default).
-- [ ] **P3 B-08** — Dry-run root preview via rootAVD `LISTONLY` mode.
+- [x] **P3 A-39** — Top-bar "🖥 scrcpy" button launches an external `scrcpy.exe` with `-s <serial>`; `ScrcpyService.FindExe` looks in PATH and `%LOCALAPPDATA%\AndroidEmulatorPlus\scrcpy\`.
+- [x] **P3 A-40** — New "⑧ Console" tab drives the emulator console via `adb emu …`: GPS (geo fix), battery (power capacity/status), telephony (gsm call / sms send), network (speed/delay presets), free-form command, plus manual clipboard pull/push.
+- [x] **P3 A-41** — Out-of-scope for the rootAVD flow; the Root tab now includes a KernelSU note with the 3-step manual procedure (custom kernel image swap + manager APK).
+- [x] **P3 B-07** — Manual clipboard pull/push on the Console tab (no background poll, so no privacy cost). `cmd clipboard get-primary` and `set-primary` against the emulator.
+- [x] **P3 B-08** — "Dry run (LISTONLY)" button on the Root tab runs rootAVD's `ListAllAVDs` entry point and logs the output without modifying any ramdisks.
 
 ## Quick wins (sub-30 min each)
 

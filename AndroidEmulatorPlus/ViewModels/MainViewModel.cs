@@ -17,6 +17,7 @@ public sealed partial class MainViewModel : ObservableObject
     public ConfigViewModel ConfigVm { get; }
     public InstallViewModel InstallVm { get; }
     public LogcatViewModel LogcatVm { get; }
+    public ConsoleViewModel ConsoleVm { get; }
 
     [ObservableProperty] private string _activeSection = "Avd";
 
@@ -32,11 +33,12 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly AdbService _adb;
     private readonly ScreenRecordService _record;
     private readonly SettingsService _settings;
+    private readonly ScrcpyService _scrcpy;
 
     public MainViewModel(LogService log,
         AvdViewModel avd, RootViewModel root, MigrateViewModel mig,
-        AppsViewModel apps, ConfigViewModel cfg, InstallViewModel install, LogcatViewModel logcat,
-        SdkLocator sdk, DeviceMonitor devices, AdbService adb, ScreenRecordService record, SettingsService settings)
+        AppsViewModel apps, ConfigViewModel cfg, InstallViewModel install, LogcatViewModel logcat, ConsoleViewModel console,
+        SdkLocator sdk, DeviceMonitor devices, AdbService adb, ScreenRecordService record, SettingsService settings, ScrcpyService scrcpy)
     {
         Log = log;
         AvdVm = avd;
@@ -46,11 +48,13 @@ public sealed partial class MainViewModel : ObservableObject
         ConfigVm = cfg;
         InstallVm = install;
         LogcatVm = logcat;
+        ConsoleVm = console;
         _sdk = sdk;
         _devices = devices;
         _adb = adb;
         _record = record;
         _settings = settings;
+        _scrcpy = scrcpy;
         _devices.Changed += OnDevicesChanged;
         RefreshSdk();
         // If the SDK isn't there yet, land on Install rather than the empty AVDs list.
@@ -119,6 +123,14 @@ public sealed partial class MainViewModel : ObservableObject
         if (section == "Install")InstallVm.RefreshCommand.Execute(null);
     }
 
+    [RelayCommand]
+    private void LaunchScrcpy()
+    {
+        var emu = _devices.Current.FirstOrDefault(d => d.IsEmulator && d.IsOnline);
+        if (emu is null) { Log.Warning("No emulator attached."); return; }
+        _scrcpy.Launch(emu.Serial);
+    }
+
     /// <summary>F5 — refresh whatever tab is in focus.</summary>
     [RelayCommand]
     private void RefreshActive()
@@ -132,6 +144,7 @@ public sealed partial class MainViewModel : ObservableObject
             case "Migrate": MigrateVm.RefreshCommand.Execute(null); break;
             case "Install": InstallVm.RefreshCommand.Execute(null); break;
             case "Logcat":  /* logcat has start/stop, no refresh */ break;
+            case "Console": /* console is request/response, no refresh */ break;
         }
     }
 

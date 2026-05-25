@@ -113,6 +113,51 @@ public sealed class RootService
         return rel.Replace('\\', '/');
     }
 
+    /// <summary>
+    /// B-08: rootAVD's `LISTONLY=1` mode prints what it would patch without changing
+    /// anything. The script enumerates AVDs and their ramdisk paths. Output goes to
+    /// <paramref name="onOutput"/> for the UI log.
+    /// </summary>
+    public async Task<bool> DryRunAsync(IProgress<string>? status, Action<string>? onOutput, CancellationToken ct)
+    {
+        if (_sdk.SdkRoot is null) throw new InvalidOperationException("SDK root not located.");
+        status?.Report("Running rootAVD.sh LISTONLY…");
+        var bash = TryFindBash() ?? throw new InvalidOperationException(
+            "bash.exe not found. Install Git for Windows.");
+        var psi = new ProcessStartInfo
+        {
+            FileName = bash,
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            WorkingDirectory = RootAvdDir,
+        };
+        psi.ArgumentList.Add(Path.Combine(RootAvdDir, "rootAVD.sh"));
+        psi.ArgumentList.Add("ListAllAVDs"); // newbit's LISTONLY entry point
+        psi.Environment["ANDROID_HOME"] = _sdk.SdkRoot;
+        psi.Environment["ANDROID_SDK_ROOT"] = _sdk.SdkRoot;
+        psi.Environment["MSYS_NO_PATHCONV"] = "1";
+        psi.Environment["MSYS2_ARG_CONV_EXCL"] = "*";
+        psi.Environment["PATH"] = Path.GetDirectoryName(_sdk.AdbExe!) + ";" + (Environment.GetEnvironmentVariable("PATH") ?? "");
+
+        using var proc = new Process { StartInfo = psi, EnableRaisingEvents = true };
+        proc.OutputDataReceived += (_, e) => { if (e.Data != null) onOutput?.Invoke(e.Data); };
+        proc.ErrorDataReceived += (_, e) => { if (e.Data != null) onOutput?.Invoke(e.Data); };
+        proc.Start();
+        proc.BeginOutputReadLine();
+        proc.BeginErrorReadLine();
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        linked.CancelAfter(TimeSpan.FromMinutes(2));
+        try { await proc.WaitForExitAsync(linked.Token); }
+        catch (OperationCanceledException)
+        {
+            try { if (!proc.HasExited) proc.Kill(entireProcessTree: true); } catch { }
+            return false;
+        }
+        return proc.ExitCode == 0;
+    }
+
     public async Task<bool> PatchAsync(string ramdiskRelative, IProgress<string>? status,
         Action<string>? onOutput, CancellationToken ct)
     {

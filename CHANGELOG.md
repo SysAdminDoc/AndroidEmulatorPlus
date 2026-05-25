@@ -50,6 +50,10 @@ All notable changes to this project will be documented here. Format follows [Kee
 - Migrate tab "Force-stop on source phone before tar" checkbox closes the running app on the phone immediately before tarring `/data/data`, so the SQLite DBs aren't captured mid-write.
 - New ⚙ Settings button on the top bar opens a dialog covering theme, SDK root override (autodetect when blank), media output dir (defaults to `~/Pictures/AndroidEmulatorPlus`), and HTTP proxy. SdkLocator honors the override; screenshot/record helpers write to the configured media dir. The card includes an explicit "no telemetry" statement.
 - First-launch wizard (R-02): a Welcome dialog opens once when no settings.json/no SDK/no AVDs are present, walking through the four workflow steps with Go-to buttons per step. "Don't show again" persists `hasSeenWizard` in settings.json. The app also auto-navigates to Install on startup if the SDK isn't detected.
+- New ⑧ Console tab simulates GPS (geo fix), battery (capacity + status), telephony (gsm call, sms send), and network conditions (speed + delay presets) via `adb emu …`. Free-form command field and manual clipboard pull/push (`cmd clipboard get-primary` / `set-primary`).
+- Top-bar "🖥 scrcpy" button launches external `scrcpy.exe` against the attached emulator. Looks in PATH and `%LOCALAPPDATA%\AndroidEmulatorPlus\scrcpy\`. winget install Genymobile.scrcpy.
+- Root tab "Dry run (LISTONLY)" button (B-08) runs rootAVD's `ListAllAVDs` entry point — enumerates what would be patched without modifying any ramdisks.
+- Root tab footer mentions KernelSU as an alternative root path with the 3-step manual procedure; full integration is out of scope for this rootAVD-based flow.
 
 ### Changed
 

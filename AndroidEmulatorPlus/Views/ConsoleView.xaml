@@ -1,0 +1,142 @@
+<UserControl x:Class="AndroidEmulatorPlus.Views.ConsoleView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="32,24">
+        <StackPanel MaxWidth="900" HorizontalAlignment="Left">
+            <TextBlock Style="{StaticResource HeaderText}" Text="Console"/>
+            <TextBlock Style="{StaticResource SubheaderText}" TextWrapping="Wrap">
+                Sensor / GPS / battery / telephony / network simulation against a running emulator via <Run FontFamily="Cascadia Mono">adb emu …</Run> (same surface as telnet'ing the emulator console).
+            </TextBlock>
+
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource SectionHeader}" Text="GPS"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="120"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="120"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Latitude" Foreground="{StaticResource SubtextBrush}" VerticalAlignment="Center"/>
+                        <TextBox  Grid.Column="1" Text="{Binding GpsLatitude}"/>
+                        <TextBlock Grid.Column="2" Text="Longitude" Foreground="{StaticResource SubtextBrush}" VerticalAlignment="Center" Margin="14,0,0,0"/>
+                        <TextBox  Grid.Column="3" Text="{Binding GpsLongitude}"/>
+                    </Grid>
+                    <Button Content="Set location" Style="{StaticResource FlatButton}" HorizontalAlignment="Left" Margin="0,10,0,0" Command="{Binding SetGeoCommand}"/>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource SectionHeader}" Text="Battery"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="120"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="40"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Capacity (%)" Foreground="{StaticResource SubtextBrush}" VerticalAlignment="Center"/>
+                        <Slider Grid.Column="1" Minimum="0" Maximum="100" Value="{Binding BatteryPercent}" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="2" Text="{Binding BatteryPercent}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                    </Grid>
+                    <Grid Margin="0,8,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="120"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Status" Foreground="{StaticResource SubtextBrush}" VerticalAlignment="Center"/>
+                        <ComboBox Grid.Column="1" ItemsSource="{Binding PowerStates}" SelectedItem="{Binding PowerStatus}"/>
+                    </Grid>
+                    <Button Content="Apply battery state" Style="{StaticResource FlatButton}" HorizontalAlignment="Left" Margin="0,10,0,0" Command="{Binding SetBatteryCommand}"/>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource SectionHeader}" Text="Telephony"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="120"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Incoming call" Foreground="{StaticResource SubtextBrush}" VerticalAlignment="Center"/>
+                        <Grid Grid.Column="1">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBox Text="{Binding GsmNumber}" FontFamily="Cascadia Mono"/>
+                            <Button Grid.Column="1" Content="Ring" Style="{StaticResource FlatButton}" Margin="8,0,0,0" Command="{Binding RingCommand}"/>
+                        </Grid>
+                    </Grid>
+                    <Grid Margin="0,8,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="120"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Incoming SMS" Foreground="{StaticResource SubtextBrush}" VerticalAlignment="Center"/>
+                        <StackPanel Grid.Column="1">
+                            <TextBox Text="{Binding SmsNumber}" FontFamily="Cascadia Mono"/>
+                            <TextBox Text="{Binding SmsBody}" Margin="0,6,0,0"/>
+                            <Button Content="Send SMS" Style="{StaticResource FlatButton}" HorizontalAlignment="Left" Margin="0,8,0,0" Command="{Binding SendSmsCommand}"/>
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource SectionHeader}" Text="Network condition"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="120"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="120"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Speed preset" Foreground="{StaticResource SubtextBrush}" VerticalAlignment="Center"/>
+                        <ComboBox Grid.Column="1" ItemsSource="{Binding Speeds}" SelectedItem="{Binding NetworkSpeed}"/>
+                        <TextBlock Grid.Column="2" Text="Delay preset" Foreground="{StaticResource SubtextBrush}" VerticalAlignment="Center" Margin="14,0,0,0"/>
+                        <ComboBox Grid.Column="3" ItemsSource="{Binding Delays}" SelectedItem="{Binding NetworkDelay}"/>
+                    </Grid>
+                    <Button Content="Apply network" Style="{StaticResource FlatButton}" HorizontalAlignment="Left" Margin="0,10,0,0" Command="{Binding SetNetworkCommand}"/>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource SectionHeader}" Text="Clipboard sync (manual)"/>
+                    <TextBlock Foreground="{StaticResource OverlayBrush}" FontSize="11" TextWrapping="Wrap">
+                        Manual round-trip to avoid the privacy cost of a background poll. Pull copies the emulator's primary clipboard into the host clipboard; Push goes the other way.
+                    </TextBlock>
+                    <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                        <Button Content="⇐ Pull from emulator" Style="{StaticResource FlatButton}" Command="{Binding PullClipboardCommand}"/>
+                        <Button Content="⇒ Push to emulator" Style="{StaticResource FlatButton}" Margin="8,0,0,0" Command="{Binding PushClipboardCommand}"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource SectionHeader}" Text="Raw command"/>
+                    <TextBlock Foreground="{StaticResource OverlayBrush}" FontSize="11" TextWrapping="Wrap">
+                        Sends arbitrary <Run FontFamily="Cascadia Mono">adb emu …</Run>. Examples: <Run FontFamily="Cascadia Mono">avd name</Run>, <Run FontFamily="Cascadia Mono">finger touch 1</Run>, <Run FontFamily="Cascadia Mono">rotate</Run>.
+                    </TextBlock>
+                    <Grid Margin="0,8,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox Text="{Binding FreeFormArgs, UpdateSourceTrigger=PropertyChanged}" FontFamily="Cascadia Mono"/>
+                        <Button Grid.Column="1" Content="Send" Style="{StaticResource PrimaryButton}" Margin="8,0,0,0" Command="{Binding SendFreeFormCommand}"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <Border Background="{StaticResource CrustBrush}" CornerRadius="6" Padding="10,8" Margin="0,12,0,0">
+                <TextBlock Text="{Binding LastResult}" FontFamily="Cascadia Mono, Consolas, monospace" FontSize="11" Foreground="{StaticResource SubtextBrush}" TextWrapping="Wrap"/>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

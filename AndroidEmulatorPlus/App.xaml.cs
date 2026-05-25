@@ -42,6 +42,8 @@ public partial class App : Application
         sc.AddSingleton<PresetService>();
         sc.AddSingleton<SnapshotService>();
         sc.AddSingleton<ApkSignerService>();
+        sc.AddSingleton<ScrcpyService>();
+        sc.AddSingleton<ConsoleService>();
         sc.AddSingleton<ScreenRecordService>();
         sc.AddSingleton<DeviceMonitor>();
 
@@ -53,6 +55,7 @@ public partial class App : Application
         sc.AddSingleton<ConfigViewModel>();
         sc.AddSingleton<InstallViewModel>();
         sc.AddSingleton<LogcatViewModel>();
+        sc.AddSingleton<ConsoleViewModel>();
 
         sc.AddTransient<MainWindow>();
 

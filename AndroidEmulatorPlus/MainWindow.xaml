@@ -15,6 +15,7 @@
         <KeyBinding Modifiers="Ctrl" Key="D5" Command="{Binding NavigateCommand}" CommandParameter="Apps"/>
         <KeyBinding Modifiers="Ctrl" Key="D6" Command="{Binding NavigateCommand}" CommandParameter="Config"/>
         <KeyBinding Modifiers="Ctrl" Key="D7" Command="{Binding NavigateCommand}" CommandParameter="Logcat"/>
+        <KeyBinding Modifiers="Ctrl" Key="D8" Command="{Binding NavigateCommand}" CommandParameter="Console"/>
         <KeyBinding Key="F5" Command="{Binding RefreshActiveCommand}"/>
         <KeyBinding Modifiers="Ctrl" Key="L" Command="{Binding ClearLogCommand}"/>
         <KeyBinding Modifiers="Ctrl" Key="R" Command="{Binding ScreenshotCommand}"/>
@@ -31,6 +32,7 @@
             <Grid Margin="16,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
@@ -70,6 +72,11 @@
                         IsEnabled="{Binding HasEmulatorAttached}"
                         ToolTip="Start / stop screenrecord on the attached emulator (capped at 3 min by Android)"/>
                 <Button Grid.Column="6" Style="{StaticResource FlatButton}" Margin="8,4,0,4"
+                        Content="🖥 scrcpy" MinWidth="0" Padding="10,4"
+                        Command="{Binding LaunchScrcpyCommand}"
+                        IsEnabled="{Binding HasEmulatorAttached}"
+                        ToolTip="Launch external scrcpy.exe against the attached emulator (winget install Genymobile.scrcpy)"/>
+                <Button Grid.Column="7" Style="{StaticResource FlatButton}" Margin="8,4,0,4"
                         Content="⚙ Settings" MinWidth="0" Padding="10,4"
                         Command="{Binding OpenSettingsCommand}"
                         ToolTip="Theme, paths, network proxy — persists to %LOCALAPPDATA%\AndroidEmulatorPlus\settings.json"/>
@@ -108,6 +115,9 @@
                     <RadioButton Style="{StaticResource SidebarButton}" Content="⑦ Logcat"
                                  IsChecked="{Binding ActiveSection, Converter={x:Static views:EqualsConverter.Instance}, ConverterParameter=Logcat, Mode=OneWay}"
                                  Command="{Binding NavigateCommand}" CommandParameter="Logcat"/>
+                    <RadioButton Style="{StaticResource SidebarButton}" Content="⑧ Console"
+                                 IsChecked="{Binding ActiveSection, Converter={x:Static views:EqualsConverter.Instance}, ConverterParameter=Console, Mode=OneWay}"
+                                 Command="{Binding NavigateCommand}" CommandParameter="Console"/>
                 </StackPanel>
             </Border>
 
@@ -127,6 +137,8 @@
                                   Visibility="{Binding DataContext.ActiveSection, RelativeSource={RelativeSource AncestorType=Window}, Converter={x:Static views:VisibleIfEqualConverter.Instance}, ConverterParameter=Config}"/>
                 <views:LogcatView DataContext="{Binding LogcatVm}"
                                   Visibility="{Binding DataContext.ActiveSection, RelativeSource={RelativeSource AncestorType=Window}, Converter={x:Static views:VisibleIfEqualConverter.Instance}, ConverterParameter=Logcat}"/>
+                <views:ConsoleView DataContext="{Binding ConsoleVm}"
+                                   Visibility="{Binding DataContext.ActiveSection, RelativeSource={RelativeSource AncestorType=Window}, Converter={x:Static views:VisibleIfEqualConverter.Instance}, ConverterParameter=Console}"/>
             </Grid>
         </Grid>
 
