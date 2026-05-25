@@ -122,10 +122,27 @@ public sealed class AppService
         return r.Success;
     }
 
-    public async Task<List<AndroidApp>> ListAsync(string serial, bool userOnly = true, CancellationToken ct = default)
+    /// <summary>
+    /// Returns the union of selected package classes, each row tagged with the right
+    /// system / disabled flag. The flags only widen the listing — at minimum the
+    /// third-party (-3) set is always included.
+    /// </summary>
+    public async Task<List<AndroidApp>> ListAsync(string serial, bool includeSystem, bool includeDisabled, CancellationToken ct = default)
     {
-        var packages = await _adb.ListPackagesAsync(serial, userOnly, ct);
-        return packages.Select(p => new AndroidApp { Package = p, IsSystem = !userOnly }).ToList();
+        var third = await _adb.ListPackagesFlagAsync(serial, "-3", ct);
+        var system = includeSystem ? await _adb.ListPackagesFlagAsync(serial, "-s", ct) : new HashSet<string>(StringComparer.Ordinal);
+        var disabled = await _adb.ListPackagesFlagAsync(serial, "-d", ct);
+
+        var all = new HashSet<string>(third, StringComparer.Ordinal);
+        if (includeSystem) all.UnionWith(system);
+        if (includeDisabled) all.UnionWith(disabled);
+
+        return all.OrderBy(static p => p).Select(p => new AndroidApp
+        {
+            Package = p,
+            IsSystem = system.Contains(p),
+            IsDisabled = disabled.Contains(p),
+        }).ToList();
     }
 
     public async Task<ProcessResult> UninstallAsync(string serial, string pkg, bool keepData = false, CancellationToken ct = default)
@@ -137,6 +154,26 @@ public sealed class AppService
             return await _adb.RawAsync(args, ct);
         }
         return await _adb.UninstallAsync(serial, pkg, ct);
+    }
+
+    /// <summary>
+    /// Per-user uninstall via <c>pm uninstall --user 0</c>. Preinstalled OEM apps marked
+    /// as system reject plain <c>adb uninstall</c>; the per-user form removes the app
+    /// from user 0 (survives reboot, undone by <see cref="ReinstallExistingAsync"/>
+    /// or factory reset). No root required.
+    /// </summary>
+    public async Task<ProcessResult> UninstallForUser0Async(string serial, string pkg, CancellationToken ct = default)
+    {
+        _log.Info($"Disabling {pkg} for user 0 (pm uninstall --user 0)…");
+        var r = await _adb.ShellAsync(serial, $"pm uninstall --user 0 {pkg}", ct);
+        return r;
+    }
+
+    /// <summary>Reverse of <see cref="UninstallForUser0Async"/>: reinstalls the system APK for user 0.</summary>
+    public async Task<ProcessResult> ReinstallExistingAsync(string serial, string pkg, CancellationToken ct = default)
+    {
+        _log.Info($"Re-enabling {pkg} for user 0…");
+        return await _adb.ShellAsync(serial, $"cmd package install-existing {pkg}", ct);
     }
 
     public Task<ProcessResult> InstallApkAsync(string serial, string apk, CancellationToken ct = default)

@@ -9,18 +9,24 @@ public sealed partial class AndroidApp : ObservableObject
     public string? VersionName { get; init; }
     public long VersionCode { get; init; }
     public bool IsSystem { get; init; }
-    public long DataSizeBytes { get; set; }
+    public bool IsDisabled { get; init; }
 
-    [ObservableProperty]
-    private bool _isSelected;
+    [ObservableProperty] private long _dataSizeBytes;
+    [ObservableProperty] private bool _isSelected;
 
     public string Display => string.IsNullOrEmpty(Label) ? Package : $"{Label} ({Package})";
 
+    /// <summary>Tag rendered next to the package name (system / disabled / user).</summary>
+    public string SourceTag => IsDisabled ? "disabled" : (IsSystem ? "system" : "user");
+
     public string SizeText => DataSizeBytes switch
     {
-        < 1024 => "—",
+        <= 0 => "—",
+        < 1024 => $"{DataSizeBytes} B",
         < 1024L * 1024 => $"{DataSizeBytes / 1024} KB",
         < 1024L * 1024 * 1024 => $"{DataSizeBytes / (1024 * 1024)} MB",
         _ => $"{DataSizeBytes / (1024L * 1024 * 1024)} GB",
     };
+
+    partial void OnDataSizeBytesChanged(long value) => OnPropertyChanged(nameof(SizeText));
 }

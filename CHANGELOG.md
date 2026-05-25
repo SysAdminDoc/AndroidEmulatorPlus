@@ -23,6 +23,9 @@ All notable changes to this project will be documented here. Format follows [Kee
 - Root tab now shows an inline "Launch & root" card when an AVD is selected but no emulator is attached. The button launches the AVD, polls adb for up to 2 minutes for the device, waits for `sys.boot_completed`, and re-enters the root flow — no more dead-end "Launch the AVD first" warning.
 - New Logcat tab (sidebar ⑦) streams `adb logcat -v threadtime` from the attached emulator with priority + package filter. Buttons: Start / Stop, Clear buffer (`logcat -c`), Clear view, Save to .log file. Auto-scrolls and caps the in-view ring at 5000 lines.
 - New top-bar "🎥 Record" toggle drives `adb shell screenrecord`. Stops, pulls the mp4 to `%USERPROFILE%\Pictures\AndroidEmulatorPlus\` and opens the folder. (Android caps `screenrecord` at 3 minutes; this is intentional and surfaced in the tooltip.)
+- Apps tab now offers Include system / Include disabled toggles. Each row shows a `user` / `system` / `disabled` tag derived from `pm list packages -3/-s/-d`.
+- Apps tab "Compute sizes" button populates per-app data sizes from `du -sb /data/data/<pkg>` (root required; the tab warns and skips when no root is available).
+- New uninstall mode toggle on the Apps tab: choose between "Uninstall (adb)" and "Disable for user 0 (reversible)" — the second uses `pm uninstall --user 0`, which can remove preinstalled OEM apps that plain `adb uninstall` refuses. A companion "Re-enable selected (user 0)" button uses `cmd package install-existing` to restore them.
 
 ### Changed
 

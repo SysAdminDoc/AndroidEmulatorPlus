@@ -30,7 +30,7 @@ Build constraint: this VMware VM has no .NET SDK; changes here are best-effort a
 - [x] **P1 A-14** — Top-bar Record toggle drives `adb shell screenrecord`; on stop pulls the mp4 to `~/Pictures/AndroidEmulatorPlus/` and opens Explorer.
 - [x] **P1 A-15** — Dedicated Logcat tab (sidebar ⑦). Streams `adb logcat -v threadtime`, supports priority + package filter, Clear buffer (`logcat -c`), Clear view, Save to file.
 - [ ] **P1 A-16** — Auto-accept SDK licenses. Pipe `y\n` repeatedly to `sdkmanager --licenses`.
-- [ ] **P1 A-18** — `-s` (system) + `-d` (disabled-only) toggles on Apps tab; show package source per row.
+- [x] **P1 A-18** — Apps tab now offers Include system + Include disabled toggles and a `user`/`system`/`disabled` tag per row.
 - [ ] **P1 A-19** — Detect `allowBackup=false` per package and warn before attempting data migration.
 - [x] **P1 A-25** — Rename AVD popup in the AVD card overflow menu (new reusable `PromptDialog` with regex+collision validation).
 - [ ] **P1 A-36** — `.github/workflows/build.yml` that builds the project on `windows-latest` and uploads the published `.exe` as a release artifact.
@@ -56,10 +56,10 @@ Build constraint: this VMware VM has no .NET SDK; changes here are best-effort a
 - [ ] **P2 A-35** — Add `AndroidEmulatorPlus.Tests` xunit project (`ParseIni/WriteIni` round-trip, `LatestMagiskAsync` filter, `ParseFailReason`, `ParseSizeGb`, etc).
 - [ ] **P2 A-37** — Catppuccin Latte palette + theme switcher.
 - [ ] **P2 B-04** — Versioned debloat preset JSON (embedded default + `%LOCALAPPDATA%\…\presets\bloat.json` override).
-- [ ] **P2 B-05** — Per-app data size column on Apps tab (`du -s /data/data/<pkg>`, root required).
+- [x] **P2 B-05** — Compute sizes button on Apps tab fills the size column from `du -sb /data/data/<pkg>` (root required; graceful warning otherwise).
 - [ ] **P2 B-06** — `adb pair host:port` Wi-Fi pairing card on the Migrate tab.
 - [ ] **P2 B-09** — Settings flyout (SDK / cache / screenshot paths, theme, network proxy).
-- [ ] **P2 B-13** — Apply `--user 0` debloat option on Apps tab (reversible per-user disable).
+- [x] **P2 B-13** — Apps tab gained a "Disable for user 0 (reversible)" uninstall mode (`pm uninstall --user 0`) + re-enable button (`cmd package install-existing`).
 
 ## Phase 4 — P3 / larger bets
 

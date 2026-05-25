@@ -28,9 +28,11 @@
                         <TextBlock Text="Filter:" VerticalAlignment="Center" Foreground="{StaticResource SubtextBrush}"/>
                         <TextBox Text="{Binding Filter, UpdateSourceTrigger=PropertyChanged}" Width="240" Margin="8,0,0,0"/>
                         <CheckBox Content="Include system" IsChecked="{Binding IncludeSystem}" Margin="16,0,0,0" VerticalAlignment="Center"/>
+                        <CheckBox Content="Include disabled" IsChecked="{Binding IncludeDisabled}" Margin="12,0,0,0" VerticalAlignment="Center"/>
                     </StackPanel>
                     <StackPanel Grid.Column="1" Orientation="Horizontal">
                         <Button Content="Refresh" Style="{StaticResource FlatButton}" Command="{Binding RefreshCommand}"/>
+                        <Button Content="Compute sizes" Style="{StaticResource FlatButton}" Command="{Binding ComputeSizesCommand}" Margin="8,0,0,0" ToolTip="Root required: runs du -sb /data/data/&lt;pkg&gt; for each visible row"/>
                         <Button Content="Install APK…" Style="{StaticResource FlatButton}" Command="{Binding InstallApkCommand}" Margin="8,0,0,0"/>
                     </StackPanel>
                 </Grid>
@@ -52,9 +54,13 @@
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <CheckBox IsChecked="{Binding IsSelected}" Content="{Binding Package}"/>
-                                <TextBlock Grid.Column="1" Text="{Binding SizeText}" Foreground="{StaticResource OverlayBrush}" FontFamily="Cascadia Mono" FontSize="11" VerticalAlignment="Center"/>
+                                <Border Grid.Column="1" Style="{StaticResource StatusPill}" Margin="6,2,0,0">
+                                    <TextBlock Text="{Binding SourceTag}" FontSize="11" Foreground="{StaticResource MauveBrush}"/>
+                                </Border>
+                                <TextBlock Grid.Column="2" Text="{Binding SizeText}" Foreground="{StaticResource OverlayBrush}" FontFamily="Cascadia Mono" FontSize="11" VerticalAlignment="Center" Margin="10,0,0,0" MinWidth="60" TextAlignment="Right"/>
                             </Grid>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
@@ -62,8 +68,21 @@
             </ScrollViewer>
         </Border>
 
-        <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,12,0,0">
-            <Button Content="✗ Uninstall Selected" Style="{StaticResource DangerButton}" Command="{Binding UninstallSelectedCommand}"/>
+        <StackPanel Grid.Row="3" Margin="0,12,0,0">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Action mode:" Foreground="{StaticResource SubtextBrush}" VerticalAlignment="Center"/>
+                <RadioButton GroupName="UninstallMode" Content="Uninstall (adb)" Margin="10,0,0,0"
+                             IsChecked="{Binding UninstallMode, Converter={x:Static views:EqualsConverter.Instance}, ConverterParameter=user, Mode=OneWay}"
+                             Command="{Binding SetUninstallModeUserCommand}" />
+                <RadioButton GroupName="UninstallMode" Content="Disable for user 0 (reversible)" Margin="14,0,0,0"
+                             IsChecked="{Binding UninstallMode, Converter={x:Static views:EqualsConverter.Instance}, ConverterParameter=user0, Mode=OneWay}"
+                             Command="{Binding SetUninstallModeUser0Command}" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                <Button Content="✗ Uninstall Selected" Style="{StaticResource DangerButton}" Command="{Binding UninstallSelectedCommand}"/>
+                <Button Content="↺ Re-enable selected (user 0)" Style="{StaticResource FlatButton}" Command="{Binding ReinstallSelectedCommand}" Margin="8,0,0,0"
+                        ToolTip="cmd package install-existing — only useful for apps removed via 'Disable for user 0'."/>
+            </StackPanel>
         </StackPanel>
     </Grid>
 </UserControl>

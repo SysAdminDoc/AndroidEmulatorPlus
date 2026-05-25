@@ -109,6 +109,32 @@ public sealed class AdbService
             .ToList();
     }
 
+    /// <summary>
+    /// Lists packages with a flavor filter. Returns the set of package names matching the
+    /// given <c>pm list packages</c> flag (one of "-3", "-s", "-d", "" for all).
+    /// </summary>
+    public async Task<HashSet<string>> ListPackagesFlagAsync(string serial, string flag, CancellationToken ct = default)
+    {
+        var cmd = string.IsNullOrEmpty(flag) ? "pm list packages" : $"pm list packages {flag}";
+        var r = await ShellAsync(serial, cmd, ct);
+        return new HashSet<string>(r.StdOut.Split('\n', StringSplitOptions.RemoveEmptyEntries)
+            .Select(l => l.Trim().Replace("\r", ""))
+            .Where(l => l.StartsWith("package:"))
+            .Select(l => l["package:".Length..]),
+            StringComparer.Ordinal);
+    }
+
+    /// <summary>
+    /// Returns the on-device data directory size for <paramref name="pkg"/>, in bytes.
+    /// Uses <c>du -sb /data/data/&lt;pkg&gt;</c> which requires root. Returns 0 on failure.
+    /// </summary>
+    public async Task<long> DataSizeAsync(string serial, string pkg, CancellationToken ct = default)
+    {
+        var r = await RootShellAsync(serial, $"du -sb /data/data/{pkg} 2>/dev/null | awk '{{print $1}}'", ct);
+        if (!r.Success) return 0;
+        return long.TryParse(r.StdOut.Trim(), out var n) ? n : 0;
+    }
+
     public async Task<List<string>> PackagePathsAsync(string serial, string pkg, CancellationToken ct = default)
     {
         var r = await ShellAsync(serial, $"pm path {pkg}", ct);

@@ -17,7 +17,9 @@ public sealed partial class AppsViewModel : ObservableObject
     public ObservableCollection<AndroidApp> Apps { get; } = new();
     [ObservableProperty] private string _filter = "";
     [ObservableProperty] private bool _includeSystem;
+    [ObservableProperty] private bool _includeDisabled;
     [ObservableProperty] private bool _isBusy;
+    [ObservableProperty] private string _uninstallMode = "user"; // "user" (adb uninstall), "user0" (pm uninstall --user 0)
 
     public AppsViewModel(AppService apps, AdbService adb, DeviceMonitor monitor, LogService log)
     {
@@ -36,11 +38,17 @@ public sealed partial class AppsViewModel : ObservableObject
         try
         {
             Apps.Clear();
-            foreach (var a in await _apps.ListAsync(emu.Serial, userOnly: !IncludeSystem))
+            foreach (var a in await _apps.ListAsync(emu.Serial, includeSystem: IncludeSystem, includeDisabled: IncludeDisabled))
                 Apps.Add(a);
         }
         finally { IsBusy = false; }
     }
+
+    partial void OnIncludeSystemChanged(bool value) => _ = RefreshAsync();
+    partial void OnIncludeDisabledChanged(bool value) => _ = RefreshAsync();
+
+    [RelayCommand] private void SetUninstallModeUser() => UninstallMode = "user";
+    [RelayCommand] private void SetUninstallModeUser0() => UninstallMode = "user0";
 
     public IEnumerable<AndroidApp> FilteredApps => string.IsNullOrWhiteSpace(Filter)
         ? Apps
@@ -71,18 +79,72 @@ public sealed partial class AppsViewModel : ObservableObject
         if (emu is null) return;
         var sel = Apps.Where(a => a.IsSelected).ToList();
         if (sel.Count == 0) { _log.Warning("Select at least one app."); return; }
+        var user0 = UninstallMode == "user0";
         IsBusy = true;
         int ok = 0, fail = 0;
         try
         {
             foreach (var a in sel)
             {
-                var r = await _apps.UninstallAsync(emu.Serial, a.Package);
+                var r = user0
+                    ? await _apps.UninstallForUser0Async(emu.Serial, a.Package)
+                    : await _apps.UninstallAsync(emu.Serial, a.Package);
                 if (r.Combined.Contains("Success")) ok++;
                 else fail++;
             }
-            _log.Success($"Uninstalled: {ok} ok, {fail} fail.");
+            _log.Success($"{(user0 ? "Disabled for user 0" : "Uninstalled")}: {ok} ok, {fail} fail.");
             await RefreshAsync();
+        }
+        finally { IsBusy = false; }
+    }
+
+    [RelayCommand]
+    private async Task ReinstallSelectedAsync()
+    {
+        var emu = _monitor.Current.FirstOrDefault(d => d.IsEmulator);
+        if (emu is null) return;
+        var sel = Apps.Where(a => a.IsSelected).ToList();
+        if (sel.Count == 0) { _log.Warning("Select at least one app."); return; }
+        IsBusy = true;
+        int ok = 0, fail = 0;
+        try
+        {
+            foreach (var a in sel)
+            {
+                var r = await _apps.ReinstallExistingAsync(emu.Serial, a.Package);
+                if (r.Combined.Contains("installed for user") || r.Combined.Contains("Success")) ok++;
+                else fail++;
+            }
+            _log.Success($"Re-enabled for user 0: {ok} ok, {fail} fail.");
+            await RefreshAsync();
+        }
+        finally { IsBusy = false; }
+    }
+
+    /// <summary>
+    /// B-05: populate the SizeText column for visible rows via <c>du -sb /data/data/&lt;pkg&gt;</c>.
+    /// Root required; non-rooted emulators get a warning + skip.
+    /// </summary>
+    [RelayCommand]
+    private async Task ComputeSizesAsync()
+    {
+        var emu = _monitor.Current.FirstOrDefault(d => d.IsEmulator);
+        if (emu is null) { _log.Warning("No emulator running."); return; }
+        if (!await _adb.IsRootedAsync(emu.Serial))
+        {
+            _log.Warning("Computing per-app data size requires root on the emulator.");
+            return;
+        }
+        IsBusy = true;
+        try
+        {
+            int done = 0;
+            foreach (var a in FilteredApps.ToList())
+            {
+                a.DataSizeBytes = await _adb.DataSizeAsync(emu.Serial, a.Package);
+                done++;
+            }
+            _log.Info($"Computed sizes for {done} app(s).");
         }
         finally { IsBusy = false; }
     }
