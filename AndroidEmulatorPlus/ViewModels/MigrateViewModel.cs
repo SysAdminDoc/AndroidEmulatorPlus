@@ -28,6 +28,8 @@ public sealed partial class MigrateViewModel : ObservableObject
     [ObservableProperty] private string _cacheSummary = "—";
     [ObservableProperty] private bool _hasCache;
 
+    private CancellationTokenSource? _cts;
+
     public MigrateViewModel(AdbService adb, MigrationService mig, DeviceMonitor monitor, LogService log, CacheDiagnosticsService cache)
     {
         _adb = adb;
@@ -124,26 +126,29 @@ public sealed partial class MigrateViewModel : ObservableObject
         if (sel.Count == 0) { _log.Warning("Select at least one package."); return; }
 
         IsBusy = true;
+        _cts = new CancellationTokenSource();
+        var ct = _cts.Token;
         int ok = 0, fail = 0; long totalBytes = 0;
         try
         {
             int idx = 0;
             foreach (var p in sel)
             {
+                if (ct.IsCancellationRequested) break;
                 idx++;
                 StepText = $"{idx}/{sel.Count}  {p.Package}";
                 ProgressFraction = (double)idx / sel.Count;
 
                 if (DoApk)
                 {
-                    var r = await _mig.TransferApkAsync(phone.Serial, emu.Serial, p.Package, default);
+                    var r = await _mig.TransferApkAsync(phone.Serial, emu.Serial, p.Package, ct);
                     if (r.Success) _log.Info($"APK ok {p.Package} ({r.Detail})");
                     else { _log.Warning($"APK fail {p.Package}: {r.Detail}"); fail++; continue; }
                 }
 
                 if (DoInternal)
                 {
-                    var r = await _mig.TransferInternalDataAsync(phone.Serial, emu.Serial, p.Package, default);
+                    var r = await _mig.TransferInternalDataAsync(phone.Serial, emu.Serial, p.Package, ct);
                     totalBytes += r.SizeBytes;
                     if (r.Success) _log.Info($"data ok {p.Package} ({r.SizeBytes / 1024 / 1024} MB, {r.Detail})");
                     else _log.Warning($"data fail {p.Package}: {r.Detail}");
@@ -151,14 +156,18 @@ public sealed partial class MigrateViewModel : ObservableObject
 
                 if (DoExternal)
                 {
-                    var r = await _mig.TransferExternalDataAsync(phone.Serial, emu.Serial, p.Package, default);
+                    var r = await _mig.TransferExternalDataAsync(phone.Serial, emu.Serial, p.Package, ct);
                     totalBytes += r.SizeBytes;
                     if (r.Success && r.SizeBytes > 0) _log.Info($"ext ok {p.Package} ({r.SizeBytes / 1024 / 1024} MB)");
                 }
                 ok++;
             }
-            Summary = $"{ok} ok, {fail} fail, {totalBytes / 1024 / 1024} MB data";
-            _log.Success("Migration finished. " + Summary);
+            Summary = $"{ok} ok, {fail} fail, {totalBytes / 1024 / 1024} MB data" + (ct.IsCancellationRequested ? "  (cancelled)" : "");
+            _log.Success("Migration " + (ct.IsCancellationRequested ? "cancelled. " : "finished. ") + Summary);
+        }
+        catch (OperationCanceledException)
+        {
+            _log.Warning("Migration cancelled by user.");
         }
         finally
         {
@@ -166,7 +175,15 @@ public sealed partial class MigrateViewModel : ObservableObject
             StepText = "";
             ProgressFraction = 0;
             RefreshCache();
+            _cts?.Dispose();
+            _cts = null;
         }
+    }
+
+    [RelayCommand]
+    private void Cancel()
+    {
+        try { _cts?.Cancel(); } catch { }
     }
 
     partial void OnFilterChanged(string value) => OnPropertyChanged(nameof(FilteredPackages));

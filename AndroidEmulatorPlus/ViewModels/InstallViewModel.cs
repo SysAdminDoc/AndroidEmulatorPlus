@@ -35,6 +35,11 @@ public sealed partial class InstallViewModel : ObservableObject
 
     public IReadOnlyList<string> Themes { get; } = new[] { "mocha", "latte" };
 
+    private CancellationTokenSource? _cts;
+
+    [RelayCommand]
+    private void Cancel() { try { _cts?.Cancel(); } catch { } }
+
     private static string DiagnosticsRoot => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "AndroidEmulatorPlus");
@@ -156,6 +161,8 @@ public sealed partial class InstallViewModel : ObservableObject
     {
         IsBusy = true;
         Step = "Resolving latest command-line-tools URL…";
+        _cts = new CancellationTokenSource();
+        var ct = _cts.Token;
         try
         {
             var sdkRoot = _sdk.SdkRoot
@@ -164,7 +171,7 @@ public sealed partial class InstallViewModel : ObservableObject
 
             // Scrape developer.android.com/studio for the current Windows build; falls back
             // to a stable known-good URL if the scrape fails.
-            var res = await _dl.LatestCmdlineToolsWindowsUrlAsync();
+            var res = await _dl.LatestCmdlineToolsWindowsUrlAsync(ct);
             _log.Info($"Using cmdline-tools URL: {res.Url}");
             if (res.IsFallback)
             {
@@ -179,7 +186,7 @@ public sealed partial class InstallViewModel : ObservableObject
             }
             Step = "Downloading command-line tools…";
             var zip = Path.Combine(Path.GetTempPath(), "android-cmdline-tools.zip");
-            await _dl.DownloadAsync(url: res.Url, dest: zip);
+            await _dl.DownloadAsync(url: res.Url, dest: zip, ct: ct);
 
             Step = "Verifying download…";
             var check = _hash.VerifyCmdlineTools(res.Url, zip);
@@ -207,6 +214,10 @@ public sealed partial class InstallViewModel : ObservableObject
             _log.Success($"Installed command-line tools at {latestDir}");
             Refresh();
         }
+        catch (OperationCanceledException)
+        {
+            _log.Warning("cmdline-tools download cancelled.");
+        }
         catch (Exception ex)
         {
             _log.Error("cmdline-tools install failed: " + ex.Message);
@@ -215,6 +226,8 @@ public sealed partial class InstallViewModel : ObservableObject
         {
             IsBusy = false;
             Step = "";
+            _cts?.Dispose();
+            _cts = null;
         }
     }
 

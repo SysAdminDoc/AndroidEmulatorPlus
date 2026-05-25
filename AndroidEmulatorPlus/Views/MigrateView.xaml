@@ -75,7 +75,13 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <Button Grid.Column="0" Content="Start Migration" Style="{StaticResource PrimaryButton}" Command="{Binding MigrateCommand}"/>
+                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                    <Button Content="Start Migration" Style="{StaticResource PrimaryButton}" Command="{Binding MigrateCommand}"
+                            IsEnabled="{Binding IsBusy, Converter={x:Static views:NotBoolConverter.Instance}}"/>
+                    <Button Content="✗ Cancel" Style="{StaticResource DangerButton}" Margin="8,0,0,0"
+                            Command="{Binding CancelCommand}"
+                            Visibility="{Binding IsBusy, Converter={x:Static views:BoolToVisibilityConverter.Instance}}"/>
+                </StackPanel>
                 <ProgressBar Grid.Column="1" Margin="14,0" VerticalAlignment="Center"
                              Value="{Binding ProgressFraction}" Minimum="0" Maximum="1"/>
                 <TextBlock Grid.Column="2" Text="{Binding StepText}" Foreground="{StaticResource OverlayBrush}" VerticalAlignment="Center"/>

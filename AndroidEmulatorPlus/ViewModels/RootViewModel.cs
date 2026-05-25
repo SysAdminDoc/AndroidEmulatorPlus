@@ -23,6 +23,8 @@ public sealed partial class RootViewModel : ObservableObject
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private bool _needsLaunch;
 
+    private CancellationTokenSource? _cts;
+
     public RootViewModel(RootService root, AdbService adb, AvdService avds, LogService log,
         DeviceMonitor monitor, SdkLocator sdk, EmulatorService emu)
     {
@@ -106,10 +108,12 @@ public sealed partial class RootViewModel : ObservableObject
         if (SelectedAvd is null) { _log.Warning("Pick an AVD first."); return; }
         var progress = new Progress<string>(s => { Step = s; _log.Info(s); });
         IsBusy = true;
+        _cts = new CancellationTokenSource();
+        var ct = _cts.Token;
         try
         {
-            await _root.EnsureRootAvdAsync(progress, default);
-            var tag = await _root.DownloadLatestMagiskAsync(progress, default);
+            await _root.EnsureRootAvdAsync(progress, ct);
+            var tag = await _root.DownloadLatestMagiskAsync(progress, ct);
             _log.Success($"Magisk {tag} cached.");
 
             var ramdisk = _root.FindRamdiskFor(SelectedAvd.Name)
@@ -128,10 +132,14 @@ public sealed partial class RootViewModel : ObservableObject
                 return;
             }
 
-            var ok = await _root.PatchAsync(rel, progress, l => _log.Detail(l), default);
+            var ok = await _root.PatchAsync(rel, progress, l => _log.Detail(l), ct);
             if (!ok) { _log.Error("rootAVD reported failure. Restore stock ramdisk via Un-Root if the emulator hangs."); return; }
             _log.Success("Ramdisk patched. Cold-boot the emulator now (Avd tab → Cold-Boot).");
             await RefreshAsync();
+        }
+        catch (OperationCanceledException)
+        {
+            _log.Warning("Root flow cancelled by user.");
         }
         catch (Exception ex)
         {
@@ -141,7 +149,15 @@ public sealed partial class RootViewModel : ObservableObject
         {
             IsBusy = false;
             Step = "";
+            _cts?.Dispose();
+            _cts = null;
         }
+    }
+
+    [RelayCommand]
+    private void Cancel()
+    {
+        try { _cts?.Cancel(); } catch { }
     }
 
     [RelayCommand]

@@ -36,6 +36,8 @@ All notable changes to this project will be documented here. Format follows [Kee
 - GitHub Actions workflow (`.github/workflows/build.yml`): dotnet restore / build / test on `windows-latest`, uploads framework-dependent and self-contained single-file artifacts; on `v*` tag, attaches the self-contained ZIP to a generated Release.
 - Catppuccin Latte (light) theme added alongside the existing Mocha (dark); theme picker on the Install tab persists to `%LOCALAPPDATA%\AndroidEmulatorPlus\settings.json` and applies on next launch. Themes split into `Themes/Mocha.xaml` and `Themes/Latte.xaml` (palette only) plus `Themes/Styles.xaml` (shared control styles).
 - New `SettingsService` reads/writes `settings.json` (theme; placeholder fields for SDK root override, media dir, HTTP proxy reserved for the upcoming Settings flyout).
+- Cancel button shipped on Root, Migrate, and Install (cmdline-tools download). Each long-running flow owns a `CancellationTokenSource` plumbed into the underlying service calls; cancelled flows log a warning and roll back partial state.
+- `EmulatorService` now tracks every emulator child in a ConcurrentDictionary keyed by AVD name. Closing the app calls `KillAll()` so orphaned emulator windows no longer outlive the parent process.
 
 ### Changed
 

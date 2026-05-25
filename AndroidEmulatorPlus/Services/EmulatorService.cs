@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using AndroidEmulatorPlus.Helpers;
 
@@ -7,13 +8,20 @@ public sealed class EmulatorService
 {
     private readonly SdkLocator _sdk;
     private readonly LogService _log;
-    private Process? _current;
+
+    /// <summary>
+    /// AVD name → emulator child Process. Multiple AVDs can be running concurrently;
+    /// previous single-_current field meant a second launch orphaned the first.
+    /// </summary>
+    private readonly ConcurrentDictionary<string, Process> _children = new(StringComparer.OrdinalIgnoreCase);
 
     public EmulatorService(SdkLocator sdk, LogService log)
     {
         _sdk = sdk;
         _log = log;
     }
+
+    public IReadOnlyCollection<string> RunningAvdNames => _children.Keys.ToArray();
 
     public sealed record LaunchOptions(
         bool ColdBoot = false,
@@ -44,18 +52,36 @@ public sealed class EmulatorService
 
         var flagSummary = string.Join(" ", args.Skip(2));
         _log.Info($"Launching emulator '{avdName}' {flagSummary}".TrimEnd());
-        _current = ProcessRunner.StartDetached(_sdk.EmulatorRequired, args,
+        var proc = ProcessRunner.StartDetached(_sdk.EmulatorRequired, args,
             workingDir: System.IO.Path.GetDirectoryName(_sdk.EmulatorRequired));
-        return _current;
+        _children[avdName] = proc;
+        proc.EnableRaisingEvents = true;
+        proc.Exited += (_, _) => { try { _children.TryRemove(avdName, out _); } catch { } };
+        return proc;
     }
 
-    public void TryKill()
+    /// <summary>Kills every emulator child this session launched. Called on app exit.</summary>
+    public void KillAll()
     {
-        try
+        foreach (var kv in _children.ToArray())
         {
-            if (_current != null && !_current.HasExited) _current.Kill(entireProcessTree: true);
+            try
+            {
+                if (!kv.Value.HasExited) kv.Value.Kill(entireProcessTree: true);
+            }
+            catch { }
+            _children.TryRemove(kv.Key, out _);
         }
-        catch { }
+    }
+
+    /// <summary>Kills the emulator child for a single AVD, if we launched one.</summary>
+    public void TryKill(string avdName)
+    {
+        if (_children.TryGetValue(avdName, out var p))
+        {
+            try { if (!p.HasExited) p.Kill(entireProcessTree: true); } catch { }
+            _children.TryRemove(avdName, out _);
+        }
     }
 
     public sealed record AccelStatus(bool Ok, string Summary, string Detail);

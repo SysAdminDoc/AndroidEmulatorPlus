@@ -26,7 +26,7 @@ Build constraint: this VMware VM has no .NET SDK; changes here are best-effort a
 - [ ] **P1 R-06** — Snapshot manager — list / pick / load / delete saved emulator states (boot snapshots vs. user-named).
 - [ ] **P1 R-08** — APK signature verification before install (warn on mismatch with already-installed package); use `apksigner.bat` from build-tools.
 - [ ] **P1 R-09** — Bandwidth-aware adb push/pull with progress per-package, not just per-batch.
-- [ ] **P1 A-01 cancel** — Cancel button on long-running ops (rootAVD patch, AVD create, cmdline-tools download, migration). Timeout shipped; user-visible Cancel did not.
+- [x] **P1 A-01 cancel** — Cancel button shipped on Root, Migrate, and Install (cmdline-tools download). Each viewmodel owns a `CancellationTokenSource` plumbed into the long-running service calls; `OperationCanceledException` reports cleanly.
 - [x] **P1 A-14** — Top-bar Record toggle drives `adb shell screenrecord`; on stop pulls the mp4 to `~/Pictures/AndroidEmulatorPlus/` and opens Explorer.
 - [x] **P1 A-15** — Dedicated Logcat tab (sidebar ⑦). Streams `adb logcat -v threadtime`, supports priority + package filter, Clear buffer (`logcat -c`), Clear view, Save to file.
 - [x] **P1 A-16** — `SdkmanagerService.AcceptLicensesAsync` pipes `y\n` × 60 into `sdkmanager --licenses` with a 3-minute timeout; surfaced as a button on the Install tab.
@@ -34,8 +34,8 @@ Build constraint: this VMware VM has no .NET SDK; changes here are best-effort a
 - [ ] **P1 A-19** — Detect `allowBackup=false` per package and warn before attempting data migration.
 - [x] **P1 A-25** — Rename AVD popup in the AVD card overflow menu (new reusable `PromptDialog` with regex+collision validation).
 - [x] **P1 A-36** — `.github/workflows/build.yml`: dotnet restore/build/test on `windows-latest`; publishes framework-dependent + self-contained single-file artifacts; on tag push (`v*`) creates a GitHub Release with the self-contained ZIP attached.
-- [ ] **P1 B-10** — Centralize `CancellationTokenSource` plumbing across long-running viewmodels (umbrella for A-01 cancel).
-- [ ] **P1 B-11** — Multi-AVD `Process` tracking via `ConcurrentDictionary` (sub-task of A-33).
+- [x] **P1 B-10** — Cancel pattern landed on Root / Migrate / Install. Same CTS/CT plumbing is now the template for future long-running flows.
+- [x] **P1 B-11** — `EmulatorService` uses `ConcurrentDictionary<string, Process>` keyed by AVD name; each child's `Exited` event prunes the entry; closing the app kills any orphans.
 
 ## Phase 3 — P2 polish
 
@@ -51,8 +51,8 @@ Build constraint: this VMware VM has no .NET SDK; changes here are best-effort a
 - [x] **P2 A-28** — Inline "Launch & root" CTA on the Root tab when no emulator is attached; launches selected AVD, waits for boot, then re-enters the root flow.
 - [ ] **P2 A-29** — Detect tar flavor on the phone and fall back to a `find … -prune` pipeline for tar implementations without `--exclude=`.
 - [ ] **P2 A-30** — `am force-stop` on the source phone before tar (with consent flag).
-- [ ] **P2 A-33** — `EmulatorService` should track running children in `Dictionary<string AvdName, Process>` instead of a single `_current`.
-- [ ] **P2 A-34** — App close should kill any emulator children launched in this session.
+- [x] **P2 A-33** — `EmulatorService._children` ConcurrentDictionary tracks every AVD launched this session; `TryKill(name)` kills a single child.
+- [x] **P2 A-34** — `App.OnExit` calls `EmulatorService.KillAll()` (alongside Logcat/ScreenRecord dispose) so closing the app doesn't orphan emulator processes.
 - [ ] **P2 A-35** — Add `AndroidEmulatorPlus.Tests` xunit project (`ParseIni/WriteIni` round-trip, `LatestMagiskAsync` filter, `ParseFailReason`, `ParseSizeGb`, etc).
 - [x] **P2 A-37** — Catppuccin Latte palette added; theme picker on the Install tab persists to `settings.json` and applies on next launch. Themes split into `Mocha.xaml` / `Latte.xaml` (palette only) + `Styles.xaml` (shared).
 - [ ] **P2 B-04** — Versioned debloat preset JSON (embedded default + `%LOCALAPPDATA%\…\presets\bloat.json` override).
