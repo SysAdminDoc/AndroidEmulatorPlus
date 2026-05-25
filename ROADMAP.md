@@ -53,7 +53,7 @@ Build constraint: this VMware VM has no .NET SDK; changes here are best-effort a
 - [ ] **P2 A-30** — `am force-stop` on the source phone before tar (with consent flag).
 - [x] **P2 A-33** — `EmulatorService._children` ConcurrentDictionary tracks every AVD launched this session; `TryKill(name)` kills a single child.
 - [x] **P2 A-34** — `App.OnExit` calls `EmulatorService.KillAll()` (alongside Logcat/ScreenRecord dispose) so closing the app doesn't orphan emulator processes.
-- [ ] **P2 A-35** — Add `AndroidEmulatorPlus.Tests` xunit project (`ParseIni/WriteIni` round-trip, `LatestMagiskAsync` filter, `ParseFailReason`, `ParseSizeGb`, etc).
+- [x] **P2 A-35** — `AndroidEmulatorPlus.Tests` xunit project with ParseIni/WriteIni round-trip, ParseSizeGb (incl. raw-byte branch), MigrationService.ParseFailReason, AvdViewModel.SystemImageSortKey, and HashVerificationService.ComputeSha256 coverage. CI workflow already picks it up.
 - [x] **P2 A-37** — Catppuccin Latte palette added; theme picker on the Install tab persists to `settings.json` and applies on next launch. Themes split into `Mocha.xaml` / `Latte.xaml` (palette only) + `Styles.xaml` (shared).
 - [x] **P2 B-04** — Embedded `Resources/bloat-presets.json` ships Google/Samsung/Pixel/Xiaomi/OnePlus presets. User overrides at `%LOCALAPPDATA%\AndroidEmulatorPlus\presets\bloat.json` replace by id or append new ids. AppsView now renders buttons via `ItemsControl`.
 - [x] **P2 B-05** — Compute sizes button on Apps tab fills the size column from `du -sb /data/data/<pkg>` (root required; graceful warning otherwise).
