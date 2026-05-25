@@ -94,7 +94,11 @@ be `dotnet build`-verified on a host with the SDK before tagging a release.
   MainWindow.xaml, and 17 view/dialog XAML files swept to `DynamicResource`.
   New `ThemeService.Apply(theme)` swaps `Application.Resources.MergedDictionaries[0]`
   in place; SettingsDialog calls it on Save. Theme now switches without restart.
-- [ ] **P2 C-17** — README screenshots + landing image (one PNG per tab, Mocha + Latte).
+- [x] **P2 C-17** (partial) — README rewritten for v0.2.0: ASCII layout sketch,
+  full 8-tab feature table, supply-chain hardening section, keyboard
+  shortcuts, persistence-paths table, theming note, module-author
+  acknowledgements. Actual screenshot PNGs still pending — requires running
+  the app on a desktop with .NET 9 SDK.
 - [x] **P2 R-03** — Covered by C-07 (above).
 
 ## Phase 4 — P3 polish & stretch

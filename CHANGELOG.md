@@ -94,6 +94,14 @@ All notable changes to this project will be documented here. Format follows [Kee
 - New `KnownHashesManifestTests` guards the manifest schema and asserts the
   v30.7 hash + the 14742923 cmdline-tools hash stay populated.
 
+### Docs
+
+- README rewritten for v0.2.0 (C-17 partial). Now reflects the 8-tab surface
+  (Logcat ⑦ + Console ⑧ added), the supply-chain hardening tiers, keyboard
+  shortcuts, the persistence-paths table, and the live theme swap. Includes
+  an ASCII layout sketch since binary screenshots require running the app on
+  a desktop with the .NET 9 SDK.
+
 ## [0.2.0] — 2026-05-25
 
 Major iteration on the v0.1.0 baseline. ~5000 lines, 8 tabs (added Logcat ⑦ and
