@@ -16,8 +16,8 @@ Build constraint: this VMware VM has no .NET SDK; changes here are best-effort a
 - [x] **P0 A-04** — SHA-256 verification against embedded `Resources/known-hashes.json`. Hard-fail for known keys, trust-on-first-use log entry for unknown keys. Manifest ships with empty `magisk` table and one cmdlineTools URL placeholder; maintainer appends entries after smoke-test.
 - [ ] **P0 A-03** — Replace the placeholder `"master"` ref in `RootService.RootAvdPinnedRef` with a verified rootAVD SHA after smoke-test on API 35 + API 36 Google Play AVDs. _Hook landed; the constant currently still resolves to `master` until a verified SHA is recorded._
 - [x] **P0 A-05** — Cache card on the Migrate tab shows transfer + bundle + root cache sizes; Clear migration / Clear root cache buttons. Auto-refreshes after every migration.
-- [ ] **P0 A-07** — Typed confirmation dialog before Resize+Wipe Data. Logging shipped; an interactive confirm with `WIPE`-to-confirm field is still TODO.
-- [ ] **P0 A-08-CONFIRM** — Confirm-before-delete on AVD overflow menu. The menu item already ends in `…` but the click immediately calls `DeleteAsync`.
+- [x] **P0 A-07** — Resize+Wipe Data now opens a typed-confirm dialog (`WIPE`) listing every snapshot + overlay that's about to be destroyed.
+- [x] **P0 A-08-CONFIRM** — Delete AVD overflow menu now shows a confirmation dialog with AVD folder + size before calling `avdmanager delete avd`. Un-Root also gained a confirmation showing the ramdisk path + backup path.
 
 ## Phase 2 — P1 workflow gaps
 

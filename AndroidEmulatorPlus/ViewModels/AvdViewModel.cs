@@ -124,6 +124,36 @@ public sealed partial class AvdViewModel : ObservableObject
     private async Task DeleteAsync(Avd? avd)
     {
         if (avd is null) return;
+        // Build the confirmation detail with folder + best-effort size of the .avd dir.
+        var folder = _avds.FolderFor(avd.Name);
+        var size = "";
+        if (folder is not null)
+        {
+            try
+            {
+                long bytes = 0;
+                foreach (var f in System.IO.Directory.EnumerateFiles(folder, "*", System.IO.SearchOption.AllDirectories))
+                    try { bytes += new System.IO.FileInfo(f).Length; } catch { }
+                size = bytes switch
+                {
+                    < 1024L * 1024 => $"{bytes / 1024} KB",
+                    < 1024L * 1024 * 1024 => $"{bytes / 1024 / 1024} MB",
+                    _ => $"{bytes / 1024.0 / 1024.0 / 1024.0:0.0} GB",
+                };
+            }
+            catch { }
+        }
+        var detail = folder is null
+            ? null
+            : $"Folder: {folder}{(string.IsNullOrEmpty(size) ? "" : $"\nSize:   {size}")}";
+        var ok = Views.ConfirmDialog.Show(
+            owner: null,
+            header: $"Delete AVD '{avd.Name}'?",
+            body: "This calls `avdmanager delete avd` and removes the AVD folder. All data inside the emulator (apps, accounts, snapshots) will be lost.",
+            detail: detail,
+            confirmButtonText: "Delete AVD");
+        if (!ok) { _log.Info("Delete cancelled."); return; }
+
         IsBusy = true;
         try
         {

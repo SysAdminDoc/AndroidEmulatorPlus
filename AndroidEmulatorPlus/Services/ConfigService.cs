@@ -59,4 +59,29 @@ public sealed class ConfigService
         }
         return true;
     }
+
+    /// <summary>
+    /// Lists snapshot names and qcow2 overlay paths that <see cref="ResizeDiskAsync"/>
+    /// would destroy when called with wipeData=true. Used by the UI to show a typed
+    /// confirmation listing exactly what will be lost.
+    /// </summary>
+    public static (List<string> Snapshots, List<string> Overlays) PreviewWipe(Avd avd)
+    {
+        var dir = Path.GetDirectoryName(avd.ConfigPath)!;
+        var snapshotsDir = Path.Combine(dir, "snapshots");
+        var snaps = new List<string>();
+        if (Directory.Exists(snapshotsDir))
+        {
+            foreach (var s in Directory.EnumerateDirectories(snapshotsDir))
+                snaps.Add(Path.GetFileName(s));
+        }
+        var overlays = new List<string>();
+        foreach (var name in new[] { "userdata-qemu.img.qcow2", "userdata.img.qcow2", "cache.img.qcow2" })
+        {
+            var p = Path.Combine(dir, name);
+            if (File.Exists(p))
+                try { overlays.Add($"{name} ({new FileInfo(p).Length / 1024 / 1024} MB)"); } catch { overlays.Add(name); }
+        }
+        return (snaps, overlays);
+    }
 }

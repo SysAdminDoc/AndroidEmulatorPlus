@@ -94,12 +94,41 @@ public sealed partial class ConfigViewModel : ObservableObject
     {
         if (Selected is null) return;
         bool wipe = mode == "wipe";
+        if (wipe)
+        {
+            var (snaps, overlays) = ConfigService.PreviewWipe(Selected);
+            var detail = new System.Text.StringBuilder();
+            if (overlays.Count > 0)
+            {
+                detail.AppendLine("qcow2 overlays to delete:");
+                foreach (var o in overlays) detail.AppendLine($"  • {o}");
+            }
+            if (snaps.Count > 0)
+            {
+                if (detail.Length > 0) detail.AppendLine();
+                detail.AppendLine($"Snapshots to destroy ({snaps.Count}):");
+                foreach (var s in snaps) detail.AppendLine($"  • {s}");
+            }
+            if (detail.Length == 0) detail.AppendLine("(this AVD has never booted — nothing to wipe yet)");
+
+            var ok = Views.ConfirmDialog.Show(
+                owner: null,
+                header: $"Wipe data on '{Selected.Name}'?",
+                body: $"The qcow2 overlays for AVD '{Selected.Name}' will be deleted so the partition recreates at {DiskGb} GB on next launch. " +
+                      "Any saved snapshots inside this AVD will be permanently lost. " +
+                      "Type WIPE to confirm.",
+                detail: detail.ToString().TrimEnd(),
+                confirmButtonText: "Wipe data",
+                typedConfirm: "WIPE");
+            if (!ok) { _log.Info("Wipe cancelled."); return; }
+        }
+
         IsBusy = true;
         try
         {
             var size = $"{DiskGb}G";
-            var ok = await _cfg.ResizeDiskAsync(Selected, size, wipe, default);
-            if (ok) _log.Success(wipe ? "Disk resized + data wiped. Next launch creates fresh partition." : "Disk size flag updated.");
+            var ok2 = await _cfg.ResizeDiskAsync(Selected, size, wipe, default);
+            if (ok2) _log.Success(wipe ? "Disk resized + data wiped. Next launch creates fresh partition." : "Disk size flag updated.");
             Refresh();
         }
         finally { IsBusy = false; }

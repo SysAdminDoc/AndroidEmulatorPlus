@@ -120,6 +120,19 @@ public sealed partial class RootViewModel : ObservableObject
         if (SelectedAvd is null) return;
         var ramdisk = _root.FindRamdiskFor(SelectedAvd.Name);
         if (ramdisk is null) { _log.Warning("Ramdisk not found."); return; }
+        var backup = _root.FindBackupRamdisk(ramdisk);
+        if (backup is null)
+        {
+            _log.Warning("No stock-ramdisk backup found (.original / .backup). Aborting Un-Root to avoid leaving the AVD unbootable.");
+            return;
+        }
+        var ok = Views.ConfirmDialog.Show(
+            owner: null,
+            header: $"Un-root the system image for '{SelectedAvd.Name}'?",
+            body: "This overwrites the patched ramdisk with the backup that was saved before the last Magisk patch. All AVDs that share this system image will lose root; cold-boot them after to apply.",
+            detail: $"Ramdisk: {ramdisk}\nBackup:  {backup}",
+            confirmButtonText: "Restore stock ramdisk");
+        if (!ok) return;
         try
         {
             _root.RestoreRamdisk(ramdisk);
