@@ -54,7 +54,7 @@ Build constraint: this VMware VM has no .NET SDK; changes here are best-effort a
 - [ ] **P2 A-33** — `EmulatorService` should track running children in `Dictionary<string AvdName, Process>` instead of a single `_current`.
 - [ ] **P2 A-34** — App close should kill any emulator children launched in this session.
 - [ ] **P2 A-35** — Add `AndroidEmulatorPlus.Tests` xunit project (`ParseIni/WriteIni` round-trip, `LatestMagiskAsync` filter, `ParseFailReason`, `ParseSizeGb`, etc).
-- [ ] **P2 A-37** — Catppuccin Latte palette + theme switcher.
+- [x] **P2 A-37** — Catppuccin Latte palette added; theme picker on the Install tab persists to `settings.json` and applies on next launch. Themes split into `Mocha.xaml` / `Latte.xaml` (palette only) + `Styles.xaml` (shared).
 - [ ] **P2 B-04** — Versioned debloat preset JSON (embedded default + `%LOCALAPPDATA%\…\presets\bloat.json` override).
 - [x] **P2 B-05** — Compute sizes button on Apps tab fills the size column from `du -sb /data/data/<pkg>` (root required; graceful warning otherwise).
 - [ ] **P2 B-06** — `adb pair host:port` Wi-Fi pairing card on the Migrate tab.

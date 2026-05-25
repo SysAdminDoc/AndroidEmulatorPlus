@@ -14,6 +14,7 @@ public sealed partial class InstallViewModel : ObservableObject
     private readonly EmulatorService _emu;
     private readonly HashVerificationService _hash;
     private readonly SdkmanagerService _sdkman;
+    private readonly SettingsService _settings;
     private readonly LogService _log;
 
     [ObservableProperty] private string _statusText = "";
@@ -29,6 +30,10 @@ public sealed partial class InstallViewModel : ObservableObject
     [ObservableProperty] private bool _accelOk;
     [ObservableProperty] private string _cmdlineToolsNote = "";
     [ObservableProperty] private bool _hasCmdlineToolsNote;
+    [ObservableProperty] private string _theme = "mocha";
+    [ObservableProperty] private string _themeNote = "";
+
+    public IReadOnlyList<string> Themes { get; } = new[] { "mocha", "latte" };
 
     private static string DiagnosticsRoot => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -36,14 +41,25 @@ public sealed partial class InstallViewModel : ObservableObject
     private static string CrashLogPath => Path.Combine(DiagnosticsRoot, "crash.log");
     private static string DailyLogPath => Path.Combine(DiagnosticsRoot, "logs", $"app-{DateTime.Now:yyyyMMdd}.log");
 
-    public InstallViewModel(SdkLocator sdk, DownloadService dl, EmulatorService emu, HashVerificationService hash, SdkmanagerService sdkman, LogService log)
+    public InstallViewModel(SdkLocator sdk, DownloadService dl, EmulatorService emu, HashVerificationService hash, SdkmanagerService sdkman, SettingsService settings, LogService log)
     {
         _sdk = sdk;
         _dl = dl;
         _emu = emu;
         _hash = hash;
         _sdkman = sdkman;
+        _settings = settings;
         _log = log;
+        _theme = settings.Current.Theme;
+    }
+
+    partial void OnThemeChanged(string value)
+    {
+        if (string.Equals(value, _settings.Current.Theme, StringComparison.OrdinalIgnoreCase)) { ThemeNote = ""; return; }
+        _settings.Current.Theme = value;
+        _settings.Save();
+        ThemeNote = "Theme will apply on next launch.";
+        _log.Info($"Theme set to '{value}'. Restart to apply.");
     }
 
     [RelayCommand]

@@ -4,9 +4,8 @@
              ShutdownMode="OnMainWindowClose">
     <Application.Resources>
         <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="Themes/Dark.xaml"/>
-            </ResourceDictionary.MergedDictionaries>
+            <!-- Palette + styles are merged programmatically in App.OnStartup so the
+                 theme choice can be loaded from settings.json before any view binds. -->
         </ResourceDictionary>
     </Application.Resources>
 </Application>

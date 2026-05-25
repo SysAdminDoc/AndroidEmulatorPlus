@@ -34,6 +34,8 @@ All notable changes to this project will be documented here. Format follows [Kee
 - Device profile dropdown gained Wear OS (`wearos_small_round`, `wearos_large_round`, `wearos_square`, `wearos_rect`), Android TV (`tv_720p`, `tv_1080p`, `tv_4k`), Android Automotive (`automotive_1024p_landscape`, `automotive_distant_display`), and `pixel_tablet`/`pixel_c` tablet profiles.
 - Keyboard shortcuts: **F5** refreshes the active tab, **Ctrl+1..7** switches sections (Install/AVDs/Root/Migrate/Apps/Config/Logcat), **Ctrl+L** clears the log panel, **Ctrl+R** captures a screenshot.
 - GitHub Actions workflow (`.github/workflows/build.yml`): dotnet restore / build / test on `windows-latest`, uploads framework-dependent and self-contained single-file artifacts; on `v*` tag, attaches the self-contained ZIP to a generated Release.
+- Catppuccin Latte (light) theme added alongside the existing Mocha (dark); theme picker on the Install tab persists to `%LOCALAPPDATA%\AndroidEmulatorPlus\settings.json` and applies on next launch. Themes split into `Themes/Mocha.xaml` and `Themes/Latte.xaml` (palette only) plus `Themes/Styles.xaml` (shared control styles).
+- New `SettingsService` reads/writes `settings.json` (theme; placeholder fields for SDK root override, media dir, HTTP proxy reserved for the upcoming Settings flyout).
 
 ### Changed
 

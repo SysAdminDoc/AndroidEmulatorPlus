@@ -13,9 +13,18 @@ public partial class App : Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
+        // Load the chosen palette + styles BEFORE any view binds — the brushes are
+        // referenced via StaticResource so they must exist when MainWindow's XAML is
+        // parsed. Theme choice persists to settings.json and applies on next launch.
+        var theme = SettingsService.ReadThemeFromDisk();
+        var paletteUri = theme == "latte" ? "Themes/Latte.xaml" : "Themes/Mocha.xaml";
+        Resources.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri(paletteUri, UriKind.Relative) });
+        Resources.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri("Themes/Styles.xaml", UriKind.Relative) });
+
         var sc = new ServiceCollection();
 
         sc.AddSingleton<LogService>();
+        sc.AddSingleton<SettingsService>();
         sc.AddSingleton<SdkLocator>();
         sc.AddSingleton<AdbService>();
         sc.AddSingleton<EmulatorService>();
