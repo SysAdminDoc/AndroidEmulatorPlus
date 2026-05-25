@@ -1,6 +1,7 @@
 # Roadmap
 
 Single, prioritized work list. Items already in `CHANGELOG.md` as shipped are not repeated here. Tag legend:
+
 - `R-NN` — original release-roadmap item (kept stable for reference)
 - `A-NN` — addition from the 2026-05-24 deep-audit pass
 - Priorities: **P0** (correctness / data-loss risk), **P1** (high value), **P2** (nice to have), **P3** (future / large bet)
@@ -24,13 +25,13 @@ Build constraint: this VMware VM has no .NET SDK; changes here are best-effort a
 
 ### Reliability / correctness (P0)
 
-- [ ] **P0 A-01** — `RootService.PatchAsync` has no timeout — if `rootAVD.sh` hangs (commonly seen when emulator deadlocks during ramdisk swap), the WPF UI is stuck until the user kills the process tree by hand. Wrap with a `CancellationTokenSource.CancelAfter(TimeSpan.FromMinutes(10))` and surface a Cancel button while busy.
-- [ ] **P0 A-02** — `AvdService.CreateAsync` writes "no" to `avdmanager.bat` stdin then waits forever; no timeout. Same fix.
-- [ ] **P0 A-03** — Pin rootAVD to a known-good revision in `RootService.EnsureRootAvdAsync` (currently `git clone --depth 1` of `master`). When newbit pushes a breaking commit, the entire root flow breaks silently. Store the pinned SHA in a constant and `git checkout <sha>` after clone.
+- [x] **P0 A-01** — `RootService.PatchAsync` has no timeout — if `rootAVD.sh` hangs (commonly seen when emulator deadlocks during ramdisk swap), the WPF UI is stuck until the user kills the process tree by hand. Wrap with a `CancellationTokenSource.CancelAfter(TimeSpan.FromMinutes(10))` and surface a Cancel button while busy. _Cancel button still TODO; timeout shipped._
+- [x] **P0 A-02** — `AvdService.CreateAsync` writes "no" to `avdmanager.bat` stdin then waits forever; no timeout. Same fix.
+- [x] **P0 A-03** — Pin rootAVD to a known-good revision in `RootService.EnsureRootAvdAsync` (currently `git clone --depth 1` of `master`). When newbit pushes a breaking commit, the entire root flow breaks silently. Store the pinned SHA in a constant and `git checkout <sha>` after clone. _Hook landed; the constant currently still resolves to `master` until a verified SHA is recorded._
 - [ ] **P0 A-04** — Verify SHA-256 of downloaded Magisk APK and the cmdline-tools ZIP against expected values before use. Today the app trusts whatever GitHub releases / dl.google.com returns. Supply-chain risk on a tool that patches a ramdisk.
 - [ ] **P0 A-05** — `MigrationService` does `try { Directory.Delete(work, true); } catch { }` and `try { File.Delete(local); } catch { }` in `finally`. On a cancellation or crash mid-flow, the transfer cache at `%LOCALAPPDATA%\AndroidEmulatorPlus\transfer\` can grow to many GB. Add an "orphaned cache size" indicator in the UI plus a "Clear cache" button.
 - [x] **P0 A-06** — `ConfigViewModel.ParseSizeGb` only handles `*G` and `*M`. Many Android AVDs persist `disk.dataPartition.size` as raw bytes (e.g. `8589934592`). Today the slider snaps back to the default 16 GB and "Save config" then writes that incorrect value, shrinking the partition. Parse plain integer bytes too.
-- [ ] **P0 A-07** — `ConfigService.ResizeDiskAsync` deletes `snapshots/` recursively without confirmation. Add a confirmation dialog or at minimum a verbose log line listing every snapshot about to be destroyed (snapshot names are user-meaningful).
+- [x] **P0 A-07** — `ConfigService.ResizeDiskAsync` deletes `snapshots/` recursively without confirmation. Add a confirmation dialog or at minimum a verbose log line listing every snapshot about to be destroyed (snapshot names are user-meaningful). _Logging shipped; an interactive confirmation dialog is still TODO._
 
 ### Workflow gaps (P1)
 
@@ -57,7 +58,7 @@ Build constraint: this VMware VM has no .NET SDK; changes here are best-effort a
 - [ ] **P2 A-25** — Rename AVD (`avdmanager move avd -n <old> -r <new>`).
 - [ ] **P2 A-26** — Duplicate AVD (copy `<name>.avd` directory + `<name>.ini`, rewrite `path=` references). Matches Android Studio Device Manager.
 - [ ] **P2 A-27** — Keyboard shortcuts: F5 = Refresh active tab, Ctrl+1..6 = switch sections, Ctrl+L = clear log.
-- [ ] **P2 A-28** — Microcopy: in `RootViewModel.RootAsync`, when "Launch the AVD first" warning fires, the message dead-ends. Offer an inline "Launch <name>" button that immediately calls `EmulatorService.Launch` and re-enters the root flow once boot completes.
+- [ ] **P2 A-28** — Microcopy: in `RootViewModel.RootAsync`, when "Launch the AVD first" warning fires, the message dead-ends. Offer an inline `Launch <name>` button that immediately calls `EmulatorService.Launch` and re-enters the root flow once boot completes.
 - [ ] **P2 A-29** — `MigrationService.TransferInternalDataAsync` calls `tar --exclude=` with three excludes. Some Android tar implementations don't support `--exclude=`. Detect tar flavor (`tar --version` returns "toybox" on modern Android) and fall back to a `find … -prune` pipeline.
 - [ ] **P2 A-30** — `am force-stop` is silently invoked on the emulator before tar extract, but not on the source phone. If the user has the app open on the phone the tar may capture a torn DB. Force-stop on the phone too (with consent in a settings flag).
 

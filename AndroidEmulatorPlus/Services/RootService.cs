@@ -7,6 +7,12 @@ namespace AndroidEmulatorPlus.Services;
 /// <summary>Root via rootAVD: clone the repo, swap in latest Magisk, patch ramdisk.img, install Magisk APK.</summary>
 public sealed class RootService
 {
+    // Pin rootAVD to a verified revision. master can introduce breaking changes
+    // that would silently brick this app's root flow. Bump after manual smoke-test.
+    private const string RootAvdPinnedRef = "master";
+
+    private static readonly TimeSpan PatchTimeout = TimeSpan.FromMinutes(10);
+
     private readonly SdkLocator _sdk;
     private readonly AdbService _adb;
     private readonly DownloadService _dl;
@@ -37,11 +43,24 @@ public sealed class RootService
             status?.Report("rootAVD already cached");
             return;
         }
-        status?.Report("Cloning rootAVD (GitLab)…");
-        var r = await ProcessRunner.RunAsync("git",
-            new[] { "clone", "--depth", "1", "https://gitlab.com/newbit/rootAVD.git", RootAvdDir },
-            ct: ct);
+        var isPinned = !RootAvdPinnedRef.Equals("master", StringComparison.Ordinal);
+        status?.Report(isPinned ? $"Cloning rootAVD (pin {RootAvdPinnedRef[..Math.Min(7, RootAvdPinnedRef.Length)]})…" : "Cloning rootAVD (master)…");
+
+        // Pinned refs need full history so the SHA is resolvable; otherwise use a shallow clone.
+        var cloneArgs = isPinned
+            ? new[] { "clone", "https://gitlab.com/newbit/rootAVD.git", RootAvdDir }
+            : new[] { "clone", "--depth", "1", "https://gitlab.com/newbit/rootAVD.git", RootAvdDir };
+        var r = await ProcessRunner.RunAsync("git", cloneArgs, ct: ct);
         if (!r.Success) throw new InvalidOperationException("git clone of rootAVD failed: " + r.Combined);
+
+        if (isPinned)
+        {
+            status?.Report($"Checking out {RootAvdPinnedRef}…");
+            var co = await ProcessRunner.RunAsync("git",
+                new[] { "checkout", "--detach", RootAvdPinnedRef },
+                workingDir: RootAvdDir, ct: ct);
+            if (!co.Success) throw new InvalidOperationException("git checkout of pinned rootAVD revision failed: " + co.Combined);
+        }
     }
 
     public async Task<string> DownloadLatestMagiskAsync(IProgress<string>? status, CancellationToken ct)
@@ -120,7 +139,22 @@ public sealed class RootService
         proc.Start();
         proc.BeginOutputReadLine();
         proc.BeginErrorReadLine();
-        await proc.WaitForExitAsync(ct);
+
+        // rootAVD.sh has been observed to hang when the target emulator deadlocks
+        // during the ramdisk swap. Cap the run so the UI doesn't get stuck forever.
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        linked.CancelAfter(PatchTimeout);
+        try
+        {
+            await proc.WaitForExitAsync(linked.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            try { if (!proc.HasExited) proc.Kill(entireProcessTree: true); } catch { }
+            if (ct.IsCancellationRequested) throw;
+            _log.Error($"rootAVD.sh exceeded {PatchTimeout.TotalMinutes:0} min timeout — killed.");
+            return false;
+        }
         return proc.ExitCode == 0;
     }
 

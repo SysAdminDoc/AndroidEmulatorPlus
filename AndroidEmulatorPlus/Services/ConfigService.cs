@@ -41,10 +41,16 @@ public sealed class ConfigService
         if (wipeData)
         {
             // The filesystem inside the partition won't expand on its own. Wipe to recreate.
+            var snapshotsDir = Path.Combine(dir, "snapshots");
+            if (Directory.Exists(snapshotsDir))
+            {
+                foreach (var snap in Directory.EnumerateDirectories(snapshotsDir))
+                    _log.Warning($"Destroying snapshot: {Path.GetFileName(snap)}");
+            }
             try { File.Delete(qcow2); } catch { }
             try { File.Delete(Path.Combine(dir, "userdata.img.qcow2")); } catch { }
             try { File.Delete(Path.Combine(dir, "cache.img.qcow2")); } catch { }
-            try { Directory.Delete(Path.Combine(dir, "snapshots"), true); } catch { }
+            try { Directory.Delete(snapshotsDir, true); } catch { }
             _log.Info("Wiped qcow2 overlays. AVD will recreate at the new partition size on next launch.");
         }
         else

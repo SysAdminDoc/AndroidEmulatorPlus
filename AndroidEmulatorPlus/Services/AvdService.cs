@@ -91,6 +91,8 @@ public sealed class AvdService
         return list;
     }
 
+    private static readonly TimeSpan CreateAvdTimeout = TimeSpan.FromMinutes(5);
+
     public async Task<ProcessResult> CreateAsync(string name, string sysImagePkg, string device = "pixel_7", CancellationToken ct = default)
     {
         if (_sdk.AvdManagerBat is null)
@@ -119,10 +121,24 @@ public sealed class AvdService
         using var proc = System.Diagnostics.Process.Start(psi)!;
         await proc.StandardInput.WriteLineAsync("no");
         proc.StandardInput.Close();
-        var stdout = await proc.StandardOutput.ReadToEndAsync(ct);
-        var stderr = await proc.StandardError.ReadToEndAsync(ct);
-        await proc.WaitForExitAsync(ct);
-        return new ProcessResult(proc.ExitCode, stdout, stderr);
+
+        // Cap the run so a hung prompt doesn't lock up the UI.
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        linked.CancelAfter(CreateAvdTimeout);
+        try
+        {
+            var stdout = await proc.StandardOutput.ReadToEndAsync(linked.Token);
+            var stderr = await proc.StandardError.ReadToEndAsync(linked.Token);
+            await proc.WaitForExitAsync(linked.Token);
+            return new ProcessResult(proc.ExitCode, stdout, stderr);
+        }
+        catch (OperationCanceledException)
+        {
+            try { if (!proc.HasExited) proc.Kill(entireProcessTree: true); } catch { }
+            if (ct.IsCancellationRequested) throw;
+            _log.Error($"avdmanager create exceeded {CreateAvdTimeout.TotalMinutes:0} min — killed.");
+            return new ProcessResult(-1, "", "avdmanager create timed out");
+        }
     }
 
     public Task<ProcessResult> DeleteAsync(string name, CancellationToken ct = default)
