@@ -11,6 +11,7 @@ public sealed partial class InstallViewModel : ObservableObject
 {
     private readonly SdkLocator _sdk;
     private readonly DownloadService _dl;
+    private readonly EmulatorService _emu;
     private readonly LogService _log;
 
     [ObservableProperty] private string _statusText = "";
@@ -22,6 +23,8 @@ public sealed partial class InstallViewModel : ObservableObject
     [ObservableProperty] private string _step = "";
     [ObservableProperty] private string _diagnosticsText = "";
     [ObservableProperty] private bool _hasDiagnostics;
+    [ObservableProperty] private string _accelText = "Not checked.";
+    [ObservableProperty] private bool _accelOk;
 
     private static string DiagnosticsRoot => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -29,10 +32,11 @@ public sealed partial class InstallViewModel : ObservableObject
     private static string CrashLogPath => Path.Combine(DiagnosticsRoot, "crash.log");
     private static string DailyLogPath => Path.Combine(DiagnosticsRoot, "logs", $"app-{DateTime.Now:yyyyMMdd}.log");
 
-    public InstallViewModel(SdkLocator sdk, DownloadService dl, LogService log)
+    public InstallViewModel(SdkLocator sdk, DownloadService dl, EmulatorService emu, LogService log)
     {
         _sdk = sdk;
         _dl = dl;
+        _emu = emu;
         _log = log;
     }
 
@@ -93,18 +97,38 @@ public sealed partial class InstallViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private async Task CheckAccelAsync()
+    {
+        if (_sdk.EmulatorExe is null) { AccelText = "emulator.exe not found — install platform-tools + emulator first."; AccelOk = false; return; }
+        IsBusy = true;
+        Step = "Running emulator -accel-check…";
+        try
+        {
+            var status = await _emu.AccelCheckAsync();
+            AccelOk = status.Ok;
+            AccelText = status.Ok ? $"✓ {status.Summary}" : $"✗ {status.Summary}";
+            _log.Info("Accel: " + status.Summary);
+        }
+        catch (Exception ex) { AccelOk = false; AccelText = "✗ " + ex.Message; }
+        finally { IsBusy = false; Step = ""; }
+    }
+
+    [RelayCommand]
     private async Task DownloadCmdlineToolsAsync()
     {
         IsBusy = true;
-        Step = "Downloading command-line tools…";
+        Step = "Resolving latest command-line-tools URL…";
         try
         {
             var sdkRoot = _sdk.SdkRoot
                 ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Android", "Sdk");
             Directory.CreateDirectory(sdkRoot);
 
-            // Latest stable Android command-line tools URL is published on developer.android.com.
-            const string url = "https://dl.google.com/android/repository/commandlinetools-win-13114758_latest.zip";
+            // Scrape developer.android.com/studio for the current Windows build; falls back
+            // to a stable known-good URL if the scrape fails.
+            var url = await _dl.LatestCmdlineToolsWindowsUrlAsync();
+            _log.Info($"Using cmdline-tools URL: {url}");
+            Step = "Downloading command-line tools…";
             var zip = Path.Combine(Path.GetTempPath(), "android-cmdline-tools.zip");
             await _dl.DownloadAsync(url, zip);
 

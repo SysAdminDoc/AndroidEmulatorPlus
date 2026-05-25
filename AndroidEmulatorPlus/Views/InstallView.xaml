@@ -40,6 +40,19 @@
                 </StackPanel>
             </Border>
 
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource SectionHeader}" Text="Hardware acceleration"/>
+                    <TextBlock Foreground="{StaticResource SubtextBrush}" TextWrapping="Wrap">
+                        Runs <Run FontFamily="Cascadia Mono, Consolas">emulator -accel-check</Run> to verify that Windows Hypervisor Platform / Hyper-V is enabled so the emulator can use hardware virtualization.
+                    </TextBlock>
+                    <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                        <Button Content="Run accel-check" Style="{StaticResource FlatButton}" Command="{Binding CheckAccelCommand}"/>
+                        <TextBlock Text="{Binding AccelText}" Margin="14,0,0,0" VerticalAlignment="Center" Foreground="{StaticResource LavenderBrush}"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
             <Border Style="{StaticResource Card}" Visibility="{Binding HasDiagnostics, Converter={x:Static views:BoolToVisibilityConverter.Instance}}">
                 <StackPanel>
                     <Grid>

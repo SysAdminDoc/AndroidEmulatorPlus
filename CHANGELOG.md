@@ -12,6 +12,12 @@ All notable changes to this project will be documented here. Format follows [Kee
 - AVD cards now show a green "● Running" pill when that AVD is the currently attached emulator. Detection runs `getprop ro.kernel.qemu.avd_name` (with `ro.boot.qemu.avd_name` fallback) on every `adb devices` snapshot.
 - Top-bar "📷 Screenshot" button captures a PNG from the attached emulator (shell `screencap -p` → pull → cleanup) into `%USERPROFILE%\Pictures\AndroidEmulatorPlus\` and opens it in the system default viewer. Disabled when no emulator is attached.
 - Apps tab accepts drag-and-drop of `.apk` / `.apks` / `.xapk` files (one or many) and installs them on the attached emulator via the same batch path used by "Install APK…".
+- Hardware-acceleration check on the Install / SDK panel runs `emulator -accel-check` and shows a one-line verdict (✓/✗ + summary). Useful when the emulator silently falls back to software rendering after a Windows Hypervisor / Hyper-V regression.
+- Cmdline-tools URL is now resolved at install time from `https://developer.android.com/studio` instead of a hard-coded `commandlinetools-win-NNNN_latest.zip`. Falls back to the previous hard-coded URL if the scrape fails (so first-launch still works offline-ish).
+
+### Fixed
+
+- `DownloadService.LatestMagiskAsync` now skips `-debug` and `-stub` Magisk APKs when picking the asset, defending against future Magisk releases that publish those before the canonical APK.
 - "■ Stop" button replaces "▶ Launch" on running AVD cards (calls `adb -s <serial> emu kill`).
 - "⋯" overflow menu on each AVD card: **Show on disk**, **Create desktop shortcut**, **Delete AVD**. Desktop shortcut writes `Emulator - <Name>.cmd` to the user Desktop (no Shell32 / COM dependency).
 - `AvdService.RenameAsync` (`avdmanager move avd -n … -r …`) and `AvdViewModel.RenameCommand` are in place — the AVD-card popup that drives them lands in the next release.

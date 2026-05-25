@@ -44,7 +44,7 @@ Build constraint: this VMware VM has no .NET SDK; changes here are best-effort a
 - [ ] **P1 A-14** — Screen record button (`adb shell screenrecord /sdcard/<ts>.mp4` + pull on stop) with start/stop toggle.
 - [ ] **P1 A-15** — Logcat viewer (filter by package + level), with a "Clear" and "Save" button. Useful when migration appears to fail and the cause is in app-side logcat.
 - [ ] **P1 A-16** — Auto-accept SDK licenses. When running `sdkmanager --licenses` during the first-launch wizard or system-image install, pipe `y` repeatedly (Google's recommended automation pattern).
-- [ ] **P1 A-17** — Cmdline-tools URL is hard-coded as `commandlinetools-win-13114758_latest.zip`. Resolve the latest stable from `https://developer.android.com/studio#command-line-tools-only` (HTML scrape) or maintain a manifest in-repo and refresh on a CI cron.
+- [x] **P1 A-17** — Cmdline-tools URL is hard-coded as `commandlinetools-win-13114758_latest.zip`. Resolve the latest stable from `https://developer.android.com/studio#command-line-tools-only` (HTML scrape) or maintain a manifest in-repo and refresh on a CI cron.
 - [ ] **P1 A-18** — `pm list packages -3` (user-only) excludes pre-installed user apps that the OEM marked as system but the user still cares about (Samsung Wallet, OEM stuff). Add a `-s` (system) toggle and a `-d` (disabled-only) toggle and show package source (system vs. user) per row.
 - [ ] **P1 A-19** — Detect `allowBackup=false` per package and warn before attempting data migration — those apps will reject the restored data even if tar succeeds.
 - [x] **P1 A-20** — Add an "Open AVD folder" / "Show on disk" action per AVD card (Android Studio Device Manager parity).
@@ -54,7 +54,7 @@ Build constraint: this VMware VM has no .NET SDK; changes here are best-effort a
 - [ ] **P2 A-21** — Screen W / H / DPI in Configure tab are free-form TextBoxes. Replace with a preset picker (Pixel 7: 1080×2400@420, Pixel 7 Pro: 1440×3120@560, Pixel Tablet: 2560×1600@320, Pixel Fold open/closed, Custom…).
 - [ ] **P2 A-22** — Expose GPU mode picker in Configure tab (`hw.gpu.mode`: host | swiftshader_indirect | angle_indirect). Default is `host`; users on remote desktop or VM often need `swiftshader_indirect`.
 - [ ] **P2 A-23** — Expose `-http-proxy`, `-dns-server`, `-no-window` (headless), `-noaudio`, `-camera-front/back` as launch flags on the AVD card's "Launch…" overflow menu.
-- [ ] **P2 A-24** — Run `emulator -accel-check` on the Install panel and show pass/fail with remediation links (Windows Hypervisor Platform feature, Intel HAXM, AMD Hyper-V).
+- [x] **P2 A-24** — Run `emulator -accel-check` on the Install panel and show pass/fail with remediation links (Windows Hypervisor Platform feature, Intel HAXM, AMD Hyper-V). _Pass/fail shipped; remediation-link UI still TODO._
 - [ ] **P2 A-25** — Rename AVD (`avdmanager move avd -n <old> -r <new>`). _Backend (`AvdService.RenameAsync` + `AvdViewModel.RenameCommand`) ready; needs an inline rename popup on the AVD card._
 - [ ] **P2 A-26** — Duplicate AVD (copy `<name>.avd` directory + `<name>.ini`, rewrite `path=` references). Matches Android Studio Device Manager.
 - [ ] **P2 A-27** — Keyboard shortcuts: F5 = Refresh active tab, Ctrl+1..6 = switch sections, Ctrl+L = clear log.

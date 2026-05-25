@@ -34,4 +34,23 @@ public sealed class EmulatorService
         }
         catch { }
     }
+
+    public sealed record AccelStatus(bool Ok, string Summary, string Detail);
+
+    /// <summary>Runs `emulator -accel-check` and parses the verdict.</summary>
+    public async Task<AccelStatus> AccelCheckAsync(CancellationToken ct = default)
+    {
+        if (_sdk.EmulatorExe is null) return new AccelStatus(false, "emulator.exe not found", "");
+        var r = await ProcessRunner.RunAsync(_sdk.EmulatorExe, new[] { "-accel-check" },
+            timeout: TimeSpan.FromSeconds(30), ct: ct);
+        var combined = r.Combined.Trim();
+        // First non-empty line that is not the literal "accel:" / "accel" prelude is usually
+        // a human-readable verdict (e.g. "Hyper-V is enabled" or "HAXM is not installed").
+        var summary = combined
+            .Split('\n', StringSplitOptions.RemoveEmptyEntries)
+            .Select(l => l.Trim())
+            .FirstOrDefault(l => l.Length > 0 && !l.Equals("accel:", StringComparison.OrdinalIgnoreCase) && !l.Equals("accel", StringComparison.OrdinalIgnoreCase))
+            ?? "no output";
+        return new AccelStatus(r.ExitCode == 0, summary, combined);
+    }
 }

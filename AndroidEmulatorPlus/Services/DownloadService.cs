@@ -56,12 +56,45 @@ public sealed class DownloadService : IDisposable
             foreach (var asset in doc.RootElement.GetProperty("assets").EnumerateArray())
             {
                 var name = asset.GetProperty("name").GetString() ?? "";
-                if (name.StartsWith("Magisk-", StringComparison.OrdinalIgnoreCase) && name.EndsWith(".apk"))
+                // Prefer the canonical "Magisk-vNN.N.apk"; skip debug / stub / canary builds.
+                if (name.StartsWith("Magisk-", StringComparison.OrdinalIgnoreCase)
+                    && name.EndsWith(".apk", StringComparison.OrdinalIgnoreCase)
+                    && !name.Contains("debug", StringComparison.OrdinalIgnoreCase)
+                    && !name.Contains("stub", StringComparison.OrdinalIgnoreCase))
+                {
                     return (tag, asset.GetProperty("browser_download_url").GetString() ?? "");
+                }
             }
         }
         catch (Exception ex) { _log.Warning($"Magisk lookup failed: {ex.Message}"); }
         return null;
+    }
+
+    private const string CmdlineToolsFallbackUrl =
+        "https://dl.google.com/android/repository/commandlinetools-win-13114758_latest.zip";
+
+    /// <summary>
+    /// Scrapes developer.android.com/studio for the current Windows command-line-tools
+    /// download URL. Returns a stable fallback URL if the scrape fails so first-launch
+    /// installation can still proceed (at the cost of a slightly older build number).
+    /// </summary>
+    public async Task<string> LatestCmdlineToolsWindowsUrlAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            var html = await FetchTextAsync("https://developer.android.com/studio", ct);
+            var rx = new System.Text.RegularExpressions.Regex(
+                @"https://dl\.google\.com/android/repository/commandlinetools-win-\d+_latest\.zip",
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            var match = rx.Match(html);
+            if (match.Success) return match.Value;
+            _log.Warning("Could not parse cmdline-tools URL from developer.android.com — using fallback.");
+        }
+        catch (Exception ex)
+        {
+            _log.Warning($"cmdline-tools URL lookup failed: {ex.Message} — using fallback.");
+        }
+        return CmdlineToolsFallbackUrl;
     }
 
     public void Dispose() => _http.Dispose();
