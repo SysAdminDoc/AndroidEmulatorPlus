@@ -37,8 +37,10 @@ be `dotnet build`-verified on a host with the SDK before tagging a release.
   installed cert SHA (from `pm dump <pkg>`) is compared against the APK's
   signer SHA; mismatch raises a typed ConfirmDialog showing both SHAs.
   Skip-and-continue when aapt2 is missing or the package isn't installed.
-- [ ] **P1 C-05** — `allowBackup=false` pre-flight in the Migrate pipeline
-  (was A-19). Mark affected rows ⚠; skip the internal-data leg by default.
+- [x] **P1 C-05** — `MigrationService.AllowsBackupAsync` probes `pm dump` for each
+  package after the phone list loads; flagged rows show a yellow ⚠ no-backup
+  pill. The migration loop skips the data leg for them unless
+  "Force-migrate no-backup apps" is set.
 - [ ] **P1 C-06** — Application icon (`Assets/aep.ico`) + window icon + csproj
   `<ApplicationIcon>`. Fixes branded alt-tab card + Explorer thumbnail.
 
@@ -56,20 +58,23 @@ be `dotnet build`-verified on a host with the SDK before tagging a release.
   broken in 5+ places (RootService.PatchAsync / DryRunAsync, AvdService.CreateAsync,
   SdkmanagerService.AcceptLicenses / Install, LogcatService.Start,
   ScreenRecordService.Start, AdbService.PairAsync).
-- [ ] **P2 C-10** — "Show welcome wizard…" button in Settings (resets
-  `HasSeenWizard` and re-opens the wizard).
-- [ ] **P2 C-11** — Migrate cache refreshes after Apps tab Export/Import.
-  Currently the cache card only re-measures on its own after a migration run.
+- [x] **P2 C-10** — "Show welcome wizard…" button on the Settings dialog flips
+  `HasSeenWizard=false` and re-opens the WelcomeDialog (DI services resolved
+  from `App.Services`).
+- [x] **P2 C-11** — `CacheDiagnosticsService.Changed` event fires after Clear*,
+  Apps tab Export/Import; `MigrateViewModel` subscribes and re-measures on
+  the UI thread.
 - [ ] **P2 C-12** — DynamicResource sweep so theme switches live without restart.
 - [ ] **P2 C-17** — README screenshots + landing image (one PNG per tab, Mocha + Latte).
 - [ ] **P2 R-03 (covered by C-07)** — Magisk module manager.
 
 ## Phase 4 — P3 polish & stretch
 
-- [ ] **P3 C-13** — Apps tab "Compute sizes" covers all rows (not just `FilteredApps`).
+- [x] **P3 C-13** — Apps tab "Compute sizes" iterates the full `Apps` collection,
+  not just `FilteredApps` — rows hidden by the filter no longer stay at "—".
 - [ ] **P3 C-14** — Welcome wizard auto-hides completed-step cards.
-- [ ] **P3 C-15** — Remove duplicate Theme picker on the Install tab (Settings is
-  the canonical home).
+- [x] **P3 C-15** — Theme picker removed from the Install tab; Settings is the
+  canonical home. `InstallViewModel` no longer holds `_settings`.
 - [ ] **P3 C-16** — "Auto-launch scrcpy after AVD boot" toggle in Settings +
   LaunchOptions.
 - [ ] **P3 C-18** — Atomic write for settings.json (`File.WriteAllText` →

@@ -15,6 +15,7 @@ public sealed partial class AppsViewModel : ObservableObject
     private readonly LogService _log;
     private readonly PresetService _presets;
     private readonly ApkSignerService _signer;
+    private readonly CacheDiagnosticsService _cache;
 
     public ObservableCollection<AndroidApp> Apps { get; } = new();
     public ObservableCollection<BloatPreset> BloatPresets { get; } = new();
@@ -24,7 +25,7 @@ public sealed partial class AppsViewModel : ObservableObject
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private string _uninstallMode = "user"; // "user" (adb uninstall), "user0" (pm uninstall --user 0)
 
-    public AppsViewModel(AppService apps, AdbService adb, DeviceMonitor monitor, LogService log, PresetService presets, ApkSignerService signer)
+    public AppsViewModel(AppService apps, AdbService adb, DeviceMonitor monitor, LogService log, PresetService presets, ApkSignerService signer, CacheDiagnosticsService cache)
     {
         _apps = apps;
         _adb = adb;
@@ -32,6 +33,7 @@ public sealed partial class AppsViewModel : ObservableObject
         _log = log;
         _presets = presets;
         _signer = signer;
+        _cache = cache;
         foreach (var p in _presets.Presets) BloatPresets.Add(p);
     }
 
@@ -144,8 +146,10 @@ public sealed partial class AppsViewModel : ObservableObject
         IsBusy = true;
         try
         {
+            // C-13: iterate the full list, not just FilteredApps — otherwise rows
+            // hidden by the filter stay at "—" after the filter is cleared.
             int done = 0;
-            foreach (var a in FilteredApps.ToList())
+            foreach (var a in Apps.ToList())
             {
                 a.DataSizeBytes = await _adb.DataSizeAsync(emu.Serial, a.Package);
                 done++;
@@ -311,7 +315,7 @@ public sealed partial class AppsViewModel : ObservableObject
                 }
             }
         }
-        finally { IsBusy = false; }
+        finally { IsBusy = false; _cache.NotifyChanged(); }
     }
 
     [RelayCommand]
@@ -334,7 +338,7 @@ public sealed partial class AppsViewModel : ObservableObject
                 await _apps.ImportAppDataAsync(emu.Serial, z);
             await RefreshAsync();
         }
-        finally { IsBusy = false; }
+        finally { IsBusy = false; _cache.NotifyChanged(); }
     }
 
     /// <summary>

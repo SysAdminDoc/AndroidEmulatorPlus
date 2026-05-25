@@ -27,7 +27,17 @@ public sealed class CacheDiagnosticsService
 {
     private readonly LogService _log;
 
+    /// <summary>
+    /// Fires after the cache contents change. The Migrate tab subscribes so its
+    /// usage card auto-refreshes when other tabs (Apps export/import) write to
+    /// %LOCALAPPDATA%/AndroidEmulatorPlus/transfer/.
+    /// </summary>
+    public event Action? Changed;
+
     public CacheDiagnosticsService(LogService log) => _log = log;
+
+    /// <summary>Notify subscribers that the on-disk cache likely changed.</summary>
+    public void NotifyChanged() => Changed?.Invoke();
 
     public static string Root => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -73,6 +83,7 @@ public sealed class CacheDiagnosticsService
         TryDelete(TransferDir);
         Directory.CreateDirectory(TransferDir);
         _log.Info($"Migration transfer cache cleared ({Human(before)}).");
+        NotifyChanged();
         return before;
     }
 
@@ -83,6 +94,7 @@ public sealed class CacheDiagnosticsService
         TryDelete(RootAvdDir);
         Directory.CreateDirectory(RootAvdDir);
         _log.Info($"Root cache cleared ({Human(before)}). Next root flow will re-clone rootAVD + re-download Magisk.");
+        NotifyChanged();
         return before;
     }
 

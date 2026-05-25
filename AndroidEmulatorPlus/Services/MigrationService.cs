@@ -20,6 +20,48 @@ public sealed class MigrationService
     /// <summary>If true, also force-stop the package on the source phone before tarring (A-30).</summary>
     public bool ForceStopOnPhone { get; set; }
 
+    /// <summary>
+    /// C-05: Probe `pm dump &lt;pkg&gt;` for the ALLOW_BACKUP flag. Apps that declare
+    /// <c>android:allowBackup="false"</c> in AndroidManifest will refuse the
+    /// restored data after migration; the Migrate flow defaults to skipping the
+    /// internal-data leg for them.
+    /// </summary>
+    public async Task<bool> AllowsBackupAsync(string serial, string pkg, CancellationToken ct = default)
+    {
+        try
+        {
+            var r = await _adb.ShellAsync(serial, $"pm dump {pkg}", ct);
+            if (!r.Success) return true; // assume yes when we can't tell
+            // pm dump output lines that name the flag look like:
+            //   flags=[ ALLOW_BACKUP ALLOW_CLEAR_USER_DATA HAS_CODE … ]
+            // When backup is disabled, ALLOW_BACKUP is simply omitted from the
+            // flags list. Look for the token to decide.
+            var hay = r.StdOut;
+            // The "flags" line is the most reliable; restrict the search to lines
+            // mentioning "flags=" to avoid matching unrelated docstrings.
+            foreach (var line in hay.Split('\n'))
+            {
+                if (line.Contains("flags=", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (line.Contains("ALLOW_BACKUP", StringComparison.Ordinal)) return true;
+                    // Some AOSP variants render this as 'flags=[ … ]' on a different
+                    // line and the next line carries the actual tokens; we conservatively
+                    // assume "yes" if no flags line is parseable.
+                }
+            }
+            // Newer AOSP printouts use 'flag.ALLOW_BACKUP=true|false' style; fall back.
+            var m = System.Text.RegularExpressions.Regex.Match(hay,
+                @"allowBackup\s*=\s*(true|false)",
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            if (m.Success) return m.Groups[1].Value.Equals("true", StringComparison.OrdinalIgnoreCase);
+            return true;
+        }
+        catch
+        {
+            return true; // tolerate adb hiccups
+        }
+    }
+
     // A-29: cache the phone's tar flavor per serial so we don't re-detect on every package.
     // The boolean tracks whether `tar --exclude=` is supported (toybox 0.7+, GNU tar).
     private readonly Dictionary<string, bool> _phoneTarSupportsExclude = new(StringComparer.Ordinal);

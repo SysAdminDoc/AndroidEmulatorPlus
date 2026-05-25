@@ -21,6 +21,8 @@ public sealed partial class MigrateViewModel : ObservableObject
     [ObservableProperty] private bool _doExternal = true;
     [ObservableProperty] private bool _doObb;
     [ObservableProperty] private bool _forceStopOnPhone;
+    /// <summary>C-05: override the allowBackup=false skip and migrate data anyway.</summary>
+    [ObservableProperty] private bool _forceDataForNoBackup;
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private string _stepText = "";
     [ObservableProperty] private double _progressFraction;
@@ -44,6 +46,13 @@ public sealed partial class MigrateViewModel : ObservableObject
         _log = log;
         _cache = cache;
         _monitor.Changed += devs => { _ = RefreshAsync(); };
+        // C-11: re-measure when other tabs (Apps Export/Import) touch the cache.
+        _cache.Changed += () =>
+        {
+            if (System.Windows.Application.Current?.Dispatcher is { } d)
+                _ = d.BeginInvoke(RefreshCache);
+            else RefreshCache();
+        };
         RefreshCache();
     }
 
@@ -101,8 +110,23 @@ public sealed partial class MigrateViewModel : ObservableObject
 
         if (phone is null) return;
         Packages.Clear();
-        foreach (var p in await _adb.ListPackagesAsync(phone.Serial))
+        var list = await _adb.ListPackagesAsync(phone.Serial);
+        foreach (var p in list)
             Packages.Add(new AndroidApp { Package = p, IsSelected = true });
+
+        // C-05: probe each package's allowBackup flag in the background. Sequential
+        // because `pm dump` is comparatively cheap and a thousand parallel adb
+        // shells flood the bridge. UI thread sees rows flip to ⚠ as the probe
+        // completes.
+        _ = Task.Run(async () =>
+        {
+            foreach (var app in Packages.ToList())
+            {
+                var ok = await _mig.AllowsBackupAsync(phone.Serial, app.Package);
+                if (!ok && System.Windows.Application.Current?.Dispatcher is { } d)
+                    _ = d.BeginInvoke(() => app.AllowBackup = false);
+            }
+        });
     }
 
     public IEnumerable<AndroidApp> FilteredPackages => string.IsNullOrWhiteSpace(Filter)
@@ -155,10 +179,17 @@ public sealed partial class MigrateViewModel : ObservableObject
 
                 if (DoInternal)
                 {
-                    var r = await _mig.TransferInternalDataAsync(phone.Serial, emu.Serial, p.Package, ct);
-                    totalBytes += r.SizeBytes;
-                    if (r.Success) _log.Info($"data ok {p.Package} ({r.SizeBytes / 1024 / 1024} MB, {r.Detail})");
-                    else _log.Warning($"data fail {p.Package}: {r.Detail}");
+                    if (!p.AllowBackup && !ForceDataForNoBackup)
+                    {
+                        _log.Warning($"data skip {p.Package}: allowBackup=false (toggle 'Force-migrate no-backup apps' to override)");
+                    }
+                    else
+                    {
+                        var r = await _mig.TransferInternalDataAsync(phone.Serial, emu.Serial, p.Package, ct);
+                        totalBytes += r.SizeBytes;
+                        if (r.Success) _log.Info($"data ok {p.Package} ({r.SizeBytes / 1024 / 1024} MB, {r.Detail})");
+                        else _log.Warning($"data fail {p.Package}: {r.Detail}");
+                    }
                 }
 
                 if (DoExternal)

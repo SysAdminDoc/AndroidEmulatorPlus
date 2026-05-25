@@ -77,6 +77,18 @@
 
         <Border Style="{StaticResource Card}">
             <StackPanel>
+                <TextBlock Style="{StaticResource SectionHeader}" Text="Help"/>
+                <StackPanel Orientation="Horizontal">
+                    <Button Content="Show welcome wizard…" Style="{StaticResource FlatButton}" Click="ShowWizard_Click"/>
+                </StackPanel>
+                <TextBlock Foreground="{StaticResource OverlayBrush}" FontSize="11" Margin="0,6,0,0" TextWrapping="Wrap">
+                    Re-opens the four-step onboarding wizard. Closes Settings first; reopen from here any time.
+                </TextBlock>
+            </StackPanel>
+        </Border>
+
+        <Border Style="{StaticResource Card}">
+            <StackPanel>
                 <TextBlock Style="{StaticResource SectionHeader}" Text="Telemetry"/>
                 <TextBlock Foreground="{StaticResource GreenBrush}" Text="No telemetry is sent. Crash details (unhandled exceptions) are written locally to crash.log only." TextWrapping="Wrap"/>
             </StackPanel>

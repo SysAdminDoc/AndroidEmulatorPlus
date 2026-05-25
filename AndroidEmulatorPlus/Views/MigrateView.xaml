@@ -86,6 +86,8 @@
                 </WrapPanel>
                 <CheckBox Content="Force-stop on source phone before tar" IsChecked="{Binding ForceStopOnPhone}" Margin="0,8,0,0"
                           ToolTip="Closes the app on the phone before tarring /data/data so the SQLite databases aren't captured mid-write."/>
+                <CheckBox Content="Force-migrate no-backup apps (override allowBackup=false skip)" IsChecked="{Binding ForceDataForNoBackup}" Margin="0,4,0,0"
+                          ToolTip="By default the data leg is skipped for packages with android:allowBackup=&quot;false&quot; because the restored data is usually rejected. Enable to push it anyway."/>
                 <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
                     <TextBlock Text="Filter:" VerticalAlignment="Center" Foreground="{StaticResource SubtextBrush}"/>
                     <TextBox Text="{Binding Filter, UpdateSourceTrigger=PropertyChanged}" Width="240" Margin="8,0,0,0"/>
@@ -102,7 +104,17 @@
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Grid Margin="0,3">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
                                 <CheckBox IsChecked="{Binding IsSelected}" Content="{Binding Package}"/>
+                                <Border Grid.Column="1" Style="{StaticResource StatusPill}" Margin="6,2,0,0"
+                                        Background="{StaticResource YellowBrush}"
+                                        Visibility="{Binding AllowBackup, Converter={x:Static views:NotBoolToVisibilityConverter.Instance}}"
+                                        ToolTip="android:allowBackup=&quot;false&quot; — restored data will be rejected by the app">
+                                    <TextBlock Text="⚠ no-backup" FontSize="11" Foreground="{StaticResource CrustBrush}" FontWeight="SemiBold"/>
+                                </Border>
                             </Grid>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>

@@ -95,24 +95,6 @@
 
             <Border Style="{StaticResource Card}">
                 <StackPanel>
-                    <TextBlock Style="{StaticResource SectionHeader}" Text="Appearance"/>
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="120"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="Theme" VerticalAlignment="Center" Foreground="{StaticResource SubtextBrush}"/>
-                        <ComboBox Grid.Column="1" ItemsSource="{Binding Themes}" SelectedItem="{Binding Theme}"/>
-                    </Grid>
-                    <TextBlock Text="{Binding ThemeNote}" Foreground="{StaticResource YellowBrush}" Margin="0,6,0,0" FontSize="12"/>
-                    <TextBlock Foreground="{StaticResource OverlayBrush}" FontSize="11" Margin="0,6,0,0" TextWrapping="Wrap">
-                        <Run FontWeight="SemiBold">mocha</Run>: Catppuccin Mocha (dark) — default. <Run FontWeight="SemiBold">latte</Run>: Catppuccin Latte (light) — for corporate screen-shares or bright rooms.
-                    </TextBlock>
-                </StackPanel>
-            </Border>
-
-            <Border Style="{StaticResource Card}">
-                <StackPanel>
                     <TextBlock Style="{StaticResource SectionHeader}" Text="If nothing is installed"/>
                     <TextBlock Foreground="{StaticResource SubtextBrush}" TextWrapping="Wrap">
                         Option 1 — install just the command-line tools (~150 MB). Then use the AVDs tab to pull a system image and create an emulator.

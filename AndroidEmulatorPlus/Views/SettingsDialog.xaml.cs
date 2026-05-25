@@ -60,4 +60,19 @@ public partial class SettingsDialog : Window
     }
 
     private void Cancel_Click(object sender, RoutedEventArgs e) { DialogResult = false; Close(); }
+
+    /// <summary>C-10: reopen the first-launch wizard from Settings.</summary>
+    private void ShowWizard_Click(object sender, RoutedEventArgs e)
+    {
+        _settings.Current.HasSeenWizard = false;
+        _settings.Save();
+        // We don't construct the WelcomeDialog here because it needs DI'd services
+        // (MainViewModel + SdkLocator + AvdService). Close this dialog with a
+        // signal flag and let the owner window react in its Closed handler — we
+        // piggy-back on DialogResult=true so the existing Save path is reused
+        // to reload the SdkLocator on settings changes; the owner separately
+        // checks HasSeenWizard and re-opens the wizard.
+        DialogResult = true;
+        Close();
+    }
 }

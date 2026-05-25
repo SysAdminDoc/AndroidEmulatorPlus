@@ -13,6 +13,8 @@ public sealed partial class AndroidApp : ObservableObject
 
     [ObservableProperty] private long _dataSizeBytes;
     [ObservableProperty] private bool _isSelected;
+    /// <summary>C-05: false = AndroidManifest declared allowBackup="false" on the source.</summary>
+    [ObservableProperty] private bool _allowBackup = true;
 
     public string Display => string.IsNullOrEmpty(Label) ? Package : $"{Label} ({Package})";
 
