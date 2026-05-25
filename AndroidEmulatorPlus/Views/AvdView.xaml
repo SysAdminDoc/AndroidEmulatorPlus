@@ -33,6 +33,10 @@
                                         <Border Style="{StaticResource StatusPill}" Margin="10,2,0,0">
                                             <TextBlock Text="{Binding Badge}" FontSize="11" Foreground="{StaticResource MauveBrush}"/>
                                         </Border>
+                                        <Border Style="{StaticResource StatusPill}" Margin="6,2,0,0" Background="{StaticResource GreenBrush}"
+                                                Visibility="{Binding IsRunning, Converter={x:Static views:BoolToVisibilityConverter.Instance}}">
+                                            <TextBlock Text="● Running" FontSize="11" Foreground="{StaticResource CrustBrush}" FontWeight="SemiBold"/>
+                                        </Border>
                                     </StackPanel>
                                     <TextBlock Text="{Binding Subtitle}" Foreground="{StaticResource SubtextBrush}" Margin="0,4,0,0"/>
                                     <TextBlock Text="{Binding SystemImage}" FontFamily="Cascadia Mono, Consolas" FontSize="11" Foreground="{StaticResource OverlayBrush}" Margin="0,4,0,0"/>
@@ -40,13 +44,32 @@
                                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                                     <Button Content="▶ Launch" Style="{StaticResource PrimaryButton}"
                                             Command="{Binding DataContext.LaunchCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                            CommandParameter="{Binding}"/>
+                                            CommandParameter="{Binding}"
+                                            Visibility="{Binding IsRunning, Converter={x:Static views:NotBoolToVisibilityConverter.Instance}}"/>
+                                    <Button Content="■ Stop" Style="{StaticResource DangerButton}"
+                                            Command="{Binding DataContext.StopCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}"
+                                            Visibility="{Binding IsRunning, Converter={x:Static views:BoolToVisibilityConverter.Instance}}"/>
                                     <Button Content="Cold Boot" Style="{StaticResource FlatButton}" Margin="8,0,0,0"
                                             Command="{Binding DataContext.LaunchColdCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                             CommandParameter="{Binding}"/>
-                                    <Button Content="Delete" Style="{StaticResource DangerButton}" Margin="8,0,0,0"
-                                            Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                            CommandParameter="{Binding}"/>
+                                    <Button Style="{StaticResource FlatButton}" Margin="8,0,0,0" Padding="10,8"
+                                            Click="OverflowButton_Click" Content="⋯">
+                                        <Button.ContextMenu>
+                                            <ContextMenu>
+                                                <MenuItem Header="Show on disk"
+                                                          Command="{Binding DataContext.ShowOnDiskCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                          CommandParameter="{Binding}"/>
+                                                <MenuItem Header="Create desktop shortcut"
+                                                          Command="{Binding DataContext.CreateShortcutCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                          CommandParameter="{Binding}"/>
+                                                <Separator/>
+                                                <MenuItem Header="Delete AVD…"
+                                                          Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                          CommandParameter="{Binding}"/>
+                                            </ContextMenu>
+                                        </Button.ContextMenu>
+                                    </Button>
                                 </StackPanel>
                             </Grid>
                         </Border>

@@ -1,11 +1,17 @@
+using CommunityToolkit.Mvvm.ComponentModel;
+
 namespace AndroidEmulatorPlus.Models;
 
-public sealed class Avd
+public sealed partial class Avd : ObservableObject
 {
     public required string Name { get; init; }
     public required string ConfigPath { get; init; }     // .../avd/<name>.avd/config.ini
     public required string IniPath { get; init; }        // .../avd/<name>.ini
     public Dictionary<string, string> Config { get; init; } = new();
+
+    [ObservableProperty] private string? _runningSerial;
+    public bool IsRunning => RunningSerial is not null;
+    partial void OnRunningSerialChanged(string? value) => OnPropertyChanged(nameof(IsRunning));
 
     public string? SystemImage => Config.GetValueOrDefault("image.sysdir.1");
     public bool PlayStoreEnabled => Config.GetValueOrDefault("PlayStore.enabled", "false")

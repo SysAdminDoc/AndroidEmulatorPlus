@@ -1,4 +1,6 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.IO;
 using AndroidEmulatorPlus.Models;
 using AndroidEmulatorPlus.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -10,6 +12,8 @@ public sealed partial class AvdViewModel : ObservableObject
 {
     private readonly AvdService _avds;
     private readonly EmulatorService _emu;
+    private readonly AdbService _adb;
+    private readonly DeviceMonitor _monitor;
     private readonly LogService _log;
     private readonly SdkLocator _sdk;
 
@@ -28,12 +32,16 @@ public sealed partial class AvdViewModel : ObservableObject
         "Nexus 6P", "Nexus 5X", "small_phone",
     };
 
-    public AvdViewModel(AvdService avds, EmulatorService emu, LogService log, SdkLocator sdk)
+    public AvdViewModel(AvdService avds, EmulatorService emu, AdbService adb,
+        DeviceMonitor monitor, LogService log, SdkLocator sdk)
     {
         _avds = avds;
         _emu = emu;
+        _adb = adb;
+        _monitor = monitor;
         _log = log;
         _sdk = sdk;
+        _monitor.Changed += _ => _ = RefreshRunningStateAsync();
     }
 
     [RelayCommand]
@@ -48,8 +56,27 @@ public sealed partial class AvdViewModel : ObservableObject
             foreach (var img in await _avds.ListSystemImagesAsync())
                 AvailableImages.Add(img);
             NewImage ??= AvailableImages.LastOrDefault();
+            await RefreshRunningStateAsync();
         }
         finally { IsBusy = false; }
+    }
+
+    /// <summary>For each currently-attached emulator, resolve which AVD it is and tag the row.</summary>
+    private async Task RefreshRunningStateAsync()
+    {
+        try
+        {
+            var emus = _monitor.Current.Where(d => d.IsEmulator && d.IsOnline).ToList();
+            var serialByAvd = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var d in emus)
+            {
+                var name = await _adb.AvdNameForSerialAsync(d.Serial);
+                if (!string.IsNullOrEmpty(name)) serialByAvd[name] = d.Serial;
+            }
+            foreach (var a in Avds)
+                a.RunningSerial = serialByAvd.TryGetValue(a.Name, out var s) ? s : null;
+        }
+        catch { /* best-effort */ }
     }
 
     [RelayCommand]
@@ -76,6 +103,63 @@ public sealed partial class AvdViewModel : ObservableObject
             var r = await _avds.DeleteAsync(avd.Name);
             if (r.Success) _log.Success($"Deleted AVD '{avd.Name}'.");
             else _log.Error("Delete failed: " + r.Combined.Trim());
+            await RefreshAsync();
+        }
+        finally { IsBusy = false; }
+    }
+
+    [RelayCommand]
+    private async Task StopAsync(Avd? avd)
+    {
+        if (avd?.RunningSerial is null) { _log.Warning("That AVD is not currently running."); return; }
+        var serial = avd.RunningSerial;
+        _log.Info($"Stopping emulator {serial} (AVD '{avd.Name}')…");
+        var r = await _adb.EmuKillAsync(serial);
+        if (r.Success) _log.Success($"Stopped {serial}.");
+        else _log.Warning("Stop returned non-zero: " + r.Combined.Trim());
+        await RefreshRunningStateAsync();
+    }
+
+    [RelayCommand]
+    private void ShowOnDisk(Avd? avd)
+    {
+        if (avd is null) return;
+        var dir = _avds.FolderFor(avd.Name);
+        if (dir is null) { _log.Warning("AVD folder not found on disk."); return; }
+        try { Process.Start(new ProcessStartInfo(dir) { UseShellExecute = true }); }
+        catch (Exception ex) { _log.Error("Open folder failed: " + ex.Message); }
+    }
+
+    [RelayCommand]
+    private void CreateShortcut(Avd? avd)
+    {
+        if (avd is null) return;
+        try { _avds.CreateDesktopShortcut(avd.Name); }
+        catch (Exception ex) { _log.Error("Shortcut create failed: " + ex.Message); }
+    }
+
+    [ObservableProperty] private string _renameTarget = "";
+
+    [RelayCommand]
+    private async Task RenameAsync(Avd? avd)
+    {
+        if (avd is null) return;
+        if (string.IsNullOrWhiteSpace(RenameTarget) || RenameTarget == avd.Name)
+        {
+            _log.Warning("Enter a new name in the Rename field first.");
+            return;
+        }
+        if (avd.IsRunning)
+        {
+            _log.Warning("Stop the emulator before renaming its AVD.");
+            return;
+        }
+        IsBusy = true;
+        try
+        {
+            var r = await _avds.RenameAsync(avd.Name, RenameTarget.Trim());
+            if (r.Success) { _log.Success($"Renamed '{avd.Name}' → '{RenameTarget.Trim()}'."); RenameTarget = ""; }
+            else _log.Error("avdmanager move: " + r.Combined.Trim());
             await RefreshAsync();
         }
         finally { IsBusy = false; }

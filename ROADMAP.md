@@ -19,7 +19,7 @@ Build constraint: this VMware VM has no .NET SDK; changes here are best-effort a
 - [ ] **P3 R-07** — Linux + macOS builds (Avalonia port).
 - [ ] **P1 R-08** — APK signature verification before install (warn on mismatch with already-installed package); use `apksigner.bat` from build-tools.
 - [ ] **P1 R-09** — Bandwidth-aware adb push/pull with progress per-package, not just per-batch.
-- [ ] **P2 R-10** — Optional desktop shortcut creation right from the AVDs tab.
+- [x] **P2 R-10** — Optional desktop shortcut creation right from the AVDs tab.
 
 ## Audit additions (2026-05-24)
 
@@ -35,8 +35,8 @@ Build constraint: this VMware VM has no .NET SDK; changes here are best-effort a
 
 ### Workflow gaps (P1)
 
-- [ ] **P1 A-08** — No "Stop emulator" UI command. `AdbService.EmuKillAsync` is wired but no view binds to it. Add a Stop button on each AVD card that is enabled when that AVD is the currently-attached emulator.
-- [ ] **P1 A-09** — No way to tell from the AVD list which AVD is currently running. Cross-reference `DeviceMonitor.Current` with `Avd.Name` (the emulator serial is `emulator-NNNN` not the AVD name — fetch `getprop ro.boot.qemu.avd_name` once per emulator and cache).
+- [x] **P1 A-08** — No "Stop emulator" UI command. `AdbService.EmuKillAsync` is wired but no view binds to it. Add a Stop button on each AVD card that is enabled when that AVD is the currently-attached emulator.
+- [x] **P1 A-09** — No way to tell from the AVD list which AVD is currently running. Cross-reference `DeviceMonitor.Current` with `Avd.Name` (the emulator serial is `emulator-NNNN` not the AVD name — fetch `getprop ro.boot.qemu.avd_name` once per emulator and cache).
 - [x] **P1 A-10** — Crash log viewer. `crash.log` accumulates at `%LOCALAPPDATA%\AndroidEmulatorPlus\crash.log` and the user never sees it unless they open Explorer. Add an Install / SDK panel section that surfaces last-N crashes with a "Clear" button.
 - [x] **P1 A-11** — Save log to file. The in-memory log buffer is 2000 entries and lost on close. Write a rolling `app.log` mirror to `%LOCALAPPDATA%\AndroidEmulatorPlus\logs\app-YYYYMMDD.log`.
 - [ ] **P1 A-12** — APK drag-and-drop install. Drop one or many APKs anywhere on the Apps view to invoke the batch install path.
@@ -47,7 +47,7 @@ Build constraint: this VMware VM has no .NET SDK; changes here are best-effort a
 - [ ] **P1 A-17** — Cmdline-tools URL is hard-coded as `commandlinetools-win-13114758_latest.zip`. Resolve the latest stable from `https://developer.android.com/studio#command-line-tools-only` (HTML scrape) or maintain a manifest in-repo and refresh on a CI cron.
 - [ ] **P1 A-18** — `pm list packages -3` (user-only) excludes pre-installed user apps that the OEM marked as system but the user still cares about (Samsung Wallet, OEM stuff). Add a `-s` (system) toggle and a `-d` (disabled-only) toggle and show package source (system vs. user) per row.
 - [ ] **P1 A-19** — Detect `allowBackup=false` per package and warn before attempting data migration — those apps will reject the restored data even if tar succeeds.
-- [ ] **P1 A-20** — Add an "Open AVD folder" / "Show on disk" action per AVD card (Android Studio Device Manager parity).
+- [x] **P1 A-20** — Add an "Open AVD folder" / "Show on disk" action per AVD card (Android Studio Device Manager parity).
 
 ### UX polish (P2)
 
@@ -55,7 +55,7 @@ Build constraint: this VMware VM has no .NET SDK; changes here are best-effort a
 - [ ] **P2 A-22** — Expose GPU mode picker in Configure tab (`hw.gpu.mode`: host | swiftshader_indirect | angle_indirect). Default is `host`; users on remote desktop or VM often need `swiftshader_indirect`.
 - [ ] **P2 A-23** — Expose `-http-proxy`, `-dns-server`, `-no-window` (headless), `-noaudio`, `-camera-front/back` as launch flags on the AVD card's "Launch…" overflow menu.
 - [ ] **P2 A-24** — Run `emulator -accel-check` on the Install panel and show pass/fail with remediation links (Windows Hypervisor Platform feature, Intel HAXM, AMD Hyper-V).
-- [ ] **P2 A-25** — Rename AVD (`avdmanager move avd -n <old> -r <new>`).
+- [ ] **P2 A-25** — Rename AVD (`avdmanager move avd -n <old> -r <new>`). _Backend (`AvdService.RenameAsync` + `AvdViewModel.RenameCommand`) ready; needs an inline rename popup on the AVD card._
 - [ ] **P2 A-26** — Duplicate AVD (copy `<name>.avd` directory + `<name>.ini`, rewrite `path=` references). Matches Android Studio Device Manager.
 - [ ] **P2 A-27** — Keyboard shortcuts: F5 = Refresh active tab, Ctrl+1..6 = switch sections, Ctrl+L = clear log.
 - [ ] **P2 A-28** — Microcopy: in `RootViewModel.RootAsync`, when "Launch the AVD first" warning fires, the message dead-ends. Offer an inline `Launch <name>` button that immediately calls `EmulatorService.Launch` and re-enters the root flow once boot completes.

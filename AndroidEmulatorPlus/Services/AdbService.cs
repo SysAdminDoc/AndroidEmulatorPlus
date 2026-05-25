@@ -129,4 +129,22 @@ public sealed class AdbService
         => ProcessRunner.RunAsync(_sdk.AdbRequired,
             new[] { "-s", serial, "emu", "kill" },
             extraEnv: NoPathConv, ct: ct);
+
+    /// <summary>Best-effort lookup of the AVD name for a running emulator serial.</summary>
+    public async Task<string?> AvdNameForSerialAsync(string serial, CancellationToken ct = default)
+    {
+        // The property name varies slightly across emulator versions; try both.
+        foreach (var prop in new[] { "ro.kernel.qemu.avd_name", "ro.boot.qemu.avd_name" })
+        {
+            try
+            {
+                var r = await ShellAsync(serial, $"getprop {prop}", ct);
+                var v = r.StdOut.Trim();
+                if (!string.IsNullOrEmpty(v)) return v;
+            }
+            catch { }
+        }
+        return null;
+    }
+
 }
