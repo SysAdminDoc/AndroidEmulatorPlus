@@ -58,8 +58,15 @@ public sealed class DownloadService : IDisposable
         return await resp.Content.ReadAsStringAsync(ct);
     }
 
-    /// <summary>Returns (tagName, browserDownloadUrl) for the first .apk asset in the latest GitHub release.</summary>
-    public async Task<(string tag, string apkUrl)?> LatestMagiskAsync(CancellationToken ct = default)
+    public sealed record MagiskAsset(string Tag, string Url, string? GitHubDigestSha256);
+
+    /// <summary>
+    /// Returns metadata for the canonical Magisk APK asset in the latest GitHub release.
+    /// GitHub publishes a per-asset <c>digest</c> field ("sha256:abc…") since 2024 — when
+    /// present, callers should cross-check it against the downloaded file's hash for
+    /// defense-in-depth on top of <see cref="HashVerificationService"/>'s in-tree manifest.
+    /// </summary>
+    public async Task<MagiskAsset?> LatestMagiskAsync(CancellationToken ct = default)
     {
         try
         {
@@ -75,7 +82,16 @@ public sealed class DownloadService : IDisposable
                     && !name.Contains("debug", StringComparison.OrdinalIgnoreCase)
                     && !name.Contains("stub", StringComparison.OrdinalIgnoreCase))
                 {
-                    return (tag, asset.GetProperty("browser_download_url").GetString() ?? "");
+                    var url = asset.GetProperty("browser_download_url").GetString() ?? "";
+                    string? digest = null;
+                    if (asset.TryGetProperty("digest", out var dProp) && dProp.ValueKind == JsonValueKind.String)
+                    {
+                        var d = dProp.GetString();
+                        // Format is "sha256:<hex>" — strip the algorithm prefix.
+                        if (d is not null && d.StartsWith("sha256:", StringComparison.OrdinalIgnoreCase))
+                            digest = d["sha256:".Length..].ToLowerInvariant();
+                    }
+                    return new MagiskAsset(tag, url, digest);
                 }
             }
         }
@@ -84,7 +100,7 @@ public sealed class DownloadService : IDisposable
     }
 
     public const string CmdlineToolsFallbackUrl =
-        "https://dl.google.com/android/repository/commandlinetools-win-13114758_latest.zip";
+        "https://dl.google.com/android/repository/commandlinetools-win-14742923_latest.zip";
 
     public sealed record CmdlineToolsResolution(string Url, bool IsFallback, string? Reason);
 

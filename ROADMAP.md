@@ -20,14 +20,28 @@ be `dotnet build`-verified on a host with the SDK before tagging a release.
 
 - [x] **P0 C-01** (code side) — Version bumped to 0.2.0 across csproj, MainWindow,
   startup log, README badge, CHANGELOG. CHANGELOG `[0.2.0]` block carved.
-- [ ] **P0 C-01-release** — Outstanding maintainer steps (requires real Android
-  SDK + an emulator on a desktop):
-  1. Populate `Resources/known-hashes.json` with verified Magisk +
-     cmdline-tools SHA-256 entries (currently empty / placeholder).
-  2. Lock `RootService.RootAvdPinnedRef` to a verified rootAVD SHA
-     (closes A-03; verify `LISTONLY` entry-point too — see open Q).
-  3. Run the AndroidEmulatorPlus.Tests suite on a desktop with .NET 9 SDK.
-  4. `git tag v0.2.0 && git push --tags` to trigger the release workflow.
+- [x] **P0 C-01-prep** — Network-verifiable pieces of the v0.2.0 release
+  prep landed via `curl` + `Get-FileHash` from this VM:
+  - `Resources/known-hashes.json` populated with computed SHA-256 for
+    `Magisk-v30.7.apk` (`e0d32d…`, cross-verified against GitHub's
+    published per-asset `digest` field) and
+    `commandlinetools-win-14742923_latest.zip` (`cc610c…`).
+  - `RootService.RootAvdPinnedRef` locked to
+    `613caa44371f85e1a461bc030e07ddc2d71afe32` (newbit/rootAVD HEAD as
+    of 2026-05-25). `ListAllAVDs` entry-point verified in rootAVD.sh
+    line 2733 at this revision.
+  - `DownloadService.CmdlineToolsFallbackUrl` bumped to the matching
+    14742923 build so the offline path uses the verified hash.
+  - GitHub per-asset `digest` field now cross-checked at download time
+    inside `RootService.DownloadLatestMagiskAsync` (defense-in-depth
+    tier 1) before the in-tree manifest is consulted (tier 2).
+- [ ] **P0 C-01-release** — Final maintainer steps (require a desktop
+  with .NET 9 SDK + a real emulator for smoke-test):
+  1. Smoke-test the Magisk-v30.7 root flow on API 35 + API 36 Google
+     Play AVDs to validate the pinned rootAVD SHA actually works.
+  2. Run the `AndroidEmulatorPlus.Tests` suite via `dotnet test`.
+  3. `git tag v0.2.0 && git push --tags` to trigger the release
+     workflow.
 - [x] **P0 C-02** — `AppService.OrderBaseFirst` puts the literal `base.apk` (or the
   largest entry) first; splits follow. Replaces the ascending-size sort that
   put the base last.
@@ -106,19 +120,20 @@ be `dotnet build`-verified on a host with the SDK before tagging a release.
 
 ## Pending external validation
 
-- [ ] **P0 A-03** — rootAVD pin still resolves to `"master"`. Set to a verified
-  SHA after smoke-test on API 35 + API 36 Google Play AVDs. Tracked together
-  with C-01 (release prep).
+- [x] **P0 A-03** — `RootService.RootAvdPinnedRef` is now
+  `613caa44371f85e1a461bc030e07ddc2d71afe32` (newbit/rootAVD HEAD at
+  2026-05-25, `ListAllAVDs` entry-point verified). Smoke-test is still a
+  v0.2.0 release-prep step but the placeholder ref is no longer a footgun.
 
-## Open questions (block C-01)
+## Open questions (mostly retired)
 
-1. **rootAVD SHA** — needs a verified revision (smoke-test on API 35 + API 36
-   Google Play AVDs).
-2. **rootAVD LISTONLY entry-point name** — `RootService.DryRunAsync` calls
-   `bash rootAVD.sh ListAllAVDs`; needs validation against newbit's current
-   script (the canonical form might be `LISTONLY=1` env var).
-3. **Magisk hash policy** — ship empty TOFU table or bake in one known-good
-   Magisk hash at release time?
+1. ~~rootAVD SHA~~ — pinned (see A-03 above). Re-verify after smoke-test.
+2. ~~rootAVD LISTONLY entry-point name~~ — verified: `ListAllAVDs` is the
+   correct entry-point at the pinned revision (line 2733 of rootAVD.sh).
+3. ~~Magisk hash policy~~ — v0.2.0 ships with `Magisk-v30.7.apk` baked in;
+   GitHub's per-asset `digest` field also cross-checked at download time so
+   later releases enjoy automatic supply-chain verification without manifest
+   updates.
 4. **Icon design** — placeholder generated via System.Drawing shipped in
    `Assets/aep.ico`. Refine with a designer-provided source asset before
    v1.0.

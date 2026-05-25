@@ -1,12 +1,19 @@
 {
   "_comment": "SHA-256 manifest for supply-chain verification. Append a key after smoke-testing a new download; the verifier hard-fails on mismatch for known keys and logs-and-continues for unknown keys.",
   "_format": {
-    "magisk": "key = asset filename returned by GitHub releases (e.g. 'Magisk-v28.1.apk')",
+    "magisk": "key = asset filename returned by GitHub releases (e.g. 'Magisk-v30.7.apk')",
     "cmdlineTools": "key = full URL returned by the developer.android.com scrape (or the hard-coded fallback)"
   },
+  "_lastVerified": {
+    "date": "2026-05-25",
+    "source": "Magisk hash cross-checked against GitHub Releases API per-asset 'digest' field. cmdline-tools hash computed from the URL listed on developer.android.com/studio at the same date (Google publishes only SHA-1 in repository2-3.xml; the SHA-256 entry below was independently computed)."
+  },
   "version": 1,
-  "magisk": {},
+  "magisk": {
+    "Magisk-v30.7.apk": "e0d32d2123532860f97123d927b1bb86c4e08e6fd8a48bfc6b5bee0afae9ebd5"
+  },
   "cmdlineTools": {
+    "https://dl.google.com/android/repository/commandlinetools-win-14742923_latest.zip": "cc610ccbe83faddb58e1aa68e8fc8743bb30aa5e83577eceb4cc168dae95f9ee",
     "https://dl.google.com/android/repository/commandlinetools-win-13114758_latest.zip": ""
   }
 }

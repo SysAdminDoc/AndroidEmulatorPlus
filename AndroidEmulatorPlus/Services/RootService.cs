@@ -8,7 +8,12 @@ public sealed class RootService
 {
     // Pin rootAVD to a verified revision. master can introduce breaking changes
     // that would silently brick this app's root flow. Bump after manual smoke-test.
-    public const string RootAvdPinnedRef = "master";
+    //
+    // 2026-05-25 — initial pin lands at gitlab.com/newbit/rootAVD HEAD as of v0.2.0.
+    // Source: `git ls-remote https://gitlab.com/newbit/rootAVD.git HEAD`. The
+    // ListAllAVDs entry-point (used by RootService.DryRunAsync) is present at
+    // line 2733 of rootAVD.sh on this revision — verified.
+    public const string RootAvdPinnedRef = "613caa44371f85e1a461bc030e07ddc2d71afe32";
 
     private static readonly TimeSpan PatchTimeout = TimeSpan.FromMinutes(10);
 
@@ -69,13 +74,24 @@ public sealed class RootService
         status?.Report("Looking up latest Magisk release…");
         var info = await _dl.LatestMagiskAsync(ct) ?? throw new InvalidOperationException(
             "Could not resolve latest Magisk from GitHub releases. Check network connectivity.");
-        var (tag, url) = info;
-        status?.Report($"Downloading Magisk {tag}…");
-        await _dl.DownloadAsync(url, MagiskApkPath, null, ct);
+        status?.Report($"Downloading Magisk {info.Tag}…");
+        await _dl.DownloadAsync(info.Url, MagiskApkPath, null, ct);
 
-        // Verify SHA-256 against in-tree manifest. Hard-fail on mismatch for known
-        // versions; log-and-continue for unknown (trust-on-first-use).
-        var assetName = System.IO.Path.GetFileName(new Uri(url).LocalPath);
+        var assetName = System.IO.Path.GetFileName(new Uri(info.Url).LocalPath);
+        var actualSha = HashVerificationService.ComputeSha256(MagiskApkPath);
+
+        // Defense-in-depth tier 1: GitHub publishes a per-asset SHA-256 digest in the
+        // Releases API. When present, the downloaded file MUST match it — this catches
+        // a corrupted download or a mirror compromise that the in-tree manifest can't.
+        if (info.GitHubDigestSha256 is { } pub
+            && !string.Equals(actualSha, pub, StringComparison.OrdinalIgnoreCase))
+        {
+            try { File.Delete(MagiskApkPath); } catch { }
+            throw new InvalidOperationException(
+                $"Magisk APK SHA-256 mismatch vs GitHub-published digest. Expected {pub}, got {actualSha}. Partial download deleted.");
+        }
+
+        // Defense-in-depth tier 2: in-tree manifest (curated, maintainer-signed-off).
         var check = _hash.VerifyMagisk(assetName, MagiskApkPath);
         if (!check.Ok)
         {
@@ -89,7 +105,7 @@ public sealed class RootService
         var appsDir = Path.Combine(RootAvdDir, "Apps");
         Directory.CreateDirectory(appsDir);
         try { File.Delete(Path.Combine(appsDir, "Magisk.apk")); } catch { }
-        return tag;
+        return info.Tag;
     }
 
     public string? FindRamdiskFor(string avdName)

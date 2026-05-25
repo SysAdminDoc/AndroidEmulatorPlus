@@ -64,12 +64,16 @@
             </StackPanel>
         </ScrollViewer>
 
-        <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,12,0,0">
-            <CheckBox x:Name="ShowAllBox" Content="Show completed steps" IsChecked="False" VerticalAlignment="Center" Margin="0,0,12,0" Checked="ShowAll_Toggled" Unchecked="ShowAll_Toggled"/>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Column="1" Margin="80,0,0,0">
+        <Grid Grid.Row="3" Margin="0,12,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <CheckBox x:Name="ShowAllBox" Content="Show completed steps" IsChecked="False" VerticalAlignment="Center" Checked="ShowAll_Toggled" Unchecked="ShowAll_Toggled"/>
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
                 <CheckBox x:Name="DontShowBox" Content="Don't show again" IsChecked="True" VerticalAlignment="Center" Margin="0,0,12,0"/>
                 <Button Content="Close" Style="{StaticResource PrimaryButton}" Click="Close_Click" IsDefault="True" IsCancel="True"/>
             </StackPanel>
-        </StackPanel>
+        </Grid>
     </Grid>
 </Window>

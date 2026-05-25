@@ -73,6 +73,26 @@ All notable changes to this project will be documented here. Format follows [Kee
 - `SettingsService.Save` writes atomically (C-18): `settings.json.tmp` then
   `File.Replace` into place. A crash mid-write can no longer corrupt the file
   App.OnStartup reads before any view binds.
+- Welcome wizard footer: corrected an inner StackPanel that was setting
+  `Grid.Column="1"` against a non-Grid parent — replaced with a proper
+  2-column Grid so the "Don't show again / Close" buttons right-align as
+  intended.
+
+### Security (supply chain)
+
+- `Resources/known-hashes.json` populated with computed SHA-256 for
+  `Magisk-v30.7.apk` (cross-checked against GitHub Releases API per-asset
+  `digest` field) and the current `commandlinetools-win-14742923_latest.zip`.
+- `RootService.RootAvdPinnedRef` pinned to
+  `613caa44371f85e1a461bc030e07ddc2d71afe32` (newbit/rootAVD HEAD at
+  2026-05-25). `ListAllAVDs` entry-point verified in the pinned revision.
+- `RootService.DownloadLatestMagiskAsync` now cross-checks the downloaded
+  Magisk APK against GitHub's per-asset `digest` field (defense-in-depth
+  tier 1) before consulting the in-tree manifest (tier 2). New Magisk
+  releases get automatic SHA-256 verification even before the manifest is
+  updated.
+- New `KnownHashesManifestTests` guards the manifest schema and asserts the
+  v30.7 hash + the 14742923 cmdline-tools hash stay populated.
 
 ## [0.2.0] — 2026-05-25
 
