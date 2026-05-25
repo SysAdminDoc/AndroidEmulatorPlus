@@ -22,6 +22,7 @@
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock Text="AndroidEmulatorPlus" FontWeight="SemiBold" FontSize="15"
@@ -44,6 +45,11 @@
                         <TextBlock Text="{Binding EmulatorStatusText}" Margin="6,0,0,0" Foreground="{StaticResource SubtextBrush}" FontSize="12"/>
                     </StackPanel>
                 </Border>
+                <Button Grid.Column="4" Style="{StaticResource FlatButton}" Margin="8,4,0,4"
+                        Content="📷  Screenshot" MinWidth="0" Padding="10,4"
+                        Command="{Binding ScreenshotCommand}"
+                        IsEnabled="{Binding HasEmulatorAttached}"
+                        ToolTip="Capture a PNG from the attached emulator"/>
             </Grid>
         </Border>
 

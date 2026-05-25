@@ -40,7 +40,7 @@ Build constraint: this VMware VM has no .NET SDK; changes here are best-effort a
 - [x] **P1 A-10** — Crash log viewer. `crash.log` accumulates at `%LOCALAPPDATA%\AndroidEmulatorPlus\crash.log` and the user never sees it unless they open Explorer. Add an Install / SDK panel section that surfaces last-N crashes with a "Clear" button.
 - [x] **P1 A-11** — Save log to file. The in-memory log buffer is 2000 entries and lost on close. Write a rolling `app.log` mirror to `%LOCALAPPDATA%\AndroidEmulatorPlus\logs\app-YYYYMMDD.log`.
 - [ ] **P1 A-12** — APK drag-and-drop install. Drop one or many APKs anywhere on the Apps view to invoke the batch install path.
-- [ ] **P1 A-13** — Screenshot button (`adb exec-out screencap -p > <ts>.png`), opens the resulting file in the default viewer. Available from a top-bar button when an emulator is attached.
+- [x] **P1 A-13** — Screenshot button (`adb exec-out screencap -p > <ts>.png`), opens the resulting file in the default viewer. Available from a top-bar button when an emulator is attached. _Implemented as a shell-screencap + pull + cleanup dance because the existing ProcessRunner pipes through UTF-8 StringBuilders; using `exec-out` would require a binary-safe runner._
 - [ ] **P1 A-14** — Screen record button (`adb shell screenrecord /sdcard/<ts>.mp4` + pull on stop) with start/stop toggle.
 - [ ] **P1 A-15** — Logcat viewer (filter by package + level), with a "Clear" and "Save" button. Useful when migration appears to fail and the cause is in app-side logcat.
 - [ ] **P1 A-16** — Auto-accept SDK licenses. When running `sdkmanager --licenses` during the first-launch wizard or system-image install, pipe `y` repeatedly (Google's recommended automation pattern).

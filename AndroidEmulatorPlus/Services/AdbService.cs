@@ -130,6 +130,25 @@ public sealed class AdbService
             new[] { "-s", serial, "emu", "kill" },
             extraEnv: NoPathConv, ct: ct);
 
+    /// <summary>Captures a PNG screenshot from the device and pulls it to <paramref name="destPath"/>.</summary>
+    public async Task<bool> ScreenshotAsync(string serial, string destPath, CancellationToken ct = default)
+    {
+        var remote = $"/sdcard/aep-shot-{DateTime.Now:yyyyMMdd-HHmmss-fff}.png";
+        var cap = await ShellAsync(serial, $"screencap -p {remote}", ct);
+        if (!cap.Success) return false;
+        try
+        {
+            System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(destPath)!);
+            var pull = await PullAsync(serial, remote, destPath, ct);
+            if (!pull.Success) return false;
+        }
+        finally
+        {
+            try { await ShellAsync(serial, $"rm -f {remote}", ct); } catch { }
+        }
+        return System.IO.File.Exists(destPath);
+    }
+
     /// <summary>Best-effort lookup of the AVD name for a running emulator serial.</summary>
     public async Task<string?> AvdNameForSerialAsync(string serial, CancellationToken ct = default)
     {

@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.IO;
 using AndroidEmulatorPlus.Models;
 using AndroidEmulatorPlus.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -20,14 +22,16 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty] private string _sdkStatusText = "";
     [ObservableProperty] private string _phoneStatusText = "no phone";
     [ObservableProperty] private string _emulatorStatusText = "no emulator";
+    [ObservableProperty] private bool _hasEmulatorAttached;
 
     private readonly SdkLocator _sdk;
     private readonly DeviceMonitor _devices;
+    private readonly AdbService _adb;
 
     public MainViewModel(LogService log,
         AvdViewModel avd, RootViewModel root, MigrateViewModel mig,
         AppsViewModel apps, ConfigViewModel cfg, InstallViewModel install,
-        SdkLocator sdk, DeviceMonitor devices)
+        SdkLocator sdk, DeviceMonitor devices, AdbService adb)
     {
         Log = log;
         AvdVm = avd;
@@ -38,6 +42,7 @@ public sealed partial class MainViewModel : ObservableObject
         InstallVm = install;
         _sdk = sdk;
         _devices = devices;
+        _adb = adb;
         _devices.Changed += OnDevicesChanged;
         RefreshSdk();
         Log.Info("AndroidEmulatorPlus v0.1.0 ready.");
@@ -49,6 +54,27 @@ public sealed partial class MainViewModel : ObservableObject
         var phone = devs.FirstOrDefault(d => !d.IsEmulator);
         EmulatorStatusText = emu is null ? "no emulator" : $"{emu.Serial}";
         PhoneStatusText = phone is null ? "no phone" : phone.Display;
+        HasEmulatorAttached = emu is not null && emu.IsOnline;
+    }
+
+    [RelayCommand]
+    private async Task ScreenshotAsync()
+    {
+        var emu = _devices.Current.FirstOrDefault(d => d.IsEmulator && d.IsOnline);
+        if (emu is null) { Log.Warning("No emulator attached."); return; }
+        var dir = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
+            "AndroidEmulatorPlus");
+        var dest = Path.Combine(dir, $"screenshot-{DateTime.Now:yyyyMMdd-HHmmss}.png");
+        Log.Info($"Taking screenshot from {emu.Serial}…");
+        var ok = await _adb.ScreenshotAsync(emu.Serial, dest);
+        if (ok)
+        {
+            Log.Success($"Saved: {dest}");
+            try { Process.Start(new ProcessStartInfo(dest) { UseShellExecute = true }); }
+            catch (Exception ex) { Log.Warning("Couldn't open viewer: " + ex.Message); }
+        }
+        else Log.Error("Screenshot failed.");
     }
 
     public void RefreshSdk()
