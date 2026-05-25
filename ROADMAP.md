@@ -12,7 +12,7 @@ Build constraint: this VMware VM has no .NET SDK; changes here are best-effort a
 ## Phase 1 — P0 hardening
 
 - [x] **P0 B-01** — Fix `IsEnabled` mis-binding on busy buttons (`NotBoolConverter` introduced; InstallView/RootView updated).
-- [ ] **P0 B-02** — `.apks` / `.xapk` extractor before `adb install`. The file dialog and drag-drop advertise both, but `adb install bundle.xapk` rejects them — they are zip containers. Unzip, run `install-multiple` on the inner APKs, and push any `*.obb` into `/sdcard/Android/obb/<pkg>/`.
+- [x] **P0 B-02** — `.apks` / `.xapk` / `.apkm` bundles are now unzipped before install; inner splits go through `adb install-multiple` and any `*.obb` lands in `/sdcard/Android/obb/<pkg>/` (package resolved via manifest.json or main.<ver>.<pkg>.obb pattern).
 - [ ] **P0 A-04** — Verify SHA-256 of downloaded Magisk APK and the cmdline-tools ZIP against an in-tree manifest before use. Hard-fail on mismatch for known tags; log-and-warn for unknown tags. Today the app trusts whatever GitHub releases / dl.google.com returns.
 - [ ] **P0 A-03** — Replace the placeholder `"master"` ref in `RootService.RootAvdPinnedRef` with a verified rootAVD SHA after smoke-test on API 35 + API 36 Google Play AVDs. _Hook landed; the constant currently still resolves to `master` until a verified SHA is recorded._
 - [ ] **P0 A-05** — Migration cache size indicator + Clear button on the Migrate tab. `MigrationService.TransferInternalData` uses best-effort `try/Directory.Delete` cleanup; orphaned multi-GB tarballs can survive crashes at `%LOCALAPPDATA%\AndroidEmulatorPlus\transfer\`.

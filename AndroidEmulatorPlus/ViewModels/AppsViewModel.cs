@@ -92,7 +92,7 @@ public sealed partial class AppsViewModel : ObservableObject
     {
         var dlg = new OpenFileDialog
         {
-            Filter = "Android packages (*.apk;*.apks;*.xapk)|*.apk;*.apks;*.xapk",
+            Filter = "Android packages (*.apk;*.apks;*.xapk;*.apkm)|*.apk;*.apks;*.xapk;*.apkm",
             Multiselect = true,
         };
         if (dlg.ShowDialog() != true) return;
@@ -110,15 +110,73 @@ public sealed partial class AppsViewModel : ObservableObject
         {
             foreach (var f in files)
             {
+                var ext = System.IO.Path.GetExtension(f).ToLowerInvariant();
                 _log.Info($"Installing {System.IO.Path.GetFileName(f)}…");
-                var r = await _apps.InstallApkAsync(emu.Serial, f);
-                if (r.Combined.Contains("Success")) { _log.Success("ok"); ok++; }
-                else { _log.Error("install failed: " + r.Combined.Trim()); fail++; }
+                bool success;
+                if (ext is ".apks" or ".xapk" or ".apkm")
+                {
+                    success = await InstallBundleAsync(emu.Serial, f);
+                }
+                else
+                {
+                    var r = await _apps.InstallApkAsync(emu.Serial, f);
+                    success = r.Combined.Contains("Success");
+                    if (!success) _log.Error("install failed: " + r.Combined.Trim());
+                }
+                if (success) { _log.Success("ok"); ok++; }
+                else fail++;
             }
             if (files.Count > 1) _log.Success($"Batch install: {ok} ok, {fail} fail.");
             await RefreshAsync();
         }
         finally { IsBusy = false; }
+    }
+
+    /// <summary>
+    /// Extracts a .apks / .xapk / .apkm bundle and installs the inner splits via
+    /// <c>install-multiple</c>; any OBB files are pushed to
+    /// <c>/sdcard/Android/obb/&lt;pkg&gt;/</c>. Cleans up the extracted folder on exit.
+    /// </summary>
+    private async Task<bool> InstallBundleAsync(string serial, string bundlePath)
+    {
+        Services.AppService.BundleExtractResult? extracted = null;
+        try
+        {
+            try { extracted = _apps.ExtractBundle(bundlePath); }
+            catch (Exception ex) { _log.Error(ex.Message); return false; }
+
+            var inst = await _apps.InstallSplitApksAsync(serial, extracted.Apks);
+            if (!inst.Combined.Contains("Success"))
+            {
+                _log.Error("bundle install failed: " + inst.Combined.Trim());
+                return false;
+            }
+
+            if (extracted.ObbFiles.Count > 0)
+            {
+                if (string.IsNullOrEmpty(extracted.ObbPackage))
+                {
+                    _log.Warning($"{extracted.ObbFiles.Count} OBB(s) found but the bundle didn't declare a package name. Skipping OBB push.");
+                }
+                else
+                {
+                    int okObb = 0;
+                    foreach (var obb in extracted.ObbFiles)
+                    {
+                        if (await _apps.PushObbAsync(serial, extracted.ObbPackage, obb)) okObb++;
+                    }
+                    _log.Info($"OBB push: {okObb}/{extracted.ObbFiles.Count} ok.");
+                }
+            }
+            return true;
+        }
+        finally
+        {
+            if (extracted is not null)
+            {
+                try { System.IO.Directory.Delete(extracted.WorkDir, true); } catch { }
+            }
+        }
     }
 
     partial void OnFilterChanged(string value) => OnPropertyChanged(nameof(FilteredApps));

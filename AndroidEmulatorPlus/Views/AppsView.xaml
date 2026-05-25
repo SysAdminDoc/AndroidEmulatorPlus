@@ -13,7 +13,7 @@
         <StackPanel Grid.Row="0">
             <TextBlock Style="{StaticResource HeaderText}" Text="Apps / Debloat"/>
             <TextBlock Style="{StaticResource SubheaderText}" TextWrapping="Wrap">
-                Inventory of installed apps on the running emulator. Bulk-uninstall, batch-install APKs, or apply a debloat preset. Tip: drag <Run FontWeight="SemiBold">.apk</Run> / <Run FontWeight="SemiBold">.apks</Run> / <Run FontWeight="SemiBold">.xapk</Run> files anywhere on this tab to install them.
+                Inventory of installed apps on the running emulator. Bulk-uninstall, batch-install APKs, or apply a debloat preset. Tip: drag <Run FontWeight="SemiBold">.apk</Run> / <Run FontWeight="SemiBold">.apks</Run> / <Run FontWeight="SemiBold">.xapk</Run> / <Run FontWeight="SemiBold">.apkm</Run> files anywhere on this tab to install them — bundles are auto-extracted before install.
             </TextBlock>
         </StackPanel>
 

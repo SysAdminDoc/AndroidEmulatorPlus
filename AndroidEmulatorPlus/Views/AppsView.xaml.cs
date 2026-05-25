@@ -10,7 +10,7 @@ public partial class AppsView : UserControl
 {
     public AppsView() => InitializeComponent();
 
-    private static readonly string[] _exts = { ".apk", ".apks", ".xapk" };
+    private static readonly string[] _exts = { ".apk", ".apks", ".xapk", ".apkm" };
 
     private static bool TryExtractApks(IDataObject data, out string[] files)
     {
