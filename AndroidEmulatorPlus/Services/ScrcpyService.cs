@@ -1,5 +1,5 @@
-using System.Diagnostics;
 using System.IO;
+using AndroidEmulatorPlus.Helpers;
 
 namespace AndroidEmulatorPlus.Services;
 
@@ -48,13 +48,7 @@ public sealed class ScrcpyService
         }
         try
         {
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = exe,
-                ArgumentList = { "-s", serial },
-                UseShellExecute = false,
-                CreateNoWindow = true,
-            });
+            ProcessRunner.StartDetached(exe, new[] { "-s", serial });
             _log.Info($"scrcpy launched against {serial}.");
             return true;
         }

@@ -97,44 +97,23 @@ public sealed class AvdService
     {
         if (_sdk.AvdManagerBat is null)
             throw new InvalidOperationException("avdmanager.bat not found. Install cmdline-tools first.");
-        var args = new[]
+        var args = new List<string>
         {
+            "/c", _sdk.AvdManagerBat,
             "create", "avd", "--force",
             "-n", name,
             "-k", sysImagePkg,
             "-d", device,
         };
         _log.Info($"Creating AVD '{name}' with image {sysImagePkg}…");
-        // avdmanager.bat prompts for hardware-profile override; pipe "no" via stdin if needed.
-        var psi = new System.Diagnostics.ProcessStartInfo
-        {
-            FileName = "cmd.exe",
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            RedirectStandardInput = true,
-        };
-        psi.ArgumentList.Add("/c");
-        psi.ArgumentList.Add(_sdk.AvdManagerBat);
-        foreach (var a in args) psi.ArgumentList.Add(a);
-        using var proc = System.Diagnostics.Process.Start(psi)!;
-        await proc.StandardInput.WriteLineAsync("no");
-        proc.StandardInput.Close();
-
-        // Cap the run so a hung prompt doesn't lock up the UI.
-        using var linked = CancellationTokenSource.CreateLinkedTokenSource(ct);
-        linked.CancelAfter(CreateAvdTimeout);
+        // avdmanager.bat prompts for hardware-profile override; pipe "no" once.
         try
         {
-            var stdout = await proc.StandardOutput.ReadToEndAsync(linked.Token);
-            var stderr = await proc.StandardError.ReadToEndAsync(linked.Token);
-            await proc.WaitForExitAsync(linked.Token);
-            return new ProcessResult(proc.ExitCode, stdout, stderr);
+            return await ProcessRunner.RunWithStdinAsync("cmd.exe", args, new[] { "no" },
+                timeout: CreateAvdTimeout, ct: ct);
         }
         catch (OperationCanceledException)
         {
-            try { if (!proc.HasExited) proc.Kill(entireProcessTree: true); } catch { }
             if (ct.IsCancellationRequested) throw;
             _log.Error($"avdmanager create exceeded {CreateAvdTimeout.TotalMinutes:0} min — killed.");
             return new ProcessResult(-1, "", "avdmanager create timed out");

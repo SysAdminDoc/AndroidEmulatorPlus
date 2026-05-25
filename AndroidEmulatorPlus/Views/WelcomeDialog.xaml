@@ -23,7 +23,7 @@
 
         <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
             <StackPanel>
-                <Border Style="{StaticResource Card}">
+                <Border x:Name="SdkCard" Style="{StaticResource Card}">
                     <StackPanel>
                         <TextBlock Style="{StaticResource SectionHeader}" Text="① Install / SDK"/>
                         <TextBlock Foreground="{StaticResource SubtextBrush}" TextWrapping="Wrap">
@@ -33,7 +33,7 @@
                         <Button Content="Go to Install / SDK" Style="{StaticResource FlatButton}" HorizontalAlignment="Left" Margin="0,10,0,0" Click="GoToInstall_Click"/>
                     </StackPanel>
                 </Border>
-                <Border Style="{StaticResource Card}">
+                <Border x:Name="AvdCard" Style="{StaticResource Card}">
                     <StackPanel>
                         <TextBlock Style="{StaticResource SectionHeader}" Text="② Create an AVD"/>
                         <TextBlock Foreground="{StaticResource SubtextBrush}" TextWrapping="Wrap">
@@ -64,9 +64,12 @@
             </StackPanel>
         </ScrollViewer>
 
-        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
-            <CheckBox x:Name="DontShowBox" Content="Don't show again" IsChecked="True" VerticalAlignment="Center" Margin="0,0,12,0"/>
-            <Button Content="Close" Style="{StaticResource PrimaryButton}" Click="Close_Click" IsDefault="True" IsCancel="True"/>
+        <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,12,0,0">
+            <CheckBox x:Name="ShowAllBox" Content="Show completed steps" IsChecked="False" VerticalAlignment="Center" Margin="0,0,12,0" Checked="ShowAll_Toggled" Unchecked="ShowAll_Toggled"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Column="1" Margin="80,0,0,0">
+                <CheckBox x:Name="DontShowBox" Content="Don't show again" IsChecked="True" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                <Button Content="Close" Style="{StaticResource PrimaryButton}" Click="Close_Click" IsDefault="True" IsCancel="True"/>
+            </StackPanel>
         </StackPanel>
     </Grid>
 </Window>

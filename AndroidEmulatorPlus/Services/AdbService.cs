@@ -165,37 +165,19 @@ public sealed class AdbService
     /// </summary>
     public async Task<ProcessResult> PairAsync(string hostPort, string code, CancellationToken ct = default)
     {
-        // adb pair takes the code interactively on stdin or as a second positional arg
-        // on newer platform-tools (35.0.0+). The positional form is portable enough.
-        var psi = new System.Diagnostics.ProcessStartInfo
-        {
-            FileName = _sdk.AdbRequired,
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            RedirectStandardInput = true,
-        };
-        psi.ArgumentList.Add("pair");
-        psi.ArgumentList.Add(hostPort);
-        psi.ArgumentList.Add(code);
-        foreach (var kv in NoPathConv) psi.Environment[kv.Key] = kv.Value;
-
-        using var proc = System.Diagnostics.Process.Start(psi)!;
-        // Some older builds still prompt; supply the code via stdin as a fallback.
-        try { await proc.StandardInput.WriteLineAsync(code); proc.StandardInput.Close(); } catch { }
-        using var linked = CancellationTokenSource.CreateLinkedTokenSource(ct);
-        linked.CancelAfter(TimeSpan.FromSeconds(30));
+        // adb pair takes the code as a second positional arg on platform-tools 35+
+        // and on stdin on older builds. Supply both: positional + a stdin line.
         try
         {
-            var stdoutTask = proc.StandardOutput.ReadToEndAsync(linked.Token);
-            var stderrTask = proc.StandardError.ReadToEndAsync(linked.Token);
-            await proc.WaitForExitAsync(linked.Token);
-            return new ProcessResult(proc.ExitCode, await stdoutTask, await stderrTask);
+            return await ProcessRunner.RunWithStdinAsync(_sdk.AdbRequired,
+                new[] { "pair", hostPort, code },
+                new[] { code },
+                extraEnv: NoPathConv,
+                timeout: TimeSpan.FromSeconds(30),
+                ct: ct);
         }
         catch (OperationCanceledException)
         {
-            try { if (!proc.HasExited) proc.Kill(entireProcessTree: true); } catch { }
             return new ProcessResult(-1, "", "adb pair timed out after 30s");
         }
     }

@@ -88,6 +88,7 @@ public sealed partial class MainViewModel : ObservableObject
         }
     }
 
+    private string? _lastSeenEmuSerial;
     private void OnDevicesChanged(IReadOnlyList<Device> devs)
     {
         var emu = devs.FirstOrDefault(d => d.IsEmulator);
@@ -95,6 +96,16 @@ public sealed partial class MainViewModel : ObservableObject
         EmulatorStatusText = emu is null ? "no emulator" : $"{emu.Serial}";
         PhoneStatusText = phone is null ? "no phone" : phone.Display;
         HasEmulatorAttached = emu is not null && emu.IsOnline;
+
+        // C-16: auto-launch scrcpy when a new emulator comes online.
+        var currentSerial = emu?.IsOnline == true ? emu.Serial : null;
+        if (_settings.Current.AutoScrcpy
+            && currentSerial is not null
+            && currentSerial != _lastSeenEmuSerial)
+        {
+            try { _scrcpy.Launch(currentSerial); } catch { }
+        }
+        _lastSeenEmuSerial = currentSerial;
     }
 
     private string MediaDir => !string.IsNullOrWhiteSpace(_settings.Current.MediaDir)

@@ -31,6 +31,10 @@ public sealed class AppSettings
     /// <summary>True once the user has seen / dismissed the first-launch wizard.</summary>
     [JsonPropertyName("hasSeenWizard")]
     public bool HasSeenWizard { get; set; }
+
+    /// <summary>C-16: when true, launch scrcpy automatically after an AVD boots.</summary>
+    [JsonPropertyName("autoScrcpy")]
+    public bool AutoScrcpy { get; set; }
 }
 
 public sealed class SettingsService
@@ -68,15 +72,21 @@ public sealed class SettingsService
     {
         try
         {
-            Directory.CreateDirectory(System.IO.Path.GetDirectoryName(Path)!);
-            File.WriteAllText(Path, JsonSerializer.Serialize(Current, new JsonSerializerOptions
-            {
-                WriteIndented = true,
-            }));
+            var dir = System.IO.Path.GetDirectoryName(Path)!;
+            Directory.CreateDirectory(dir);
+            // C-18: write atomically — settings.json is read by App.OnStartup before
+            // any view binds, and a crash mid-write would corrupt it. Write to a
+            // sibling .tmp first and rename into place.
+            var tmp = Path + ".tmp";
+            var payload = JsonSerializer.Serialize(Current, new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(tmp, payload);
+            if (File.Exists(Path)) File.Replace(tmp, Path, destinationBackupFileName: null);
+            else File.Move(tmp, Path);
         }
         catch (Exception ex)
         {
             _log.Error("settings.json write failed: " + ex.Message);
+            try { File.Delete(Path + ".tmp"); } catch { }
         }
     }
 

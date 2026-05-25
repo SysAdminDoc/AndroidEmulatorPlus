@@ -23,6 +23,7 @@ public partial class SettingsDialog : Window
         SdkRootBox.Text = _settings.Current.SdkRootOverride ?? "";
         MediaDirBox.Text = _settings.Current.MediaDir ?? "";
         ProxyBox.Text = _settings.Current.HttpProxy ?? "";
+        AutoScrcpyBox.IsChecked = _settings.Current.AutoScrcpy;
     }
 
     private void BrowseSdk_Click(object sender, RoutedEventArgs e)
@@ -54,6 +55,7 @@ public partial class SettingsDialog : Window
         _settings.Current.SdkRootOverride = string.IsNullOrWhiteSpace(SdkRootBox.Text) ? null : SdkRootBox.Text.Trim();
         _settings.Current.MediaDir = string.IsNullOrWhiteSpace(MediaDirBox.Text) ? null : MediaDirBox.Text.Trim();
         _settings.Current.HttpProxy = string.IsNullOrWhiteSpace(ProxyBox.Text) ? null : ProxyBox.Text.Trim();
+        _settings.Current.AutoScrcpy = AutoScrcpyBox.IsChecked == true;
         _settings.Save();
         DialogResult = true;
         Close();

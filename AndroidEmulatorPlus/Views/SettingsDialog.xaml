@@ -77,6 +77,16 @@
 
         <Border Style="{StaticResource Card}">
             <StackPanel>
+                <TextBlock Style="{StaticResource SectionHeader}" Text="Behavior"/>
+                <CheckBox x:Name="AutoScrcpyBox" Content="Auto-launch scrcpy after AVD boots" />
+                <TextBlock Foreground="{StaticResource OverlayBrush}" FontSize="11" Margin="0,4,0,0" TextWrapping="Wrap">
+                    Watches the device monitor for newly-attached emulators and runs scrcpy.exe with their serial. Requires scrcpy on PATH or in <Run FontFamily="Cascadia Mono">%LOCALAPPDATA%\AndroidEmulatorPlus\scrcpy\</Run>.
+                </TextBlock>
+            </StackPanel>
+        </Border>
+
+        <Border Style="{StaticResource Card}">
+            <StackPanel>
                 <TextBlock Style="{StaticResource SectionHeader}" Text="Help"/>
                 <StackPanel Orientation="Horizontal">
                     <Button Content="Show welcome wizard…" Style="{StaticResource FlatButton}" Click="ShowWizard_Click"/>

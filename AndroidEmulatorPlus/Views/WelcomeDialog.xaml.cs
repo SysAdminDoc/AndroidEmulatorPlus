@@ -9,15 +9,31 @@ public partial class WelcomeDialog : Window
     private readonly MainViewModel _main;
     private readonly SettingsService _settings;
 
+    private bool _sdkComplete;
+    private bool _avdComplete;
+
     public WelcomeDialog(MainViewModel main, SettingsService settings, SdkLocator sdk, AvdService avds)
     {
         _main = main;
         _settings = settings;
         InitializeComponent();
-        SdkStatus.Text = sdk.IsReady ? "✓ SDK detected." : "⚠ SDK not detected — start here.";
+        _sdkComplete = sdk.IsReady;
+        SdkStatus.Text = _sdkComplete ? "✓ SDK detected." : "⚠ SDK not detected — start here.";
         var avdCount = avds.List().Count;
-        AvdStatus.Text = avdCount > 0 ? $"✓ {avdCount} AVD(s) on disk." : "⚠ No AVDs yet — create one.";
+        _avdComplete = avdCount > 0;
+        AvdStatus.Text = _avdComplete ? $"✓ {avdCount} AVD(s) on disk." : "⚠ No AVDs yet — create one.";
+        ApplyVisibility();
     }
+
+    /// <summary>C-14: hide step cards that are already done so the wizard focuses on what's next.</summary>
+    private void ApplyVisibility()
+    {
+        var showAll = ShowAllBox?.IsChecked == true;
+        SdkCard.Visibility = (_sdkComplete && !showAll) ? Visibility.Collapsed : Visibility.Visible;
+        AvdCard.Visibility = (_avdComplete && !showAll) ? Visibility.Collapsed : Visibility.Visible;
+    }
+
+    private void ShowAll_Toggled(object sender, RoutedEventArgs e) => ApplyVisibility();
 
     private void Navigate(string section)
     {

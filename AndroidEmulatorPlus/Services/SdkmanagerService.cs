@@ -1,5 +1,3 @@
-using System.Diagnostics;
-using System.IO;
 using AndroidEmulatorPlus.Helpers;
 
 namespace AndroidEmulatorPlus.Services;
@@ -40,56 +38,21 @@ public sealed class SdkmanagerService
         }
         status?.Report("Running sdkmanager --licenses…");
 
-        var psi = new ProcessStartInfo
-        {
-            FileName = "cmd.exe",
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            RedirectStandardInput = true,
-        };
-        psi.ArgumentList.Add("/c");
-        psi.ArgumentList.Add(_sdk.SdkManagerBat);
-        psi.ArgumentList.Add("--licenses");
-        foreach (var kv in NoPathConv) psi.Environment[kv.Key] = kv.Value;
-
-        using var proc = Process.Start(psi)!;
-        // Pipe a generous supply of "y\n" lines. sdkmanager rotates through every
-        // unaccepted license; ~60 covers all current Google + Android licenses with
-        // plenty of headroom.
         try
         {
-            for (int i = 0; i < 60; i++)
-            {
-                if (proc.HasExited) break;
-                await proc.StandardInput.WriteLineAsync("y");
-            }
-            proc.StandardInput.Close();
-        }
-        catch { /* ignored — process may have closed stdin */ }
-
-        using var linked = CancellationTokenSource.CreateLinkedTokenSource(ct);
-        linked.CancelAfter(TimeSpan.FromMinutes(3));
-        try
-        {
-            var stdoutTask = proc.StandardOutput.ReadToEndAsync(linked.Token);
-            var stderrTask = proc.StandardError.ReadToEndAsync(linked.Token);
-            await proc.WaitForExitAsync(linked.Token);
-            var stdout = await stdoutTask;
-            var stderr = await stderrTask;
-            if (proc.ExitCode == 0)
-            {
-                _log.Success("All SDK licenses accepted.");
-                return true;
-            }
-            _log.Warning($"sdkmanager --licenses exited {proc.ExitCode}: {stdout}{stderr}".Trim());
+            var args = new[] { "/c", _sdk.SdkManagerBat, "--licenses" };
+            var ys = Enumerable.Repeat("y", 60); // covers all current Google + Android licenses with headroom
+            var r = await ProcessRunner.RunWithStdinAsync("cmd.exe", args, ys,
+                extraEnv: NoPathConv,
+                timeout: TimeSpan.FromMinutes(3),
+                ct: ct);
+            if (r.Success) { _log.Success("All SDK licenses accepted."); return true; }
+            _log.Warning($"sdkmanager --licenses exited {r.ExitCode}: {r.Combined.Trim()}");
             return false;
         }
         catch (OperationCanceledException)
         {
-            try { if (!proc.HasExited) proc.Kill(entireProcessTree: true); } catch { }
-            _log.Error("sdkmanager --licenses timed out after 3 minutes.");
+            _log.Error("sdkmanager --licenses timed out / cancelled.");
             return false;
         }
     }
@@ -107,44 +70,20 @@ public sealed class SdkmanagerService
 
         status?.Report($"sdkmanager install: {string.Join(", ", pkgs)}");
 
-        var psi = new ProcessStartInfo
-        {
-            FileName = "cmd.exe",
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            RedirectStandardInput = true,
-        };
-        psi.ArgumentList.Add("/c");
-        psi.ArgumentList.Add(_sdk.SdkManagerBat);
-        foreach (var p in pkgs) psi.ArgumentList.Add(p);
-        foreach (var kv in NoPathConv) psi.Environment[kv.Key] = kv.Value;
-
-        using var proc = Process.Start(psi)!;
-        // Same y-spam pattern.
         try
         {
-            for (int i = 0; i < 30; i++)
-            {
-                if (proc.HasExited) break;
-                await proc.StandardInput.WriteLineAsync("y");
-            }
-            proc.StandardInput.Close();
-        }
-        catch { }
-
-        using var linked = CancellationTokenSource.CreateLinkedTokenSource(ct);
-        linked.CancelAfter(TimeSpan.FromMinutes(15));
-        try
-        {
-            await proc.WaitForExitAsync(linked.Token);
-            return proc.ExitCode == 0;
+            var args = new List<string> { "/c", _sdk.SdkManagerBat };
+            args.AddRange(pkgs);
+            var ys = Enumerable.Repeat("y", 30);
+            var r = await ProcessRunner.RunWithStdinAsync("cmd.exe", args, ys,
+                extraEnv: NoPathConv,
+                timeout: TimeSpan.FromMinutes(15),
+                ct: ct);
+            return r.Success;
         }
         catch (OperationCanceledException)
         {
-            try { if (!proc.HasExited) proc.Kill(entireProcessTree: true); } catch { }
-            _log.Error($"sdkmanager install timed out after 15 minutes ({string.Join(", ", pkgs)}).");
+            _log.Error($"sdkmanager install timed out / cancelled ({string.Join(", ", pkgs)}).");
             return false;
         }
     }

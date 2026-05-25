@@ -52,12 +52,13 @@ be `dotnet build`-verified on a host with the SDK before tagging a release.
 - [ ] **P2 C-08** — Tests for `AvdService.Duplicate`, `AppService.ExtractBundle`,
   `ConfigService.PreviewWipe`, `PresetService` merge, `HashVerificationService`
   manifest plumbing.
-- [ ] **P2 C-09** — Lift remaining `Process.Start` callers into
-  `ProcessRunner.RunWithStdinAsync` + `StreamAsync` helpers. CLAUDE.md says
-  ProcessRunner is the sole `Process.Start` site; that invariant is now
-  broken in 5+ places (RootService.PatchAsync / DryRunAsync, AvdService.CreateAsync,
-  SdkmanagerService.AcceptLicenses / Install, LogcatService.Start,
-  ScreenRecordService.Start, AdbService.PairAsync).
+- [x] **P2 C-09** — New `ProcessRunner.RunWithStdinAsync` and `StreamAsync`
+  helpers; refactored `SdkmanagerService.AcceptLicenses`/`Install`,
+  `AvdService.CreateAsync`, `RootService.PatchAsync`/`DryRunAsync`,
+  `AdbService.PairAsync`, and `ScrcpyService.Launch` through them. The two
+  remaining `Process.Start` sites (`LogcatService.Start`,
+  `ScreenRecordService.Start`) legitimately hold the Process for explicit
+  Stop control and are documented in their headers.
 - [x] **P2 C-10** — "Show welcome wizard…" button on the Settings dialog flips
   `HasSeenWizard=false` and re-opens the WelcomeDialog (DI services resolved
   from `App.Services`).
@@ -72,13 +73,16 @@ be `dotnet build`-verified on a host with the SDK before tagging a release.
 
 - [x] **P3 C-13** — Apps tab "Compute sizes" iterates the full `Apps` collection,
   not just `FilteredApps` — rows hidden by the filter no longer stay at "—".
-- [ ] **P3 C-14** — Welcome wizard auto-hides completed-step cards.
+- [x] **P3 C-14** — Welcome wizard hides completed step cards by default;
+  "Show completed steps" toggle reveals them.
 - [x] **P3 C-15** — Theme picker removed from the Install tab; Settings is the
   canonical home. `InstallViewModel` no longer holds `_settings`.
-- [ ] **P3 C-16** — "Auto-launch scrcpy after AVD boot" toggle in Settings +
-  LaunchOptions.
-- [ ] **P3 C-18** — Atomic write for settings.json (`File.WriteAllText` →
-  write-tmp + `File.Replace`).
+- [x] **P3 C-16** — "Auto-launch scrcpy after AVD boots" toggle on the Settings
+  dialog persists `AutoScrcpy=true` in settings.json; `MainViewModel.OnDevicesChanged`
+  fires scrcpy when a new emulator serial comes online.
+- [x] **P3 C-18** — `SettingsService.Save` writes to `settings.json.tmp` then
+  `File.Replace` into place, so a crash mid-write can't corrupt the file
+  App.OnStartup reads.
 - [ ] **P3 C-19** — Refactor `AppsViewModel` (367 lines) and `AvdViewModel`
   (350 lines) — extract bundle-install + AVD-dialog plumbing into helpers.
 - [ ] **P3 R-07** — Linux + macOS builds (Avalonia port).
