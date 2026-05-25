@@ -40,6 +40,26 @@
                 </StackPanel>
             </Border>
 
+            <Border Style="{StaticResource Card}" Visibility="{Binding HasDiagnostics, Converter={x:Static views:BoolToVisibilityConverter.Instance}}">
+                <StackPanel>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Style="{StaticResource SectionHeader}" Text="Diagnostics"/>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal">
+                            <Button Content="Open logs folder" Style="{StaticResource FlatButton}" Command="{Binding OpenLogsFolderCommand}"/>
+                            <Button Content="Clear crash.log" Style="{StaticResource DangerButton}" Command="{Binding ClearCrashLogCommand}" Margin="8,0,0,0"/>
+                        </StackPanel>
+                    </Grid>
+                    <Border Background="{StaticResource CrustBrush}" CornerRadius="6" Padding="10,8" Margin="0,6,0,0">
+                        <TextBlock Text="{Binding DiagnosticsText}" FontFamily="Cascadia Mono, Consolas, monospace" FontSize="11"
+                                   Foreground="{StaticResource SubtextBrush}" TextWrapping="NoWrap" MaxHeight="220"/>
+                    </Border>
+                </StackPanel>
+            </Border>
+
             <Border Style="{StaticResource Card}">
                 <StackPanel>
                     <TextBlock Style="{StaticResource SectionHeader}" Text="If nothing is installed"/>

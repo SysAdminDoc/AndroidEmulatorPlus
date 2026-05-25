@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 
@@ -19,9 +20,22 @@ public sealed class LogService
     public ObservableCollection<LogEntry> Entries { get; } = new();
     public event Action<LogEntry>? EntryAdded;
 
+    // Rolling daily file at %LOCALAPPDATA%\AndroidEmulatorPlus\logs\app-YYYYMMDD.log.
+    // The in-memory ring is capped at 2000 entries; the file keeps the full session
+    // history so a post-mortem of a failed root/migrate is still possible.
+    public string LogDirectory { get; } = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "AndroidEmulatorPlus", "logs");
+
+    public string CurrentLogFile => Path.Combine(LogDirectory, $"app-{DateTime.Now:yyyyMMdd}.log");
+
+    private readonly object _fileLock = new();
+    private bool _firstWrite = true;
+
     private void Add(LogLevel level, string text)
     {
         var entry = new LogEntry { Level = level, Text = text };
+        AppendToFile(entry);
         if (Application.Current?.Dispatcher is { } d && !d.CheckAccess())
             d.BeginInvoke(() => { Entries.Add(entry); EntryAdded?.Invoke(entry); });
         else
@@ -38,6 +52,40 @@ public sealed class LogService
             else
                 while (Entries.Count > 2000) Entries.RemoveAt(0);
         }
+    }
+
+    private void AppendToFile(LogEntry entry)
+    {
+        try
+        {
+            lock (_fileLock)
+            {
+                Directory.CreateDirectory(LogDirectory);
+                if (_firstWrite)
+                {
+                    File.AppendAllText(CurrentLogFile,
+                        $"\n=== Session start {DateTime.Now:O} (pid {Environment.ProcessId}) ===\n");
+                    _firstWrite = false;
+                    PruneOldLogs();
+                }
+                File.AppendAllText(CurrentLogFile,
+                    $"{entry.At:yyyy-MM-dd HH:mm:ss.fff} [{entry.Level}] {entry.Text}\n");
+            }
+        }
+        catch { /* never let a log write crash the app */ }
+    }
+
+    private void PruneOldLogs()
+    {
+        try
+        {
+            var cutoff = DateTime.Now.AddDays(-14);
+            foreach (var f in Directory.EnumerateFiles(LogDirectory, "app-*.log"))
+            {
+                try { if (File.GetLastWriteTime(f) < cutoff) File.Delete(f); } catch { }
+            }
+        }
+        catch { }
     }
 
     public void Info(string text) => Add(LogLevel.Info, text);

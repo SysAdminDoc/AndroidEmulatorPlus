@@ -37,8 +37,8 @@ Build constraint: this VMware VM has no .NET SDK; changes here are best-effort a
 
 - [ ] **P1 A-08** — No "Stop emulator" UI command. `AdbService.EmuKillAsync` is wired but no view binds to it. Add a Stop button on each AVD card that is enabled when that AVD is the currently-attached emulator.
 - [ ] **P1 A-09** — No way to tell from the AVD list which AVD is currently running. Cross-reference `DeviceMonitor.Current` with `Avd.Name` (the emulator serial is `emulator-NNNN` not the AVD name — fetch `getprop ro.boot.qemu.avd_name` once per emulator and cache).
-- [ ] **P1 A-10** — Crash log viewer. `crash.log` accumulates at `%LOCALAPPDATA%\AndroidEmulatorPlus\crash.log` and the user never sees it unless they open Explorer. Add an Install / SDK panel section that surfaces last-N crashes with a "Clear" button.
-- [ ] **P1 A-11** — Save log to file. The in-memory log buffer is 2000 entries and lost on close. Write a rolling `app.log` mirror to `%LOCALAPPDATA%\AndroidEmulatorPlus\logs\app-YYYYMMDD.log`.
+- [x] **P1 A-10** — Crash log viewer. `crash.log` accumulates at `%LOCALAPPDATA%\AndroidEmulatorPlus\crash.log` and the user never sees it unless they open Explorer. Add an Install / SDK panel section that surfaces last-N crashes with a "Clear" button.
+- [x] **P1 A-11** — Save log to file. The in-memory log buffer is 2000 entries and lost on close. Write a rolling `app.log` mirror to `%LOCALAPPDATA%\AndroidEmulatorPlus\logs\app-YYYYMMDD.log`.
 - [ ] **P1 A-12** — APK drag-and-drop install. Drop one or many APKs anywhere on the Apps view to invoke the batch install path.
 - [ ] **P1 A-13** — Screenshot button (`adb exec-out screencap -p > <ts>.png`), opens the resulting file in the default viewer. Available from a top-bar button when an emulator is attached.
 - [ ] **P1 A-14** — Screen record button (`adb shell screenrecord /sdcard/<ts>.mp4` + pull on stop) with start/stop toggle.

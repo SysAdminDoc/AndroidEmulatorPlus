@@ -20,6 +20,14 @@ public sealed partial class InstallViewModel : ObservableObject
     [ObservableProperty] private bool _hasCmdlineTools;
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private string _step = "";
+    [ObservableProperty] private string _diagnosticsText = "";
+    [ObservableProperty] private bool _hasDiagnostics;
+
+    private static string DiagnosticsRoot => Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "AndroidEmulatorPlus");
+    private static string CrashLogPath => Path.Combine(DiagnosticsRoot, "crash.log");
+    private static string DailyLogPath => Path.Combine(DiagnosticsRoot, "logs", $"app-{DateTime.Now:yyyyMMdd}.log");
 
     public InstallViewModel(SdkLocator sdk, DownloadService dl, LogService log)
     {
@@ -37,13 +45,51 @@ public sealed partial class InstallViewModel : ObservableObject
             StatusText = "SDK not located.";
             SdkPathText = "(no SDK detected)";
             HasPlatformTools = HasEmulator = HasCmdlineTools = false;
-            return;
         }
-        SdkPathText = _sdk.SdkRoot;
-        HasPlatformTools = _sdk.AdbExe != null;
-        HasEmulator = _sdk.EmulatorExe != null;
-        HasCmdlineTools = _sdk.SdkManagerBat != null;
-        StatusText = _sdk.IsReady ? "SDK looks good." : "SDK is missing pieces.";
+        else
+        {
+            SdkPathText = _sdk.SdkRoot;
+            HasPlatformTools = _sdk.AdbExe != null;
+            HasEmulator = _sdk.EmulatorExe != null;
+            HasCmdlineTools = _sdk.SdkManagerBat != null;
+            StatusText = _sdk.IsReady ? "SDK looks good." : "SDK is missing pieces.";
+        }
+        LoadDiagnostics();
+    }
+
+    private void LoadDiagnostics()
+    {
+        var hasCrash = File.Exists(CrashLogPath);
+        HasDiagnostics = hasCrash || File.Exists(DailyLogPath);
+        if (!HasDiagnostics) { DiagnosticsText = "No diagnostics on file."; return; }
+
+        try
+        {
+            var sb = new System.Text.StringBuilder();
+            if (hasCrash)
+            {
+                var lines = File.ReadAllLines(CrashLogPath);
+                sb.AppendLine($"--- crash.log ({lines.Length} lines) ---");
+                foreach (var l in lines.Reverse().Take(50)) sb.AppendLine(l);
+            }
+            DiagnosticsText = sb.ToString();
+        }
+        catch (Exception ex) { DiagnosticsText = $"(could not read diagnostics: {ex.Message})"; }
+    }
+
+    [RelayCommand]
+    private void OpenLogsFolder()
+    {
+        var dir = Path.Combine(DiagnosticsRoot, "logs");
+        Directory.CreateDirectory(dir);
+        Process.Start(new ProcessStartInfo(dir) { UseShellExecute = true });
+    }
+
+    [RelayCommand]
+    private void ClearCrashLog()
+    {
+        try { if (File.Exists(CrashLogPath)) File.Delete(CrashLogPath); } catch (Exception ex) { _log.Warning("Clear crash.log failed: " + ex.Message); }
+        LoadDiagnostics();
     }
 
     [RelayCommand]
