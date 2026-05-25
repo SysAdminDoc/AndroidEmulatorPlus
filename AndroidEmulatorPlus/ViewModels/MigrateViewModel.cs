@@ -12,6 +12,7 @@ public sealed partial class MigrateViewModel : ObservableObject
     private readonly MigrationService _mig;
     private readonly DeviceMonitor _monitor;
     private readonly LogService _log;
+    private readonly CacheDiagnosticsService _cache;
 
     public ObservableCollection<AndroidApp> Packages { get; } = new();
     [ObservableProperty] private string _filter = "";
@@ -24,14 +25,50 @@ public sealed partial class MigrateViewModel : ObservableObject
     [ObservableProperty] private string _phoneStatus = "no phone";
     [ObservableProperty] private string _emuStatus = "no emulator";
     [ObservableProperty] private string _summary = "";
+    [ObservableProperty] private string _cacheSummary = "—";
+    [ObservableProperty] private bool _hasCache;
 
-    public MigrateViewModel(AdbService adb, MigrationService mig, DeviceMonitor monitor, LogService log)
+    public MigrateViewModel(AdbService adb, MigrationService mig, DeviceMonitor monitor, LogService log, CacheDiagnosticsService cache)
     {
         _adb = adb;
         _mig = mig;
         _monitor = monitor;
         _log = log;
+        _cache = cache;
         _monitor.Changed += devs => { _ = RefreshAsync(); };
+        RefreshCache();
+    }
+
+    [RelayCommand]
+    private void RefreshCache()
+    {
+        var u = _cache.Measure();
+        if (u.Total <= 0)
+        {
+            HasCache = false;
+            CacheSummary = "Cache is empty.";
+            return;
+        }
+        HasCache = true;
+        var parts = new List<string>();
+        if (u.TransferBytes > 0) parts.Add($"migration {u.Human(u.TransferBytes)}");
+        if (u.BundleBytes > 0) parts.Add($"bundles {u.Human(u.BundleBytes)}");
+        if (u.RootBytes > 0) parts.Add($"root {u.Human(u.RootBytes)}");
+        CacheSummary = $"Cache total {u.Human(u.Total)}  ·  " + string.Join(" · ", parts);
+    }
+
+    [RelayCommand]
+    private void ClearTransferCache()
+    {
+        _cache.ClearTransfer();
+        RefreshCache();
+    }
+
+    [RelayCommand]
+    private void ClearRootCache()
+    {
+        _cache.ClearRootCache();
+        RefreshCache();
     }
 
     [RelayCommand]
@@ -128,6 +165,7 @@ public sealed partial class MigrateViewModel : ObservableObject
             IsBusy = false;
             StepText = "";
             ProgressFraction = 0;
+            RefreshCache();
         }
     }
 

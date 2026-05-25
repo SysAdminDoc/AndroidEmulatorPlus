@@ -81,6 +81,28 @@
                 <TextBlock Grid.Column="2" Text="{Binding StepText}" Foreground="{StaticResource OverlayBrush}" VerticalAlignment="Center"/>
             </Grid>
             <TextBlock Text="{Binding Summary}" Foreground="{StaticResource GreenBrush}" Margin="0,6,0,0"/>
+
+            <Border Style="{StaticResource Card}" Margin="0,12,0,0">
+                <StackPanel>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Style="{StaticResource SectionHeader}" Text="On-disk cache"/>
+                        <Button Grid.Column="1" Content="Recalculate" Style="{StaticResource FlatButton}" Command="{Binding RefreshCacheCommand}" Padding="10,4" MinHeight="0"/>
+                    </Grid>
+                    <TextBlock Text="{Binding CacheSummary}" Foreground="{StaticResource SubtextBrush}"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                        <Button Content="Clear migration cache" Style="{StaticResource FlatButton}" Command="{Binding ClearTransferCacheCommand}"/>
+                        <Button Content="Clear root cache" Style="{StaticResource FlatButton}" Command="{Binding ClearRootCacheCommand}" Margin="8,0,0,0"/>
+                    </StackPanel>
+                    <TextBlock Foreground="{StaticResource OverlayBrush}" FontSize="11" Margin="0,8,0,0" TextWrapping="Wrap">
+                        Migration cache holds the temporary tarballs and split-APK extracts in <Run FontFamily="Cascadia Mono">%LOCALAPPDATA%\AndroidEmulatorPlus\transfer\</Run>.
+                        Root cache holds the rootAVD clone + downloaded Magisk APK; clearing forces a re-clone next time you Root.
+                    </TextBlock>
+                </StackPanel>
+            </Border>
         </StackPanel>
     </Grid>
 </UserControl>

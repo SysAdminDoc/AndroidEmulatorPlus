@@ -27,6 +27,7 @@ public partial class App : Application
         sc.AddSingleton<ConfigService>();
         sc.AddSingleton<DownloadService>();
         sc.AddSingleton<HashVerificationService>();
+        sc.AddSingleton<CacheDiagnosticsService>();
         sc.AddSingleton<DeviceMonitor>();
 
         sc.AddSingleton<MainViewModel>();

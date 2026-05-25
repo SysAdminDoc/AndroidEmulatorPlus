@@ -17,6 +17,7 @@ All notable changes to this project will be documented here. Format follows [Kee
 - Empty-state card on the AVDs tab when no AVDs exist — links the user to the create form.
 - `.apks` / `.xapk` / `.apkm` bundles are now extracted before install. Inner splits go through `adb install-multiple`; any `*.obb` files are pushed to `/sdcard/Android/obb/<pkg>/` (package name resolved from a `manifest.json` / `info.json` inside the bundle, or the `main.<ver>.<pkg>.obb` filename convention). Previously the dialog filter advertised these formats but `adb install` refused them.
 - Downloaded Magisk APK and cmdline-tools ZIP are now SHA-256 verified against an embedded `Resources/known-hashes.json` manifest. Known-key mismatches hard-fail and delete the partial file. Unknown keys log the computed hash so future manifest updates have a record (trust-on-first-use).
+- Cache card on the Migrate tab reports total cache usage (migration tarballs + bundle extracts + rootAVD/Magisk clone). Two clear actions: "Clear migration cache" (safe, recoverable) and "Clear root cache" (forces re-clone of rootAVD next root). Auto-recalculates after every migration.
 
 ### Changed
 
