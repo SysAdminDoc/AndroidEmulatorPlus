@@ -36,6 +36,9 @@
                     <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
                         <Button Content="Refresh" Style="{StaticResource FlatButton}" Command="{Binding RefreshCommand}"/>
                         <Button Content="Open SDK Folder" Style="{StaticResource FlatButton}" Command="{Binding OpenSdkFolderCommand}" Margin="8,0,0,0"/>
+                        <Button Content="Accept all SDK licenses" Style="{StaticResource FlatButton}" Command="{Binding AcceptLicensesCommand}" Margin="8,0,0,0"
+                                IsEnabled="{Binding HasCmdlineTools}"
+                                ToolTip="Pipes y\n into sdkmanager --licenses so future installs run unattended"/>
                     </StackPanel>
                 </StackPanel>
             </Border>
@@ -50,6 +53,23 @@
                         <Button Content="Run accel-check" Style="{StaticResource FlatButton}" Command="{Binding CheckAccelCommand}"/>
                         <TextBlock Text="{Binding AccelText}" Margin="14,0,0,0" VerticalAlignment="Center" Foreground="{StaticResource LavenderBrush}"/>
                     </StackPanel>
+                    <Border Background="{StaticResource CrustBrush}" CornerRadius="6" Padding="10,8" Margin="0,10,0,0"
+                            Visibility="{Binding AccelOk, Converter={x:Static views:NotBoolToVisibilityConverter.Instance}}">
+                        <StackPanel>
+                            <TextBlock Foreground="{StaticResource YellowBrush}" FontWeight="SemiBold" Margin="0,0,0,4" Text="Remediation"/>
+                            <TextBlock Foreground="{StaticResource SubtextBrush}" TextWrapping="Wrap" FontSize="12">
+                                Hardware virtualization is gated by a Windows feature and (on Intel) a BIOS flag. Open one of:
+                            </TextBlock>
+                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                <Button Content="Windows Hypervisor Platform docs" Style="{StaticResource FlatButton}"
+                                        Command="{Binding OpenUrlCommand}" CommandParameter="https://learn.microsoft.com/en-us/virtualization/api/hypervisor-platform/hypervisor-platform"/>
+                                <Button Content="Open 'Turn Windows features on/off'" Style="{StaticResource FlatButton}" Margin="8,0,0,0"
+                                        Command="{Binding OpenFeaturesCommand}"/>
+                                <Button Content="Android Studio emulator-accel docs" Style="{StaticResource FlatButton}" Margin="8,0,0,0"
+                                        Command="{Binding OpenUrlCommand}" CommandParameter="https://developer.android.com/studio/run/emulator-acceleration"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
                 </StackPanel>
             </Border>
 

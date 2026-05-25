@@ -29,6 +29,7 @@ public partial class App : Application
         sc.AddSingleton<HashVerificationService>();
         sc.AddSingleton<CacheDiagnosticsService>();
         sc.AddSingleton<LogcatService>();
+        sc.AddSingleton<SdkmanagerService>();
         sc.AddSingleton<ScreenRecordService>();
         sc.AddSingleton<DeviceMonitor>();
 

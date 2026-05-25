@@ -29,7 +29,7 @@ Build constraint: this VMware VM has no .NET SDK; changes here are best-effort a
 - [ ] **P1 A-01 cancel** — Cancel button on long-running ops (rootAVD patch, AVD create, cmdline-tools download, migration). Timeout shipped; user-visible Cancel did not.
 - [x] **P1 A-14** — Top-bar Record toggle drives `adb shell screenrecord`; on stop pulls the mp4 to `~/Pictures/AndroidEmulatorPlus/` and opens Explorer.
 - [x] **P1 A-15** — Dedicated Logcat tab (sidebar ⑦). Streams `adb logcat -v threadtime`, supports priority + package filter, Clear buffer (`logcat -c`), Clear view, Save to file.
-- [ ] **P1 A-16** — Auto-accept SDK licenses. Pipe `y\n` repeatedly to `sdkmanager --licenses`.
+- [x] **P1 A-16** — `SdkmanagerService.AcceptLicensesAsync` pipes `y\n` × 60 into `sdkmanager --licenses` with a 3-minute timeout; surfaced as a button on the Install tab.
 - [x] **P1 A-18** — Apps tab now offers Include system + Include disabled toggles and a `user`/`system`/`disabled` tag per row.
 - [ ] **P1 A-19** — Detect `allowBackup=false` per package and warn before attempting data migration.
 - [x] **P1 A-25** — Rename AVD popup in the AVD card overflow menu (new reusable `PromptDialog` with regex+collision validation).
@@ -45,7 +45,7 @@ Build constraint: this VMware VM has no .NET SDK; changes here are best-effort a
 - [x] **P2 A-21** — Configure tab ships a ScreenPreset picker (Pixel 7/7 Pro/8/8 Pro/9 Pro/Tablet/Fold open & closed/Nexus 5X/Small phone/TV) that fills in Width/Height/DPI.
 - [x] **P2 A-22** — Configure tab ships a `hw.gpu.mode` picker (host / swiftshader_indirect / angle_indirect / guest / off) with inline guidance.
 - [x] **P2 A-23** — AVD overflow menu adds "Launch with options…": cold boot, wipe, headless, no-audio, http-proxy, dns-server, front/back camera.
-- [ ] **P2 A-24 remediation** — Pass/fail shipped; remediation-link UI on accel-check failure (Windows Hypervisor Platform feature, Intel HAXM, AMD Hyper-V) is still TODO.
+- [x] **P2 A-24 remediation** — On accel-check failure the Install card now exposes three buttons: Windows Hypervisor Platform docs, "Turn Windows features on/off" (optionalfeatures.exe), Android Studio emulator-acceleration docs.
 - [ ] **P2 A-26** — Duplicate AVD (copy `<name>.avd` directory + `<name>.ini`, rewrite `path=` references).
 - [ ] **P2 A-27** — Keyboard shortcuts: F5 = Refresh active tab, Ctrl+1..6 = switch sections, Ctrl+L = clear log.
 - [x] **P2 A-28** — Inline "Launch & root" CTA on the Root tab when no emulator is attached; launches selected AVD, waits for boot, then re-enters the root flow.

@@ -28,6 +28,8 @@ All notable changes to this project will be documented here. Format follows [Kee
 - New uninstall mode toggle on the Apps tab: choose between "Uninstall (adb)" and "Disable for user 0 (reversible)" — the second uses `pm uninstall --user 0`, which can remove preinstalled OEM apps that plain `adb uninstall` refuses. A companion "Re-enable selected (user 0)" button uses `cmd package install-existing` to restore them.
 - Configure tab gained a screen preset picker (Pixel 7/7 Pro/8/8 Pro/9 Pro/Tablet/Fold open & closed/Nexus 5X/Small phone/1080p TV) and a GPU mode picker (`hw.gpu.mode`: host / swiftshader_indirect / angle_indirect / guest / off) with inline guidance for which mode to pick when running inside a VM or over RDP.
 - AVD card overflow now includes "Launch with options…" — a dialog that exposes cold boot, wipe data, headless (`-no-window`), `-no-audio`, `-http-proxy`, `-dns-server`, and front/back camera selection. All emit standard emulator flags through `EmulatorService.LaunchOptions`.
+- "Accept all SDK licenses" button on the Install tab pipes `y\n` × 60 into `sdkmanager --licenses` so subsequent `sdkmanager install …` runs unattended (capped at 3 minutes).
+- Accel-check card surfaces a remediation panel on failure: Windows Hypervisor Platform docs, "Turn Windows features on/off" (launches optionalfeatures.exe), Android emulator-acceleration docs.
 
 ### Changed
 

@@ -13,6 +13,7 @@ public sealed partial class InstallViewModel : ObservableObject
     private readonly DownloadService _dl;
     private readonly EmulatorService _emu;
     private readonly HashVerificationService _hash;
+    private readonly SdkmanagerService _sdkman;
     private readonly LogService _log;
 
     [ObservableProperty] private string _statusText = "";
@@ -35,13 +36,30 @@ public sealed partial class InstallViewModel : ObservableObject
     private static string CrashLogPath => Path.Combine(DiagnosticsRoot, "crash.log");
     private static string DailyLogPath => Path.Combine(DiagnosticsRoot, "logs", $"app-{DateTime.Now:yyyyMMdd}.log");
 
-    public InstallViewModel(SdkLocator sdk, DownloadService dl, EmulatorService emu, HashVerificationService hash, LogService log)
+    public InstallViewModel(SdkLocator sdk, DownloadService dl, EmulatorService emu, HashVerificationService hash, SdkmanagerService sdkman, LogService log)
     {
         _sdk = sdk;
         _dl = dl;
         _emu = emu;
         _hash = hash;
+        _sdkman = sdkman;
         _log = log;
+    }
+
+    [RelayCommand]
+    private async Task AcceptLicensesAsync()
+    {
+        IsBusy = true;
+        Step = "Accepting SDK licenses…";
+        try
+        {
+            await _sdkman.AcceptLicensesAsync(new Progress<string>(s => Step = s));
+        }
+        finally
+        {
+            IsBusy = false;
+            Step = "";
+        }
     }
 
     [RelayCommand]
@@ -188,6 +206,21 @@ public sealed partial class InstallViewModel : ObservableObject
     private void OpenStudioDownloadPage()
     {
         Process.Start(new ProcessStartInfo("https://developer.android.com/studio") { UseShellExecute = true });
+    }
+
+    [RelayCommand]
+    private void OpenUrl(string? url)
+    {
+        if (string.IsNullOrWhiteSpace(url)) return;
+        try { Process.Start(new ProcessStartInfo(url) { UseShellExecute = true }); }
+        catch (Exception ex) { _log.Warning("Open URL failed: " + ex.Message); }
+    }
+
+    [RelayCommand]
+    private void OpenFeatures()
+    {
+        try { Process.Start(new ProcessStartInfo("optionalfeatures.exe") { UseShellExecute = true }); }
+        catch (Exception ex) { _log.Warning("Could not open Windows features: " + ex.Message); }
     }
 
     [RelayCommand]
