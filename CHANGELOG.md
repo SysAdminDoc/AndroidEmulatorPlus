@@ -46,6 +46,8 @@ All notable changes to this project will be documented here. Format follows [Kee
 - APK signature verification with `apksigner.bat`: the Apps tab gained a "Verify signatures" toggle (default on); each install runs `apksigner verify --print-certs` first and fail-stops mismatches. `.apks` / `.xapk` / `.apkm` bundles are unzipped to inspect the inner APK.
 - Migrate tab now offers an opt-in "OBB (game data — can be huge)" checkbox that tars `/sdcard/Android/obb/<pkg>` from the phone and replays it on the emulator.
 - Apps tab "Export data…" / "Import from ZIP…" buttons (R-05) round-trip `/data/data/<pkg>` between machines. Export writes a ZIP per selected app with the tar + a metadata.json (package, original UID, timestamp); Import re-maps to the emulator's current UID via `chown -R` + `restorecon -R`.
+- Migration phone-side tar now probes `tar --help` once per session and falls back to a `find … -prune | tar -T -` pipeline for tar builds that don't support `--exclude=` (older toybox, non-standard ROMs).
+- Migrate tab "Force-stop on source phone before tar" checkbox closes the running app on the phone immediately before tarring `/data/data`, so the SQLite DBs aren't captured mid-write.
 
 ### Changed
 

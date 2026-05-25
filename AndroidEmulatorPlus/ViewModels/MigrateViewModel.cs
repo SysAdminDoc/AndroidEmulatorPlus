@@ -20,6 +20,7 @@ public sealed partial class MigrateViewModel : ObservableObject
     [ObservableProperty] private bool _doInternal = true;
     [ObservableProperty] private bool _doExternal = true;
     [ObservableProperty] private bool _doObb;
+    [ObservableProperty] private bool _forceStopOnPhone;
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private string _stepText = "";
     [ObservableProperty] private double _progressFraction;
@@ -134,6 +135,7 @@ public sealed partial class MigrateViewModel : ObservableObject
         _cts = new CancellationTokenSource();
         var ct = _cts.Token;
         int ok = 0, fail = 0; long totalBytes = 0;
+        _mig.ForceStopOnPhone = ForceStopOnPhone;
         try
         {
             int idx = 0;

@@ -49,8 +49,8 @@ Build constraint: this VMware VM has no .NET SDK; changes here are best-effort a
 - [x] **P2 A-26** — Duplicate AVD entry on overflow menu: file-level copy of `<name>.avd/` + ini rewrite + transient-file cleanup so the duplicate boots clean.
 - [x] **P2 A-27** — Keyboard shortcuts wired in MainWindow.InputBindings: F5 refreshes the active tab, Ctrl+1..7 switches sections (incl. Logcat), Ctrl+L clears the log panel, Ctrl+R takes a screenshot.
 - [x] **P2 A-28** — Inline "Launch & root" CTA on the Root tab when no emulator is attached; launches selected AVD, waits for boot, then re-enters the root flow.
-- [ ] **P2 A-29** — Detect tar flavor on the phone and fall back to a `find … -prune` pipeline for tar implementations without `--exclude=`.
-- [ ] **P2 A-30** — `am force-stop` on the source phone before tar (with consent flag).
+- [x] **P2 A-29** — `MigrationService` probes phone tar for `--exclude=` once per session and falls back to `find … -prune | tar -T -` when the flag isn't supported (older toybox / non-standard ROMs).
+- [x] **P2 A-30** — "Force-stop on source phone before tar" checkbox on the Migrate tab; when set, `am force-stop <pkg>` runs on the phone immediately before tarring `/data/data`.
 - [x] **P2 A-33** — `EmulatorService._children` ConcurrentDictionary tracks every AVD launched this session; `TryKill(name)` kills a single child.
 - [x] **P2 A-34** — `App.OnExit` calls `EmulatorService.KillAll()` (alongside Logcat/ScreenRecord dispose) so closing the app doesn't orphan emulator processes.
 - [x] **P2 A-35** — `AndroidEmulatorPlus.Tests` xunit project with ParseIni/WriteIni round-trip, ParseSizeGb (incl. raw-byte branch), MigrationService.ParseFailReason, AvdViewModel.SystemImageSortKey, and HashVerificationService.ComputeSha256 coverage. CI workflow already picks it up.

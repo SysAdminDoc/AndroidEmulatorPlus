@@ -82,8 +82,10 @@
                     <CheckBox Content="APKs" IsChecked="{Binding DoApk}" Margin="0,0,18,0"/>
                     <CheckBox Content="Internal data (/data/data)" IsChecked="{Binding DoInternal}" Margin="0,0,18,0"/>
                     <CheckBox Content="External data (/sdcard/Android/data)" IsChecked="{Binding DoExternal}" Margin="0,0,18,0"/>
-                    <CheckBox Content="OBB (game data — can be huge)" IsChecked="{Binding DoObb}" ToolTip="Copies /sdcard/Android/obb/&lt;pkg&gt; — opt-in because game OBBs are often multi-GB"/>
+                    <CheckBox Content="OBB (game data — can be huge)" IsChecked="{Binding DoObb}" Margin="0,0,18,0" ToolTip="Copies /sdcard/Android/obb/&lt;pkg&gt; — opt-in because game OBBs are often multi-GB"/>
                 </WrapPanel>
+                <CheckBox Content="Force-stop on source phone before tar" IsChecked="{Binding ForceStopOnPhone}" Margin="0,8,0,0"
+                          ToolTip="Closes the app on the phone before tarring /data/data so the SQLite databases aren't captured mid-write."/>
                 <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
                     <TextBlock Text="Filter:" VerticalAlignment="Center" Foreground="{StaticResource SubtextBrush}"/>
                     <TextBox Text="{Binding Filter, UpdateSourceTrigger=PropertyChanged}" Width="240" Margin="8,0,0,0"/>

@@ -17,6 +17,24 @@ public sealed class MigrationService
         _log = log;
     }
 
+    /// <summary>If true, also force-stop the package on the source phone before tarring (A-30).</summary>
+    public bool ForceStopOnPhone { get; set; }
+
+    // A-29: cache the phone's tar flavor per serial so we don't re-detect on every package.
+    // The boolean tracks whether `tar --exclude=` is supported (toybox 0.7+, GNU tar).
+    private readonly Dictionary<string, bool> _phoneTarSupportsExclude = new(StringComparer.Ordinal);
+
+    private async Task<bool> PhoneTarSupportsExcludeAsync(string serial, CancellationToken ct)
+    {
+        if (_phoneTarSupportsExclude.TryGetValue(serial, out var v)) return v;
+        var probe = await _adb.ShellAsync(serial, "tar --help 2>&1 | grep -i exclude || echo NO", ct);
+        var supports = probe.StdOut.Contains("exclude", StringComparison.OrdinalIgnoreCase)
+                    && !probe.StdOut.TrimEnd().EndsWith("NO", StringComparison.Ordinal);
+        _phoneTarSupportsExclude[serial] = supports;
+        _log.Detail($"phone tar (serial {serial}) supports --exclude=: {supports}");
+        return supports;
+    }
+
     public string CacheRoot => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "AndroidEmulatorPlus", "transfer");
@@ -58,10 +76,25 @@ public sealed class MigrationService
         Directory.CreateDirectory(CacheRoot);
         try
         {
-            // tar on phone (root) — exclude cache directories
-            var tar = await _adb.RootShellAsync(phoneSerial,
-                $"cd /data/data && tar --exclude={pkg}/cache --exclude={pkg}/code_cache --exclude={pkg}/no_backup -cf {tarOnPhone} {pkg} && chmod 666 {tarOnPhone}",
-                ct);
+            // A-30: optionally force-stop on the phone before tarring so the DB isn't torn.
+            if (ForceStopOnPhone)
+            {
+                try { await _adb.ShellAsync(phoneSerial, $"am force-stop {pkg}", ct); } catch { }
+            }
+
+            // A-29: pick the right tar pipeline for the phone's tar flavor.
+            string tarCmd;
+            if (await PhoneTarSupportsExcludeAsync(phoneSerial, ct))
+            {
+                tarCmd = $"cd /data/data && tar --exclude={pkg}/cache --exclude={pkg}/code_cache --exclude={pkg}/no_backup -cf {tarOnPhone} {pkg} && chmod 666 {tarOnPhone}";
+            }
+            else
+            {
+                // Older toybox tar lacks --exclude=; use find with -prune to skip cache dirs
+                // and feed the surviving paths via -T -.
+                tarCmd = $"cd /data/data && find {pkg} -type d \\( -name cache -o -name code_cache -o -name no_backup \\) -prune -o -print | tar -cf {tarOnPhone} -T - && chmod 666 {tarOnPhone}";
+            }
+            var tar = await _adb.RootShellAsync(phoneSerial, tarCmd, ct);
             if (!tar.Success) return new TransferResult(pkg, false, 0, "tar failed");
 
             var stat = await _adb.ShellAsync(phoneSerial, $"stat -c %s {tarOnPhone}", ct);
