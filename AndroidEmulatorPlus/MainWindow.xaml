@@ -7,6 +7,18 @@
         Width="1280" Height="820"
         MinWidth="980" MinHeight="640"
         WindowStartupLocation="CenterScreen">
+    <Window.InputBindings>
+        <KeyBinding Modifiers="Ctrl" Key="D1" Command="{Binding NavigateCommand}" CommandParameter="Install"/>
+        <KeyBinding Modifiers="Ctrl" Key="D2" Command="{Binding NavigateCommand}" CommandParameter="Avd"/>
+        <KeyBinding Modifiers="Ctrl" Key="D3" Command="{Binding NavigateCommand}" CommandParameter="Root"/>
+        <KeyBinding Modifiers="Ctrl" Key="D4" Command="{Binding NavigateCommand}" CommandParameter="Migrate"/>
+        <KeyBinding Modifiers="Ctrl" Key="D5" Command="{Binding NavigateCommand}" CommandParameter="Apps"/>
+        <KeyBinding Modifiers="Ctrl" Key="D6" Command="{Binding NavigateCommand}" CommandParameter="Config"/>
+        <KeyBinding Modifiers="Ctrl" Key="D7" Command="{Binding NavigateCommand}" CommandParameter="Logcat"/>
+        <KeyBinding Key="F5" Command="{Binding RefreshActiveCommand}"/>
+        <KeyBinding Modifiers="Ctrl" Key="L" Command="{Binding ClearLogCommand}"/>
+        <KeyBinding Modifiers="Ctrl" Key="R" Command="{Binding ScreenshotCommand}"/>
+    </Window.InputBindings>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="48"/>

@@ -32,6 +32,7 @@ All notable changes to this project will be documented here. Format follows [Kee
 - Accel-check card surfaces a remediation panel on failure: Windows Hypervisor Platform docs, "Turn Windows features on/off" (launches optionalfeatures.exe), Android emulator-acceleration docs.
 - "Duplicate…" entry on the AVD card overflow menu: file-level copy of `<name>.avd/` and the matching `.ini`, with transient files (hardware-qemu.ini, multiinstance.lock, running.lock) removed so the clone boots cleanly. Validates the new name (regex + collision check) via PromptDialog and refuses when the source AVD is currently running.
 - Device profile dropdown gained Wear OS (`wearos_small_round`, `wearos_large_round`, `wearos_square`, `wearos_rect`), Android TV (`tv_720p`, `tv_1080p`, `tv_4k`), Android Automotive (`automotive_1024p_landscape`, `automotive_distant_display`), and `pixel_tablet`/`pixel_c` tablet profiles.
+- Keyboard shortcuts: **F5** refreshes the active tab, **Ctrl+1..7** switches sections (Install/AVDs/Root/Migrate/Apps/Config/Logcat), **Ctrl+L** clears the log panel, **Ctrl+R** captures a screenshot.
 
 ### Changed
 

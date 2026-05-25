@@ -103,6 +103,26 @@ public sealed partial class MainViewModel : ObservableObject
         if (section == "Install")InstallVm.RefreshCommand.Execute(null);
     }
 
+    /// <summary>F5 — refresh whatever tab is in focus.</summary>
+    [RelayCommand]
+    private void RefreshActive()
+    {
+        switch (ActiveSection)
+        {
+            case "Avd":     AvdVm.RefreshCommand.Execute(null); break;
+            case "Apps":    AppsVm.RefreshCommand.Execute(null); break;
+            case "Config":  ConfigVm.RefreshCommand.Execute(null); break;
+            case "Root":    RootVm.RefreshCommand.Execute(null); break;
+            case "Migrate": MigrateVm.RefreshCommand.Execute(null); break;
+            case "Install": InstallVm.RefreshCommand.Execute(null); break;
+            case "Logcat":  /* logcat has start/stop, no refresh */ break;
+        }
+    }
+
+    /// <summary>Ctrl+L — clear the in-app log panel.</summary>
+    [RelayCommand]
+    private void ClearLog() => Log.Clear();
+
     /// <summary>
     /// A-14: Start/stop screen recording from the top-bar toggle. Saves to
     /// %USERPROFILE%/Pictures/AndroidEmulatorPlus/ once stopped.

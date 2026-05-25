@@ -47,7 +47,7 @@ Build constraint: this VMware VM has no .NET SDK; changes here are best-effort a
 - [x] **P2 A-23** — AVD overflow menu adds "Launch with options…": cold boot, wipe, headless, no-audio, http-proxy, dns-server, front/back camera.
 - [x] **P2 A-24 remediation** — On accel-check failure the Install card now exposes three buttons: Windows Hypervisor Platform docs, "Turn Windows features on/off" (optionalfeatures.exe), Android Studio emulator-acceleration docs.
 - [x] **P2 A-26** — Duplicate AVD entry on overflow menu: file-level copy of `<name>.avd/` + ini rewrite + transient-file cleanup so the duplicate boots clean.
-- [ ] **P2 A-27** — Keyboard shortcuts: F5 = Refresh active tab, Ctrl+1..6 = switch sections, Ctrl+L = clear log.
+- [x] **P2 A-27** — Keyboard shortcuts wired in MainWindow.InputBindings: F5 refreshes the active tab, Ctrl+1..7 switches sections (incl. Logcat), Ctrl+L clears the log panel, Ctrl+R takes a screenshot.
 - [x] **P2 A-28** — Inline "Launch & root" CTA on the Root tab when no emulator is attached; launches selected AVD, waits for boot, then re-enters the root flow.
 - [ ] **P2 A-29** — Detect tar flavor on the phone and fall back to a `find … -prune` pipeline for tar implementations without `--exclude=`.
 - [ ] **P2 A-30** — `am force-stop` on the source phone before tar (with consent flag).
