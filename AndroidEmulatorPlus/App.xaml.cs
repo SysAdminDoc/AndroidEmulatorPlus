@@ -39,6 +39,7 @@ public partial class App : Application
         sc.AddSingleton<CacheDiagnosticsService>();
         sc.AddSingleton<LogcatService>();
         sc.AddSingleton<SdkmanagerService>();
+        sc.AddSingleton<PresetService>();
         sc.AddSingleton<ScreenRecordService>();
         sc.AddSingleton<DeviceMonitor>();
 

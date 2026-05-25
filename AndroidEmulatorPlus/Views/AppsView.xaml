@@ -39,8 +39,22 @@
                 <WrapPanel Margin="0,10,0,0">
                     <Button Content="Select all" Style="{StaticResource FlatButton}" Command="{Binding SelectAllCommand}" Margin="0,0,8,0"/>
                     <Button Content="Select none" Style="{StaticResource FlatButton}" Command="{Binding SelectNoneCommand}" Margin="0,0,8,0"/>
-                    <Button Content="Preset: Google bloat" Style="{StaticResource FlatButton}" Command="{Binding SelectGoogleBloatCommand}" Margin="0,0,8,0"/>
-                    <Button Content="Preset: Samsung bloat" Style="{StaticResource FlatButton}" Command="{Binding SelectSamsungBloatCommand}" Margin="0,0,8,0"/>
+                    <ItemsControl ItemsSource="{Binding BloatPresets}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Content="{Binding Name}"
+                                        ToolTip="{Binding Description}"
+                                        Style="{StaticResource FlatButton}" Margin="0,0,8,0"
+                                        Command="{Binding DataContext.ApplyPresetCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}"/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
                 </WrapPanel>
             </StackPanel>
         </Border>

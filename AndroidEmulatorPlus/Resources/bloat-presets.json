@@ -1,0 +1,90 @@
+{
+  "_comment": "Debloat presets. Bundled defaults live in this file (embedded resource). Users can override or extend by creating %LOCALAPPDATA%\\AndroidEmulatorPlus\\presets\\bloat.json with the same schema; entries with the same id replace the embedded ones, new ids are appended.",
+  "version": 1,
+  "presets": [
+    {
+      "id": "google",
+      "name": "Google bloat",
+      "description": "Pre-installed Google apps most users replace with alternatives.",
+      "packages": [
+        "com.android.chrome",
+        "com.google.android.youtube",
+        "com.google.android.apps.youtube.music",
+        "com.google.android.apps.maps",
+        "com.google.android.apps.podcasts",
+        "com.google.android.googlequicksearchbox",
+        "com.google.android.apps.docs",
+        "com.google.android.apps.photos",
+        "com.google.android.apps.tachyon",
+        "com.google.android.gm",
+        "com.google.android.calendar",
+        "com.google.android.apps.youtube.kids",
+        "com.google.android.apps.wellbeing",
+        "com.google.android.apps.tasks",
+        "com.google.android.keep"
+      ]
+    },
+    {
+      "id": "samsung",
+      "name": "Samsung bloat",
+      "description": "Samsung One UI preinstalls (Bixby, TV+, Game Hub).",
+      "packages": [
+        "com.samsung.android.bixby.agent",
+        "com.samsung.android.bixby.service",
+        "com.samsung.android.app.spage",
+        "com.samsung.android.app.routines",
+        "com.samsung.android.game.gamehome",
+        "com.samsung.android.kidsinstaller",
+        "com.samsung.android.tvplus",
+        "com.samsung.android.app.notes",
+        "com.samsung.android.app.tips",
+        "com.samsung.android.scloud",
+        "com.samsung.android.shortcutbackupservice"
+      ]
+    },
+    {
+      "id": "pixel",
+      "name": "Pixel extras",
+      "description": "Pixel-only preinstalls (Stand, At a Glance, Material You wallpapers).",
+      "packages": [
+        "com.google.android.apps.pixelmigrate",
+        "com.google.android.apps.dreamliner",
+        "com.google.android.apps.youtube.creator",
+        "com.google.android.apps.wallpaper",
+        "com.google.android.apps.wallpaper.pixel",
+        "com.google.android.apps.subscriptions.red",
+        "com.google.android.as",
+        "com.google.android.GoogleCamera"
+      ]
+    },
+    {
+      "id": "xiaomi",
+      "name": "Xiaomi / MIUI bloat",
+      "description": "Common Xiaomi MIUI preinstalls (Mi Browser, Mi Music, etc).",
+      "packages": [
+        "com.mi.android.globalminusscreen",
+        "com.miui.player",
+        "com.mi.global.bbs",
+        "com.miui.gallery",
+        "com.miui.miservice",
+        "com.miui.weather2",
+        "com.miui.videoplayer",
+        "com.mi.android.globalpersonalassistant",
+        "com.mi.android.globalFileexplorer"
+      ]
+    },
+    {
+      "id": "oneplus",
+      "name": "OnePlus / OxygenOS bloat",
+      "packages": [
+        "net.oneplus.weather",
+        "com.oneplus.gallery",
+        "com.oneplus.note",
+        "com.oneplus.calculator",
+        "com.oneplus.soundrecorder",
+        "com.oneplus.opbackup",
+        "com.heytap.cloud"
+      ]
+    }
+  ]
+}

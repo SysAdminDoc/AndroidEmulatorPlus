@@ -13,20 +13,34 @@ public sealed partial class AppsViewModel : ObservableObject
     private readonly AdbService _adb;
     private readonly DeviceMonitor _monitor;
     private readonly LogService _log;
+    private readonly PresetService _presets;
 
     public ObservableCollection<AndroidApp> Apps { get; } = new();
+    public ObservableCollection<BloatPreset> BloatPresets { get; } = new();
     [ObservableProperty] private string _filter = "";
     [ObservableProperty] private bool _includeSystem;
     [ObservableProperty] private bool _includeDisabled;
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private string _uninstallMode = "user"; // "user" (adb uninstall), "user0" (pm uninstall --user 0)
 
-    public AppsViewModel(AppService apps, AdbService adb, DeviceMonitor monitor, LogService log)
+    public AppsViewModel(AppService apps, AdbService adb, DeviceMonitor monitor, LogService log, PresetService presets)
     {
         _apps = apps;
         _adb = adb;
         _monitor = monitor;
         _log = log;
+        _presets = presets;
+        foreach (var p in _presets.Presets) BloatPresets.Add(p);
+    }
+
+    /// <summary>Applies a preset by id (used by ItemsControl button bindings).</summary>
+    [RelayCommand]
+    private void ApplyPreset(BloatPreset? preset)
+    {
+        if (preset is null) return;
+        var lookup = new HashSet<string>(preset.Packages, StringComparer.Ordinal);
+        foreach (var a in Apps) a.IsSelected = lookup.Contains(a.Package);
+        _log.Info($"Preset '{preset.Name}': selected {Apps.Count(a => a.IsSelected)} package(s).");
     }
 
     [RelayCommand]
@@ -59,18 +73,6 @@ public sealed partial class AppsViewModel : ObservableObject
 
     [RelayCommand]
     private void SelectNone() { foreach (var a in Apps) a.IsSelected = false; }
-
-    [RelayCommand]
-    private void SelectGoogleBloat()
-    {
-        foreach (var a in Apps) a.IsSelected = AppService.BloatPresetGoogle.Contains(a.Package);
-    }
-
-    [RelayCommand]
-    private void SelectSamsungBloat()
-    {
-        foreach (var a in Apps) a.IsSelected = AppService.BloatPresetSamsung.Contains(a.Package);
-    }
 
     [RelayCommand]
     private async Task UninstallSelectedAsync()

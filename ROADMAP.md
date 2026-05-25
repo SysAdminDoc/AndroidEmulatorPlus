@@ -55,7 +55,7 @@ Build constraint: this VMware VM has no .NET SDK; changes here are best-effort a
 - [x] **P2 A-34** — `App.OnExit` calls `EmulatorService.KillAll()` (alongside Logcat/ScreenRecord dispose) so closing the app doesn't orphan emulator processes.
 - [ ] **P2 A-35** — Add `AndroidEmulatorPlus.Tests` xunit project (`ParseIni/WriteIni` round-trip, `LatestMagiskAsync` filter, `ParseFailReason`, `ParseSizeGb`, etc).
 - [x] **P2 A-37** — Catppuccin Latte palette added; theme picker on the Install tab persists to `settings.json` and applies on next launch. Themes split into `Mocha.xaml` / `Latte.xaml` (palette only) + `Styles.xaml` (shared).
-- [ ] **P2 B-04** — Versioned debloat preset JSON (embedded default + `%LOCALAPPDATA%\…\presets\bloat.json` override).
+- [x] **P2 B-04** — Embedded `Resources/bloat-presets.json` ships Google/Samsung/Pixel/Xiaomi/OnePlus presets. User overrides at `%LOCALAPPDATA%\AndroidEmulatorPlus\presets\bloat.json` replace by id or append new ids. AppsView now renders buttons via `ItemsControl`.
 - [x] **P2 B-05** — Compute sizes button on Apps tab fills the size column from `du -sb /data/data/<pkg>` (root required; graceful warning otherwise).
 - [ ] **P2 B-06** — `adb pair host:port` Wi-Fi pairing card on the Migrate tab.
 - [ ] **P2 B-09** — Settings flyout (SDK / cache / screenshot paths, theme, network proxy).

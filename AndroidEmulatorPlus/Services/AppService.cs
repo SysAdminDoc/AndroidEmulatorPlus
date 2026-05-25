@@ -183,30 +183,5 @@ public sealed class AppService
     public Task<ProcessResult> InstallSplitApksAsync(string serial, IEnumerable<string> apks, CancellationToken ct = default)
         => _adb.InstallAsync(serial, apks, ct);
 
-    /// <summary>Known Google / Samsung / OEM bloat candidates. User reviews and chooses what to remove.</summary>
-    public static IReadOnlyList<string> BloatPresetGoogle => new[]
-    {
-        "com.android.chrome",
-        "com.google.android.youtube",
-        "com.google.android.apps.youtube.music",
-        "com.google.android.apps.maps",
-        "com.google.android.apps.podcasts",
-        "com.google.android.googlequicksearchbox",
-        "com.google.android.apps.docs",
-        "com.google.android.apps.photos",
-        "com.google.android.apps.tachyon",  // Meet
-        "com.google.android.gm",             // Gmail
-        "com.google.android.calendar",
-    };
-
-    public static IReadOnlyList<string> BloatPresetSamsung => new[]
-    {
-        "com.samsung.android.bixby.agent",
-        "com.samsung.android.bixby.service",
-        "com.samsung.android.app.spage",
-        "com.samsung.android.app.routines",
-        "com.samsung.android.game.gamehome",
-        "com.samsung.android.kidsinstaller",
-        "com.samsung.android.tvplus",
-    };
+    // Preset bloat lists moved to Resources/bloat-presets.json + PresetService (B-04).
 }
