@@ -43,6 +43,9 @@ All notable changes to this project will be documented here. Format follows [Kee
 - New `AndroidEmulatorPlus.Tests` xunit project: `ParseIni`/`WriteIni` round-trip (incl. case-insensitive overwrites), `ConfigViewModel.ParseSizeGb` (incl. raw-byte branch fixed in 3c7b738), `MigrationService.ParseFailReason`, `AvdViewModel.SystemImageSortKey`, `HashVerificationService.ComputeSha256`. CI already picks it up when present.
 - "Browse online…" button on the AVDs tab opens a new `SystemImagePickerDialog`: filterable list from `sdkmanager --list`, Accept-all-licenses helper, install via `sdkmanager <pkg>` with auto-`y` spam. On success the just-installed image lands selected in the Create form.
 - AVD card overflow now includes "Snapshots…" — dialog lists `<avd>.avd/snapshots/` with sizes + modified time, Save / Load (require the AVD to be running, go through `adb emu avd snapshot save|load`), Delete (works any time, confirmation dialog).
+- APK signature verification with `apksigner.bat`: the Apps tab gained a "Verify signatures" toggle (default on); each install runs `apksigner verify --print-certs` first and fail-stops mismatches. `.apks` / `.xapk` / `.apkm` bundles are unzipped to inspect the inner APK.
+- Migrate tab now offers an opt-in "OBB (game data — can be huge)" checkbox that tars `/sdcard/Android/obb/<pkg>` from the phone and replays it on the emulator.
+- Apps tab "Export data…" / "Import from ZIP…" buttons (R-05) round-trip `/data/data/<pkg>` between machines. Export writes a ZIP per selected app with the tar + a metadata.json (package, original UID, timestamp); Import re-maps to the emulator's current UID via `chown -R` + `restorecon -R`.
 
 ### Changed
 

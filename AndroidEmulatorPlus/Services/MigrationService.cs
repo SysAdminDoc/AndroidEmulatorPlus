@@ -99,6 +99,51 @@ public sealed class MigrationService
         }
     }
 
+    /// <summary>
+    /// R-04: tar /storage/emulated/0/Android/obb/&lt;pkg&gt; from the phone to the emulator.
+    /// Game OBBs can be huge — opt-in toggle on the Migrate tab.
+    /// </summary>
+    public async Task<TransferResult> TransferObbAsync(string phoneSerial, string emuSerial, string pkg, CancellationToken ct)
+    {
+        var tarOnPhone = $"/sdcard/{pkg}_obb.tar";
+        var tarOnEmu = $"/sdcard/{pkg}_obb.tar";
+        var local = Path.Combine(CacheRoot, $"{pkg}_obb.tar");
+        Directory.CreateDirectory(CacheRoot);
+
+        var exists = await _adb.RootShellAsync(phoneSerial,
+            $"[ -d /storage/emulated/0/Android/obb/{pkg} ] && echo yes", ct);
+        if (!exists.StdOut.Contains("yes")) return new TransferResult(pkg, true, 0, "no obb dir");
+
+        try
+        {
+            var tar = await _adb.RootShellAsync(phoneSerial,
+                $"cd /storage/emulated/0/Android/obb && tar -cf {tarOnPhone} {pkg} && chmod 666 {tarOnPhone}", ct);
+            if (!tar.Success) return new TransferResult(pkg, false, 0, "obb tar failed");
+            var stat = await _adb.ShellAsync(phoneSerial, $"stat -c %s {tarOnPhone}", ct);
+            if (!long.TryParse(stat.StdOut.Trim(), out var size) || size < 1024)
+            {
+                await _adb.RootShellAsync(phoneSerial, $"rm -f {tarOnPhone}", ct);
+                return new TransferResult(pkg, true, 0, "obb empty");
+            }
+            var pull = await _adb.PullAsync(phoneSerial, tarOnPhone, local, ct);
+            if (!pull.Success) return new TransferResult(pkg, false, size, "obb pull failed");
+            var push = await _adb.PushAsync(emuSerial, local, tarOnEmu, ct);
+            if (!push.Success) return new TransferResult(pkg, false, size, "obb push failed");
+
+            var ex = await _adb.ShellAsync(emuSerial,
+                $"mkdir -p /storage/emulated/0/Android/obb/{pkg} && cd /storage/emulated/0/Android/obb && tar -xf {tarOnEmu} && echo OK", ct);
+            await _adb.ShellAsync(emuSerial, $"rm -f {tarOnEmu}", ct);
+            await _adb.RootShellAsync(phoneSerial, $"rm -f {tarOnPhone}", ct);
+            if (ex.Combined.Contains("OK"))
+                return new TransferResult(pkg, true, size, "obb ok");
+            return new TransferResult(pkg, false, size, "obb extract failed");
+        }
+        finally
+        {
+            try { File.Delete(local); } catch { }
+        }
+    }
+
     public async Task<TransferResult> TransferExternalDataAsync(string phoneSerial, string emuSerial, string pkg, CancellationToken ct)
     {
         var tarOnPhone = $"/sdcard/{pkg}_ext.tar";

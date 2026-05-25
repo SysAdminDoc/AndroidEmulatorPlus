@@ -19,6 +19,7 @@ public sealed partial class MigrateViewModel : ObservableObject
     [ObservableProperty] private bool _doApk = true;
     [ObservableProperty] private bool _doInternal = true;
     [ObservableProperty] private bool _doExternal = true;
+    [ObservableProperty] private bool _doObb;
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private string _stepText = "";
     [ObservableProperty] private double _progressFraction;
@@ -163,6 +164,12 @@ public sealed partial class MigrateViewModel : ObservableObject
                     var r = await _mig.TransferExternalDataAsync(phone.Serial, emu.Serial, p.Package, ct);
                     totalBytes += r.SizeBytes;
                     if (r.Success && r.SizeBytes > 0) _log.Info($"ext ok {p.Package} ({r.SizeBytes / 1024 / 1024} MB)");
+                }
+                if (DoObb)
+                {
+                    var r = await _mig.TransferObbAsync(phone.Serial, emu.Serial, p.Package, ct);
+                    totalBytes += r.SizeBytes;
+                    if (r.Success && r.SizeBytes > 0) _log.Info($"obb ok {p.Package} ({r.SizeBytes / 1024 / 1024} MB)");
                 }
                 ok++;
             }

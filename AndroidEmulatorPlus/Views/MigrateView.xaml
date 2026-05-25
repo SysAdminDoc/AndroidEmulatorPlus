@@ -81,7 +81,8 @@
                 <WrapPanel>
                     <CheckBox Content="APKs" IsChecked="{Binding DoApk}" Margin="0,0,18,0"/>
                     <CheckBox Content="Internal data (/data/data)" IsChecked="{Binding DoInternal}" Margin="0,0,18,0"/>
-                    <CheckBox Content="External data (/sdcard/Android/data)" IsChecked="{Binding DoExternal}"/>
+                    <CheckBox Content="External data (/sdcard/Android/data)" IsChecked="{Binding DoExternal}" Margin="0,0,18,0"/>
+                    <CheckBox Content="OBB (game data — can be huge)" IsChecked="{Binding DoObb}" ToolTip="Copies /sdcard/Android/obb/&lt;pkg&gt; — opt-in because game OBBs are often multi-GB"/>
                 </WrapPanel>
                 <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
                     <TextBlock Text="Filter:" VerticalAlignment="Center" Foreground="{StaticResource SubtextBrush}"/>

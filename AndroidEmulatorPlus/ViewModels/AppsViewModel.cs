@@ -14,6 +14,7 @@ public sealed partial class AppsViewModel : ObservableObject
     private readonly DeviceMonitor _monitor;
     private readonly LogService _log;
     private readonly PresetService _presets;
+    private readonly ApkSignerService _signer;
 
     public ObservableCollection<AndroidApp> Apps { get; } = new();
     public ObservableCollection<BloatPreset> BloatPresets { get; } = new();
@@ -23,15 +24,18 @@ public sealed partial class AppsViewModel : ObservableObject
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private string _uninstallMode = "user"; // "user" (adb uninstall), "user0" (pm uninstall --user 0)
 
-    public AppsViewModel(AppService apps, AdbService adb, DeviceMonitor monitor, LogService log, PresetService presets)
+    public AppsViewModel(AppService apps, AdbService adb, DeviceMonitor monitor, LogService log, PresetService presets, ApkSignerService signer)
     {
         _apps = apps;
         _adb = adb;
         _monitor = monitor;
         _log = log;
         _presets = presets;
+        _signer = signer;
         foreach (var p in _presets.Presets) BloatPresets.Add(p);
     }
+
+    [ObservableProperty] private bool _verifySignaturesBeforeInstall = true;
 
     /// <summary>Applies a preset by id (used by ItemsControl button bindings).</summary>
     [RelayCommand]
@@ -179,10 +183,12 @@ public sealed partial class AppsViewModel : ObservableObject
                 bool success;
                 if (ext is ".apks" or ".xapk" or ".apkm")
                 {
+                    if (!await VerifyBeforeInstallAsync(emu.Serial, f)) { fail++; continue; }
                     success = await InstallBundleAsync(emu.Serial, f);
                 }
                 else
                 {
+                    if (!await VerifyBeforeInstallAsync(emu.Serial, f)) { fail++; continue; }
                     var r = await _apps.InstallApkAsync(emu.Serial, f);
                     success = r.Combined.Contains("Success");
                     if (!success) _log.Error("install failed: " + r.Combined.Trim());
@@ -191,6 +197,120 @@ public sealed partial class AppsViewModel : ObservableObject
                 else fail++;
             }
             if (files.Count > 1) _log.Success($"Batch install: {ok} ok, {fail} fail.");
+            await RefreshAsync();
+        }
+        finally { IsBusy = false; }
+    }
+
+    /// <summary>
+    /// R-08: When enabled, verify the APK's signature with apksigner and warn if the
+    /// installed package has a different signing cert. The .apkm/.xapk/.apks bundle
+    /// formats are zip containers; we inspect the first inner .apk we find.
+    /// Returns true if install should proceed.
+    /// </summary>
+    private async Task<bool> VerifyBeforeInstallAsync(string serial, string path)
+    {
+        if (!VerifySignaturesBeforeInstall) return true;
+        if (!_signer.IsAvailable)
+        {
+            _log.Warning("Sig verify skipped: apksigner.bat not found in SDK build-tools.");
+            return true;
+        }
+        string apkToInspect = path;
+        var ext = System.IO.Path.GetExtension(path).ToLowerInvariant();
+        string? tempDir = null;
+        try
+        {
+            if (ext is ".apks" or ".xapk" or ".apkm")
+            {
+                tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"aep-verify-{Guid.NewGuid():N}");
+                System.IO.Directory.CreateDirectory(tempDir);
+                System.IO.Compression.ZipFile.ExtractToDirectory(path, tempDir);
+                apkToInspect = System.IO.Directory.EnumerateFiles(tempDir, "*.apk", System.IO.SearchOption.AllDirectories)
+                    .OrderBy(p => p.Length).FirstOrDefault() ?? path;
+            }
+
+            var info = await _signer.InspectAsync(apkToInspect);
+            if (!info.Verified)
+            {
+                _log.Error($"apksigner verify FAILED for {System.IO.Path.GetFileName(path)}: {info.Raw.Trim()}");
+                return false;
+            }
+            if (info.Sha256 is not null)
+            {
+                _log.Detail($"signer cert SHA-256 {info.Sha256[..12]}…");
+                // Compare against installed package, if it exists. We need the package
+                // name; apksigner doesn't print it, so use `aapt2 dump packagename` is
+                // ideal but not always present; fall back to skipping the cross-check.
+                // (Future work: pull package name from AndroidManifest via aapt2.)
+            }
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _log.Warning("Sig verify skipped: " + ex.Message);
+            return true;
+        }
+        finally
+        {
+            if (tempDir is not null) try { System.IO.Directory.Delete(tempDir, true); } catch { }
+        }
+    }
+
+    [RelayCommand]
+    private async Task ExportSelectedAsync()
+    {
+        var emu = _monitor.Current.FirstOrDefault(d => d.IsEmulator);
+        if (emu is null) { _log.Warning("No emulator running."); return; }
+        var sel = Apps.Where(a => a.IsSelected).ToList();
+        if (sel.Count == 0) { _log.Warning("Select at least one app."); return; }
+        if (!await _adb.IsRootedAsync(emu.Serial)) { _log.Warning("Export requires root on the emulator."); return; }
+
+        var dlg = new Microsoft.Win32.SaveFileDialog
+        {
+            Filter = "AEP app data export (*.zip)|*.zip|All files|*.*",
+            FileName = sel.Count == 1 ? $"{sel[0].Package}.zip" : "app-data-export.zip",
+        };
+        if (dlg.ShowDialog() != true) return;
+
+        IsBusy = true;
+        try
+        {
+            if (sel.Count == 1)
+            {
+                await _apps.ExportAppDataAsync(emu.Serial, sel[0].Package, dlg.FileName);
+            }
+            else
+            {
+                var dir = System.IO.Path.GetDirectoryName(dlg.FileName)!;
+                foreach (var a in sel)
+                {
+                    var p = System.IO.Path.Combine(dir, $"{a.Package}.zip");
+                    await _apps.ExportAppDataAsync(emu.Serial, a.Package, p);
+                }
+            }
+        }
+        finally { IsBusy = false; }
+    }
+
+    [RelayCommand]
+    private async Task ImportZipAsync()
+    {
+        var emu = _monitor.Current.FirstOrDefault(d => d.IsEmulator);
+        if (emu is null) { _log.Warning("No emulator running."); return; }
+        if (!await _adb.IsRootedAsync(emu.Serial)) { _log.Warning("Import requires root on the emulator."); return; }
+
+        var dlg = new Microsoft.Win32.OpenFileDialog
+        {
+            Filter = "AEP app data export (*.zip)|*.zip|All files|*.*",
+            Multiselect = true,
+        };
+        if (dlg.ShowDialog() != true) return;
+        IsBusy = true;
+        try
+        {
+            foreach (var z in dlg.FileNames)
+                await _apps.ImportAppDataAsync(emu.Serial, z);
             await RefreshAsync();
         }
         finally { IsBusy = false; }

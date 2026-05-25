@@ -184,4 +184,97 @@ public sealed class AppService
         => _adb.InstallAsync(serial, apks, ct);
 
     // Preset bloat lists moved to Resources/bloat-presets.json + PresetService (B-04).
+
+    /// <summary>
+    /// R-05: Export /data/data/&lt;pkg&gt; from the emulator into a local .zip. Requires
+    /// root on the emulator. The zip contains a single top-level entry: the package's
+    /// data tarball, plus a metadata.json with the package name and emulator UID.
+    /// </summary>
+    public async Task<bool> ExportAppDataAsync(string serial, string pkg, string destZip, CancellationToken ct = default)
+    {
+        var staging = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "AndroidEmulatorPlus", "transfer", $"export-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(staging);
+        var remoteTar = $"/sdcard/aep-export-{pkg}.tar";
+        try
+        {
+            var tar = await _adb.RootShellAsync(serial,
+                $"cd /data/data && tar -cf {remoteTar} {pkg} && chmod 666 {remoteTar}", ct);
+            if (!tar.Success) { _log.Error("export tar failed: " + tar.Combined.Trim()); return false; }
+            var localTar = Path.Combine(staging, $"{pkg}.tar");
+            var pull = await _adb.PullAsync(serial, remoteTar, localTar, ct);
+            if (!pull.Success || !File.Exists(localTar)) { _log.Error("export pull failed."); return false; }
+
+            // Sidecar metadata so Import can restore against a different UID.
+            var uidR = await _adb.RootShellAsync(serial, $"stat -c %u /data/data/{pkg}", ct);
+            var uid = int.TryParse(uidR.StdOut.Trim(), out var u) ? u : -1;
+            var meta = $$"""
+                { "package": "{{pkg}}", "uid": {{uid}}, "exported": "{{DateTime.UtcNow:o}}", "version": 1 }
+                """;
+            File.WriteAllText(Path.Combine(staging, "metadata.json"), meta);
+
+            try { if (File.Exists(destZip)) File.Delete(destZip); } catch { }
+            ZipFile.CreateFromDirectory(staging, destZip);
+            _log.Success($"Exported {pkg} → {destZip} ({new FileInfo(destZip).Length / 1024 / 1024} MB).");
+            return true;
+        }
+        finally
+        {
+            try { await _adb.RootShellAsync(serial, $"rm -f {remoteTar}", ct); } catch { }
+            try { Directory.Delete(staging, true); } catch { }
+        }
+    }
+
+    /// <summary>
+    /// R-05: Restore a .zip produced by <see cref="ExportAppDataAsync"/> back into
+    /// /data/data/&lt;pkg&gt; on the emulator (root required). The metadata.json's UID is
+    /// re-mapped to whatever uid the package currently has on the target.
+    /// </summary>
+    public async Task<bool> ImportAppDataAsync(string serial, string zipPath, CancellationToken ct = default)
+    {
+        var staging = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "AndroidEmulatorPlus", "transfer", $"import-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(staging);
+        try
+        {
+            ZipFile.ExtractToDirectory(zipPath, staging);
+            var metaPath = Path.Combine(staging, "metadata.json");
+            if (!File.Exists(metaPath)) { _log.Error("Import: metadata.json missing in zip."); return false; }
+            using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(metaPath));
+            var pkg = doc.RootElement.GetProperty("package").GetString();
+            if (string.IsNullOrEmpty(pkg)) { _log.Error("Import: package field missing."); return false; }
+
+            var tar = Directory.EnumerateFiles(staging, "*.tar").FirstOrDefault();
+            if (tar is null) { _log.Error("Import: no tar inside zip."); return false; }
+
+            var remoteTar = $"/sdcard/aep-import-{pkg}.tar";
+            var push = await _adb.PushAsync(serial, tar, remoteTar, ct);
+            if (!push.Success) { _log.Error("Import push failed."); return false; }
+
+            await _adb.ShellAsync(serial, $"am force-stop {pkg}", ct);
+            var uidR = await _adb.RootShellAsync(serial, $"stat -c %u /data/data/{pkg}", ct);
+            if (!int.TryParse(uidR.StdOut.Trim(), out var uid))
+            {
+                _log.Error($"Import: package {pkg} not installed on this emulator. Install the APK first.");
+                return false;
+            }
+
+            var ex = await _adb.RootShellAsync(serial,
+                $"cd /data/data && tar -xf {remoteTar} && chown -R {uid}:{uid} /data/data/{pkg} && restorecon -R /data/data/{pkg} && echo OK", ct);
+            await _adb.RootShellAsync(serial, $"rm -f {remoteTar}", ct);
+            if (!ex.Combined.Contains("OK"))
+            {
+                _log.Error("Import extract failed: " + ex.Combined.Trim());
+                return false;
+            }
+            _log.Success($"Imported {pkg} (uid {uid}).");
+            return true;
+        }
+        finally
+        {
+            try { Directory.Delete(staging, true); } catch { }
+        }
+    }
 }

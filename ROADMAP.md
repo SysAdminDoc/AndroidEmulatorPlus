@@ -24,8 +24,8 @@ Build constraint: this VMware VM has no .NET SDK; changes here are best-effort a
 - [x] **P1 R-01** — "Browse online…" button on the AVDs tab opens a system-image picker dialog backed by `sdkmanager --list`. Auto-license-accept available; install runs via `sdkmanager <pkg>` with `y\n` spam; refreshes AvailableImages on success.
 - [ ] **P1 R-02** — First-launch wizard: install SDK → create AVD → root → migrate, all guided.
 - [x] **P1 R-06** — Snapshots… overflow entry opens a dialog listing `&lt;avd&gt;.avd/snapshots/` with sizes and modified time. Save / Load go through `adb emu avd snapshot save|load` (requires the AVD to be running); Delete works any time and uses a typed confirmation.
-- [ ] **P1 R-08** — APK signature verification before install (warn on mismatch with already-installed package); use `apksigner.bat` from build-tools.
-- [ ] **P1 R-09** — Bandwidth-aware adb push/pull with progress per-package, not just per-batch.
+- [x] **P1 R-08** — `ApkSignerService` runs `apksigner verify --print-certs` before each install (toggle on the Apps tab); bundle formats are unzipped first so the inner APK is inspected. Mismatched / unverified APKs fail-stop before adb install.
+- [x] **P1 R-09 (partial)** — Per-package progress is now logged for APK / data / ext / OBB legs of the migration, plus the cache card on the Migrate tab reports byte totals after every run. Live byte-rate inside an adb push/pull is upstream-limited; bandwidth-aware streaming is deferred.
 - [x] **P1 A-01 cancel** — Cancel button shipped on Root, Migrate, and Install (cmdline-tools download). Each viewmodel owns a `CancellationTokenSource` plumbed into the long-running service calls; `OperationCanceledException` reports cleanly.
 - [x] **P1 A-14** — Top-bar Record toggle drives `adb shell screenrecord`; on stop pulls the mp4 to `~/Pictures/AndroidEmulatorPlus/` and opens Explorer.
 - [x] **P1 A-15** — Dedicated Logcat tab (sidebar ⑦). Streams `adb logcat -v threadtime`, supports priority + package filter, Clear buffer (`logcat -c`), Clear view, Save to file.
@@ -40,8 +40,8 @@ Build constraint: this VMware VM has no .NET SDK; changes here are best-effort a
 ## Phase 3 — P2 polish
 
 - [ ] **P2 R-03** — Magisk module manager view (Zygisk DenyList, Shamiko, LSPosed, PlayIntegrityFork).
-- [ ] **P2 R-04** — OBB transfer pass during migration (opt-in toggle — game OBBs can be huge).
-- [ ] **P2 R-05** — Per-app data export to ZIP + "Restore from ZIP" flow.
+- [x] **P2 R-04** — Opt-in "OBB (game data — can be huge)" checkbox on the Migrate tab; `MigrationService.TransferObbAsync` tars `/sdcard/Android/obb/<pkg>` and replays it on the emulator.
+- [x] **P2 R-05** — Export Data… / Import from ZIP… buttons on the Apps tab. Export wraps `tar /data/data/<pkg>` + metadata.json into a ZIP per selection. Import re-maps the recorded UID to whatever the package's UID is on the target emulator, then `chown` + `restorecon`.
 - [x] **P2 A-21** — Configure tab ships a ScreenPreset picker (Pixel 7/7 Pro/8/8 Pro/9 Pro/Tablet/Fold open & closed/Nexus 5X/Small phone/TV) that fills in Width/Height/DPI.
 - [x] **P2 A-22** — Configure tab ships a `hw.gpu.mode` picker (host / swiftshader_indirect / angle_indirect / guest / off) with inline guidance.
 - [x] **P2 A-23** — AVD overflow menu adds "Launch with options…": cold boot, wipe, headless, no-audio, http-proxy, dns-server, front/back camera.

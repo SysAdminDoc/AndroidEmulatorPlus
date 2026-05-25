@@ -29,6 +29,8 @@
                         <TextBox Text="{Binding Filter, UpdateSourceTrigger=PropertyChanged}" Width="240" Margin="8,0,0,0"/>
                         <CheckBox Content="Include system" IsChecked="{Binding IncludeSystem}" Margin="16,0,0,0" VerticalAlignment="Center"/>
                         <CheckBox Content="Include disabled" IsChecked="{Binding IncludeDisabled}" Margin="12,0,0,0" VerticalAlignment="Center"/>
+                        <CheckBox Content="Verify signatures" IsChecked="{Binding VerifySignaturesBeforeInstall}" Margin="12,0,0,0" VerticalAlignment="Center"
+                                  ToolTip="apksigner verify --print-certs runs before each install (R-08)"/>
                     </StackPanel>
                     <StackPanel Grid.Column="1" Orientation="Horizontal">
                         <Button Content="Refresh" Style="{StaticResource FlatButton}" Command="{Binding RefreshCommand}"/>
@@ -96,6 +98,10 @@
                 <Button Content="✗ Uninstall Selected" Style="{StaticResource DangerButton}" Command="{Binding UninstallSelectedCommand}"/>
                 <Button Content="↺ Re-enable selected (user 0)" Style="{StaticResource FlatButton}" Command="{Binding ReinstallSelectedCommand}" Margin="8,0,0,0"
                         ToolTip="cmd package install-existing — only useful for apps removed via 'Disable for user 0'."/>
+                <Button Content="⤓ Export data…" Style="{StaticResource FlatButton}" Command="{Binding ExportSelectedCommand}" Margin="8,0,0,0"
+                        ToolTip="Tar /data/data/&lt;pkg&gt; per selected app into a .zip (root required)."/>
+                <Button Content="⤒ Import from ZIP…" Style="{StaticResource FlatButton}" Command="{Binding ImportZipCommand}" Margin="8,0,0,0"
+                        ToolTip="Restore a .zip produced by Export data into /data/data/&lt;pkg&gt; (root required, package must be installed)."/>
             </StackPanel>
         </StackPanel>
     </Grid>

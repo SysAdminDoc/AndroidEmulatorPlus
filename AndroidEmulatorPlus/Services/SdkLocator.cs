@@ -12,6 +12,7 @@ public sealed class SdkLocator
     public string? AvdManagerBat { get; private set; }
     public string? SdkManagerBat { get; private set; }
     public string? AvdHome { get; private set; }
+    public string? ApkSignerBat { get; private set; }
 
     public SdkLocator()
     {
@@ -43,6 +44,19 @@ public sealed class SdkLocator
                 Path.Combine(SdkRoot, "cmdline-tools", "bin", "sdkmanager.bat"),
                 Path.Combine(SdkRoot, "tools", "bin", "sdkmanager.bat"),
             });
+
+            // apksigner.bat lives under build-tools/<version>/; pick the highest-versioned
+            // entry that actually has the script. build-tools are SemVer-ish so a simple
+            // string-descending sort works.
+            var buildToolsRoot = Path.Combine(SdkRoot, "build-tools");
+            if (Directory.Exists(buildToolsRoot))
+            {
+                ApkSignerBat = Directory.EnumerateDirectories(buildToolsRoot)
+                    .Select(d => Path.Combine(d, "apksigner.bat"))
+                    .Where(File.Exists)
+                    .OrderByDescending(p => Path.GetFileName(Path.GetDirectoryName(p)), StringComparer.OrdinalIgnoreCase)
+                    .FirstOrDefault();
+            }
         }
 
         AvdHome = Path.Combine(

@@ -41,6 +41,7 @@ public partial class App : Application
         sc.AddSingleton<SdkmanagerService>();
         sc.AddSingleton<PresetService>();
         sc.AddSingleton<SnapshotService>();
+        sc.AddSingleton<ApkSignerService>();
         sc.AddSingleton<ScreenRecordService>();
         sc.AddSingleton<DeviceMonitor>();
 
