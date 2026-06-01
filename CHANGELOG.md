@@ -170,6 +170,10 @@ All notable changes to this project will be documented here. Format follows [Kee
 
 ### Docs
 
+- Consolidated planning docs: active work remains in `ROADMAP.md`, shipped
+  roadmap history is summarized in `COMPLETED.md`, and research evidence is
+  summarized in `RESEARCH_REPORT.md` with the previous feature plan archived
+  under `docs/archive/research/`.
 - README rewritten for v0.2.0 (C-17 partial). Now reflects the 8-tab surface
   (Logcat ⑦ + Console ⑧ added), the supply-chain hardening tiers, keyboard
   shortcuts, the persistence-paths table, and the live theme swap. Includes

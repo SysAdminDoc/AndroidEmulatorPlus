@@ -107,6 +107,12 @@ extraction, system-image sort, SHA-256 helper, `OrderBaseFirst`, AVD
 duplicate file-tree contract, debloat-preset merge, `allowBackup`
 parsing, known-hashes manifest schema.
 
+## Project planning
+
+- [ROADMAP.md](ROADMAP.md) - active checklist and release blockers.
+- [COMPLETED.md](COMPLETED.md) - shipped roadmap history.
+- [RESEARCH_REPORT.md](RESEARCH_REPORT.md) - research summary and archive index.
+
 ## Typical workflow
 
 ```

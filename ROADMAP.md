@@ -1,9 +1,9 @@
 # Roadmap
 
 Single source of truth for outstanding work. Completed implementation history lives
-in [CHANGELOG.md](CHANGELOG.md). Historical audit evidence and feature research live
-in [RESEARCH_FEATURE_PLAN.md](RESEARCH_FEATURE_PLAN.md), but that file no longer
-owns a separate checklist.
+in [COMPLETED.md](COMPLETED.md) and [CHANGELOG.md](CHANGELOG.md). Historical audit
+evidence and feature research live in [RESEARCH_REPORT.md](RESEARCH_REPORT.md),
+but that report no longer owns a separate checklist.
 
 Tag legend:
 
@@ -54,21 +54,7 @@ Tag legend:
   UI-platform migration, not a WPF patch; define acceptance criteria before
   implementation.
 
-## Recently Completed
+## Planning Archive
 
-- 2026-05-25: premium UI/product polish pass covering shared control states,
-  keyboard focus rings, calmer app chrome, concise top-bar status, professional
-  text-only action labels, responsive wrapping action rows, Apps/Migrate/Logcat
-  empty states, and de-noised status microcopy. See [CHANGELOG.md](CHANGELOG.md).
-- 2026-05-25: deep hardening pass for shell quoting and identifier validation,
-  bundle signature verification, Magisk latest-release downloads, module zip
-  validation, app-data tar import/migration safety, refresh race handling,
-  settings normalization, process-output draining, media cleanup, AVD/snapshot
-  name guards, config clamping, and focused regression tests. See
-  [CHANGELOG.md](CHANGELOG.md) for details.
-- 2026-05-25: v0.2.0 code-side release prep, rootAVD pinning, known-hash
-  manifest, bundle base-APK ordering, proxy wiring, signer mismatch warning,
-  no-backup migration preflight, application icon, Magisk module manager, test
-  coverage, process-runner consolidation, live theme switching, welcome wizard
-  improvements, auto-scrcpy, atomic settings writes, and bundle installer
-  extraction. See [CHANGELOG.md](CHANGELOG.md) for details.
+- `docs/archive/research/RESEARCH_FEATURE_PLAN.md` preserves the pass-3 feature
+  research and audit evidence that preceded this consolidated planning set.
