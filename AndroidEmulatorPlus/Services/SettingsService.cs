@@ -35,6 +35,10 @@ public sealed class AppSettings
     /// <summary>C-16: when true, launch scrcpy automatically after an AVD boots.</summary>
     [JsonPropertyName("autoScrcpy")]
     public bool AutoScrcpy { get; set; }
+
+    /// <summary>When true, installed builds check GitHub Releases for Velopack updates on startup.</summary>
+    [JsonPropertyName("autoUpdateChecks")]
+    public bool AutoUpdateChecks { get; set; } = true;
 }
 
 public sealed class SettingsService

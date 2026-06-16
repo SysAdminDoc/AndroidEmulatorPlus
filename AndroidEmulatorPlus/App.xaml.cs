@@ -25,6 +25,7 @@ public partial class App : Application
         sc.AddSingleton<LogService>();
         sc.AddSingleton<SettingsService>();
         sc.AddSingleton<ThemeService>();
+        sc.AddSingleton<UpdateService>();
         sc.AddSingleton<SdkLocator>();
         sc.AddSingleton<AdbService>();
         sc.AddSingleton<EmulatorService>();

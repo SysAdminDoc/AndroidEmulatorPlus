@@ -79,23 +79,60 @@ jobs:
         with:
           dotnet-version: 9.0.x
 
+      - name: Resolve version
+        id: version
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $version = $tag -replace '^v', ''
+          "version=$version" >> $env:GITHUB_OUTPUT
+        shell: pwsh
+
       - name: Publish (self-contained, x64)
         run: |
           dotnet publish AndroidEmulatorPlus/AndroidEmulatorPlus.csproj `
             -c Release -r win-x64 --self-contained true `
             -p:PublishSingleFile=true `
             -p:IncludeNativeLibrariesForSelfExtract=true `
-            -o publish/sc
+            -o publish/velopack
         shell: pwsh
 
-      - name: Zip release
+      - name: Package Velopack release
         run: |
-          Compress-Archive -Path publish/sc/* `
-            -DestinationPath AndroidEmulatorPlus-${{ github.ref_name }}-win-x64.zip
+          dotnet tool install -g vpk --version 1.2.0
+          $vpk = Join-Path $env:USERPROFILE ".dotnet\tools\vpk.exe"
+
+          & $vpk download github `
+            --repoUrl https://github.com/${{ github.repository }} `
+            --token ${{ secrets.GITHUB_TOKEN }} `
+            --outputDir Releases
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "No previous Velopack release found; continuing with a full package."
+          }
+
+          & $vpk pack `
+            --packId SysAdminDoc.AndroidEmulatorPlus `
+            --packTitle AndroidEmulatorPlus `
+            --packAuthors SysAdminDoc `
+            --packVersion ${{ steps.version.outputs.version }} `
+            --packDir publish/velopack `
+            --mainExe AndroidEmulatorPlus.exe `
+            --runtime win-x64 `
+            --icon AndroidEmulatorPlus/Assets/aep.ico `
+            --outputDir Releases `
+            --yes
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
         shell: pwsh
 
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: AndroidEmulatorPlus-*.zip
-          generate_release_notes: true
+      - name: Upload Velopack release
+        run: |
+          $vpk = Join-Path $env:USERPROFILE ".dotnet\tools\vpk.exe"
+          & $vpk upload github `
+            --repoUrl https://github.com/${{ github.repository }} `
+            --token ${{ secrets.GITHUB_TOKEN }} `
+            --outputDir Releases `
+            --publish `
+            --merge `
+            --releaseName "AndroidEmulatorPlus ${{ github.ref_name }}" `
+            --tag ${{ github.ref_name }}
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        shell: pwsh

@@ -35,11 +35,13 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly ScreenRecordService _record;
     private readonly SettingsService _settings;
     private readonly ScrcpyService _scrcpy;
+    private readonly UpdateService _updates;
 
     public MainViewModel(LogService log,
         AvdViewModel avd, RootViewModel root, MigrateViewModel mig,
         AppsViewModel apps, ConfigViewModel cfg, InstallViewModel install, LogcatViewModel logcat, ConsoleViewModel console,
-        SdkLocator sdk, DeviceMonitor devices, AdbService adb, ScreenRecordService record, SettingsService settings, ScrcpyService scrcpy)
+        SdkLocator sdk, DeviceMonitor devices, AdbService adb, ScreenRecordService record,
+        SettingsService settings, ScrcpyService scrcpy, UpdateService updates)
     {
         Log = log;
         AvdVm = avd;
@@ -56,6 +58,7 @@ public sealed partial class MainViewModel : ObservableObject
         _record = record;
         _settings = settings;
         _scrcpy = scrcpy;
+        _updates = updates;
         _devices.Changed += OnDevicesChanged;
         RefreshSdk();
         // If the SDK isn't there yet, land on Install rather than the empty AVDs list.
@@ -66,7 +69,7 @@ public sealed partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void OpenSettings()
     {
-        var dlg = new Views.SettingsDialog(_settings)
+        var dlg = new Views.SettingsDialog(_settings, _updates)
         {
             Owner = System.Windows.Application.Current?.MainWindow,
         };

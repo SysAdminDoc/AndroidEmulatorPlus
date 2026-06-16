@@ -87,6 +87,20 @@
 
         <Border Style="{StaticResource Card}">
             <StackPanel>
+                <TextBlock Style="{StaticResource SectionHeader}" Text="Updates"/>
+                <CheckBox x:Name="AutoUpdatesBox" Content="Check for app updates on startup" />
+                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                    <Button x:Name="CheckUpdatesButton" Content="Check now" Style="{StaticResource FlatButton}" Click="CheckUpdates_Click"/>
+                    <Button x:Name="RestartForUpdateButton" Content="Download and restart" Style="{StaticResource PrimaryButton}" Margin="10,0,0,0" Click="RestartForUpdate_Click"/>
+                </StackPanel>
+                <TextBlock x:Name="UpdateStatusText" Foreground="{DynamicResource OverlayBrush}" FontSize="11" Margin="0,6,0,0" TextWrapping="Wrap">
+                    Installed copies use GitHub Releases for Velopack update packages.
+                </TextBlock>
+            </StackPanel>
+        </Border>
+
+        <Border Style="{StaticResource Card}">
+            <StackPanel>
                 <TextBlock Style="{StaticResource SectionHeader}" Text="Help"/>
                 <StackPanel Orientation="Horizontal">
                     <Button Content="Show welcome wizard…" Style="{StaticResource FlatButton}" Click="ShowWizard_Click"/>

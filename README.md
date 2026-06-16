@@ -51,8 +51,8 @@ pills:
 
 **Top bar quick actions:** 📷 Screenshot · 🎥 Record (start/stop) · 🖥 scrcpy
 (launch external `scrcpy.exe`) · ⚙ Settings (theme, SDK root override,
-media output dir, HTTP proxy, auto-scrcpy, show wizard, telemetry-off
-statement).
+media output dir, HTTP proxy, auto-scrcpy, Velopack updates, show wizard,
+telemetry-off statement).
 
 A live device-monitor in the top bar shows whether a phone and an emulator
 are currently attached over `adb`.
@@ -94,7 +94,9 @@ dotnet publish AndroidEmulatorPlus/AndroidEmulatorPlus.csproj \
 ```
 
 The CI workflow at `.github/workflows/build.yml` runs the same on
-`windows-latest` and attaches the artifact on every `v*` tag push.
+`windows-latest`. On every `v*` tag push it packages a Velopack installer,
+portable bundle, full package, delta package when a previous release exists,
+and the `releases.win.json` feed used by in-app updates.
 
 ## Tests
 
@@ -167,6 +169,9 @@ The app only reaches out to:
 - `https://gitlab.com/newbit/rootAVD.git` — `git clone` of the patcher.
 - `https://github.com/<module-author>/<repo>/releases/latest` — only if you
   install a Magisk module from the curated catalog.
+- `https://github.com/SysAdminDoc/AndroidEmulatorPlus/releases` — installed
+  copies check and download Velopack update packages when update checks are
+  enabled in Settings.
 
 All traffic is HTTPS. No telemetry is sent, no accounts are required, and no
 data ever leaves your machine. Crash details (unhandled exceptions only) are
@@ -177,7 +182,7 @@ Settings dialog has a "no telemetry" reminder card.
 
 | Path | Purpose |
 |---|---|
-| `%LOCALAPPDATA%\AndroidEmulatorPlus\settings.json` | Theme, SDK root override, media dir, HTTP proxy, auto-scrcpy, wizard-seen |
+| `%LOCALAPPDATA%\AndroidEmulatorPlus\settings.json` | Theme, SDK root override, media dir, HTTP proxy, auto-scrcpy, update checks, wizard-seen |
 | `%LOCALAPPDATA%\AndroidEmulatorPlus\logs\app-YYYYMMDD.log` | Rolling daily log mirror (kept 14 days) |
 | `%LOCALAPPDATA%\AndroidEmulatorPlus\crash.log` | Unhandled-exception trace |
 | `%LOCALAPPDATA%\AndroidEmulatorPlus\cache\` | rootAVD clone + downloaded Magisk APK |

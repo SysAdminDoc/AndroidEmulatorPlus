@@ -12,14 +12,16 @@ public partial class MainWindow : Window
     private readonly SettingsService _settings;
     private readonly SdkLocator _sdk;
     private readonly AvdService _avds;
+    private readonly UpdateService _updates;
 
-    public MainWindow(LogService log, MainViewModel vm, SettingsService settings, SdkLocator sdk, AvdService avds)
+    public MainWindow(LogService log, MainViewModel vm, SettingsService settings, SdkLocator sdk, AvdService avds, UpdateService updates)
     {
         _log = log;
         _vm = vm;
         _settings = settings;
         _sdk = sdk;
         _avds = avds;
+        _updates = updates;
         InitializeComponent();
         DataContext = vm;
         // Auto-scroll the log to the bottom as entries arrive.
@@ -39,15 +41,27 @@ public partial class MainWindow : Window
         // R-02 first-launch wizard: show once when there is no settings.json, no SDK,
         // or no AVDs yet. The user can dismiss with 'Don't show again' to persist
         // HasSeenWizard = true.
-        if (_settings.Current.HasSeenWizard) return;
+        if (_settings.Current.HasSeenWizard)
+        {
+            StartBackgroundUpdateCheck();
+            return;
+        }
         if (_sdk.IsReady && _avds.List().Count > 0)
         {
             _settings.Current.HasSeenWizard = true;
             _settings.Save();
+            StartBackgroundUpdateCheck();
             return;
         }
         var dlg = new Views.WelcomeDialog(_vm, _settings, _sdk, _avds) { Owner = this };
         dlg.ShowDialog();
+        StartBackgroundUpdateCheck();
+    }
+
+    private void StartBackgroundUpdateCheck()
+    {
+        if (!_settings.Current.AutoUpdateChecks) return;
+        _ = Task.Run(() => _updates.CheckAndDownloadAsync(restart: false));
     }
 
     private void ClearLog_Click(object sender, RoutedEventArgs e) => _log.Clear();

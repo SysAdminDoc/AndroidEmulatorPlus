@@ -9,10 +9,12 @@ namespace AndroidEmulatorPlus.Views;
 public partial class SettingsDialog : Window
 {
     private readonly SettingsService _settings;
+    private readonly UpdateService _updates;
 
-    public SettingsDialog(SettingsService settings)
+    public SettingsDialog(SettingsService settings, UpdateService updates)
     {
         _settings = settings;
+        _updates = updates;
         InitializeComponent();
         // Bind the current values into controls (without two-way binding so Cancel is meaningful).
         foreach (ComboBoxItem item in ThemeBox.Items)
@@ -24,6 +26,7 @@ public partial class SettingsDialog : Window
         MediaDirBox.Text = _settings.Current.MediaDir ?? "";
         ProxyBox.Text = _settings.Current.HttpProxy ?? "";
         AutoScrcpyBox.IsChecked = _settings.Current.AutoScrcpy;
+        AutoUpdatesBox.IsChecked = _settings.Current.AutoUpdateChecks;
     }
 
     private void BrowseSdk_Click(object sender, RoutedEventArgs e)
@@ -66,6 +69,7 @@ public partial class SettingsDialog : Window
         _settings.Current.MediaDir = string.IsNullOrWhiteSpace(MediaDirBox.Text) ? null : MediaDirBox.Text.Trim();
         _settings.Current.HttpProxy = proxy;
         _settings.Current.AutoScrcpy = AutoScrcpyBox.IsChecked == true;
+        _settings.Current.AutoUpdateChecks = AutoUpdatesBox.IsChecked == true;
         _settings.Save();
         // C-12: live theme swap via ThemeService (also persists the chosen theme).
         if (themeChanged && App.Services.GetService(typeof(ThemeService)) is ThemeService theme)
@@ -75,6 +79,31 @@ public partial class SettingsDialog : Window
     }
 
     private void Cancel_Click(object sender, RoutedEventArgs e) { DialogResult = false; Close(); }
+
+    private async void CheckUpdates_Click(object sender, RoutedEventArgs e)
+        => await RunUpdateCheckAsync(restart: false);
+
+    private async void RestartForUpdate_Click(object sender, RoutedEventArgs e)
+        => await RunUpdateCheckAsync(restart: true);
+
+    private async Task RunUpdateCheckAsync(bool restart)
+    {
+        CheckUpdatesButton.IsEnabled = false;
+        RestartForUpdateButton.IsEnabled = false;
+        UpdateStatusText.Text = restart
+            ? "Checking for updates before restart..."
+            : "Checking for updates...";
+        try
+        {
+            var result = await _updates.CheckAndDownloadAsync(restart);
+            UpdateStatusText.Text = result.Message;
+        }
+        finally
+        {
+            CheckUpdatesButton.IsEnabled = true;
+            RestartForUpdateButton.IsEnabled = true;
+        }
+    }
 
     /// <summary>C-10: reopen the first-launch wizard from Settings.</summary>
     private void ShowWizard_Click(object sender, RoutedEventArgs e)
