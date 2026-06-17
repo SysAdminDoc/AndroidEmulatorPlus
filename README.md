@@ -1,6 +1,6 @@
 # AndroidEmulatorPlus
 
-[![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](https://github.com/SysAdminDoc/AndroidEmulatorPlus/releases)
+[![Version](https://img.shields.io/badge/version-0.2.1-blue.svg)](https://github.com/SysAdminDoc/AndroidEmulatorPlus/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-lightgrey.svg)](#)
 [![.NET](https://img.shields.io/badge/.NET-9.0-blueviolet.svg)](#)
@@ -23,7 +23,7 @@ pills:
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────┐
-│ AndroidEmulatorPlus v0.2.0  SDK ✓ … 📱 phone …  💻 emu … 📷 🎥 🖥 ⚙       │
+│ AndroidEmulatorPlus v0.2.1  SDK ✓ … 📱 phone …  💻 emu … 📷 🎥 🖥 ⚙       │
 ├────────────┬─────────────────────────────────────────────────────────────────┤
 │ ① Install  │                                                                 │
 │ ② AVDs     │                                                                 │
@@ -49,7 +49,7 @@ pills:
 | **⑦ Logcat** | Dedicated tab streaming `adb logcat -v threadtime` from the attached emulator with priority + package filters. Clear buffer (`logcat -c`) / Clear view / Save to file. Virtualizing 5000-line ring. |
 | **⑧ Console** | Emulator-console (`adb emu …`) sandbox: GPS (`geo fix`), battery (capacity + status), telephony (`gsm call`, `sms send`), network condition presets, manual clipboard pull/push, free-form command field. |
 
-**Top bar quick actions:** 📷 Screenshot · 🎥 Record (start/stop) · 🖥 scrcpy
+**Top bar quick actions:** Screenshot · Record (start/stop) · Mirror (scrcpy)
 (launch external `scrcpy.exe`) · ⚙ Settings (theme, SDK root override,
 media output dir, HTTP proxy, auto-scrcpy, Velopack updates, show wizard,
 telemetry-off statement).
@@ -121,8 +121,8 @@ parsing, known-hashes manifest schema.
 1. ① Install   →  ensures SDK + cmdline-tools + licenses
 2. ② AVDs      →  Browse online… → install a Google Play system image
                   → Create "MyEmulator" → Launch → let Play Store sign in
-3. ③ Root      →  Root with Latest Magisk → Cold Boot → Verify
-                  → Modules… → Shamiko + LSPosed
+3. ③ Root      →  Root with latest Magisk → Cold Boot → Verify
+                  → Modules → Shamiko + LSPosed
 4. ④ Migrate   →  pair phone → pick packages → Start (3-10 minutes)
 5. ⑤ Apps      →  Verify signatures on, drop APKs to install,
                   preset-debloat what you don't want
@@ -130,15 +130,6 @@ parsing, known-hashes manifest schema.
 7. ⑦ Logcat    →  watch for app errors during/after migration
 8. ⑧ Console   →  spoof GPS / battery / network for testing
 ```
-
-## Keyboard shortcuts
-
-| Keys | Action |
-|---|---|
-| `Ctrl+1` … `Ctrl+8` | Switch to sidebar section 1–8 |
-| `F5` | Refresh the active tab |
-| `Ctrl+R` | Screenshot the attached emulator |
-| `Ctrl+L` | Clear the log panel |
 
 ## Supply-chain hardening
 

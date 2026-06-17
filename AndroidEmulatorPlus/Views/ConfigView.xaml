@@ -11,7 +11,8 @@
             <Border Style="{StaticResource Card}">
                 <StackPanel>
                     <TextBlock Style="{StaticResource SectionHeader}" Text="Target AVD"/>
-                    <ComboBox ItemsSource="{Binding Avds}" SelectedItem="{Binding Selected}" DisplayMemberPath="Name"/>
+                    <ComboBox ItemsSource="{Binding Avds}" SelectedItem="{Binding Selected}" DisplayMemberPath="Name"
+                              AutomationProperties.Name="Target AVD"/>
                 </StackPanel>
             </Border>
 
@@ -33,24 +34,30 @@
                             <RowDefinition/>
                         </Grid.RowDefinitions>
 
-                        <TextBlock Text="RAM (MB)" VerticalAlignment="Center" Foreground="{DynamicResource SubtextBrush}"/>
-                        <Slider Grid.Column="1" Minimum="1024" Maximum="16384" SmallChange="256" LargeChange="1024" Value="{Binding RamMb}" VerticalAlignment="Center"/>
+                        <TextBlock Text="RAM (MB)" VerticalAlignment="Center" Style="{StaticResource FieldLabel}"/>
+                        <Slider Grid.Column="1" Minimum="1024" Maximum="16384" SmallChange="256" LargeChange="1024" Value="{Binding RamMb}" VerticalAlignment="Center"
+                                AutomationProperties.Name="RAM in megabytes"/>
                         <TextBlock Grid.Column="2" Text="{Binding RamMb}" VerticalAlignment="Center" HorizontalAlignment="Right"/>
 
-                        <TextBlock Grid.Row="1" Text="CPU cores" VerticalAlignment="Center" Foreground="{DynamicResource SubtextBrush}" Margin="0,8,0,0"/>
-                        <Slider Grid.Row="1" Grid.Column="1" Minimum="1" Maximum="16" Value="{Binding Cores}" VerticalAlignment="Center" Margin="0,8,0,0"/>
+                        <TextBlock Grid.Row="1" Text="CPU cores" VerticalAlignment="Center" Style="{StaticResource FieldLabel}" Margin="0,8,0,0"/>
+                        <Slider Grid.Row="1" Grid.Column="1" Minimum="1" Maximum="16" Value="{Binding Cores}" VerticalAlignment="Center" Margin="0,8,0,0"
+                                AutomationProperties.Name="CPU cores"/>
                         <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding Cores}" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,8,0,0"/>
 
-                        <TextBlock Grid.Row="2" Text="Disk (GB)" VerticalAlignment="Center" Foreground="{DynamicResource SubtextBrush}" Margin="0,8,0,0"/>
-                        <Slider Grid.Row="2" Grid.Column="1" Minimum="8" Maximum="256" Value="{Binding DiskGb}" VerticalAlignment="Center" Margin="0,8,0,0"/>
+                        <TextBlock Grid.Row="2" Text="Disk (GB)" VerticalAlignment="Center" Style="{StaticResource FieldLabel}" Margin="0,8,0,0"/>
+                        <Slider Grid.Row="2" Grid.Column="1" Minimum="8" Maximum="256" Value="{Binding DiskGb}" VerticalAlignment="Center" Margin="0,8,0,0"
+                                AutomationProperties.Name="Disk size in gigabytes"/>
                         <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding DiskGb}" VerticalAlignment="Center" HorizontalAlignment="Right" Margin="0,8,0,0"/>
 
-                        <TextBlock Grid.Row="3" Text="Width" VerticalAlignment="Center" Foreground="{DynamicResource SubtextBrush}" Margin="0,8,0,0"/>
-                        <TextBox  Grid.Row="3" Grid.Column="1" Text="{Binding ScreenW}" Margin="0,8,0,0"/>
-                        <TextBlock Grid.Row="4" Text="Height" VerticalAlignment="Center" Foreground="{DynamicResource SubtextBrush}" Margin="0,8,0,0"/>
-                        <TextBox  Grid.Row="4" Grid.Column="1" Text="{Binding ScreenH}" Margin="0,8,0,0"/>
-                        <TextBlock Grid.Row="5" Text="DPI" VerticalAlignment="Center" Foreground="{DynamicResource SubtextBrush}" Margin="0,8,0,0"/>
-                        <TextBox  Grid.Row="5" Grid.Column="1" Text="{Binding Dpi}" Margin="0,8,0,0"/>
+                        <TextBlock Grid.Row="3" Text="Width" VerticalAlignment="Center" Style="{StaticResource FieldLabel}" Margin="0,8,0,0"/>
+                        <TextBox  Grid.Row="3" Grid.Column="1" Text="{Binding ScreenW}" Margin="0,8,0,0"
+                                  AutomationProperties.Name="Screen width"/>
+                        <TextBlock Grid.Row="4" Text="Height" VerticalAlignment="Center" Style="{StaticResource FieldLabel}" Margin="0,8,0,0"/>
+                        <TextBox  Grid.Row="4" Grid.Column="1" Text="{Binding ScreenH}" Margin="0,8,0,0"
+                                  AutomationProperties.Name="Screen height"/>
+                        <TextBlock Grid.Row="5" Text="DPI" VerticalAlignment="Center" Style="{StaticResource FieldLabel}" Margin="0,8,0,0"/>
+                        <TextBox  Grid.Row="5" Grid.Column="1" Text="{Binding Dpi}" Margin="0,8,0,0"
+                                  AutomationProperties.Name="Screen DPI"/>
                     </Grid>
                 </StackPanel>
             </Border>
@@ -63,11 +70,12 @@
                             <ColumnDefinition Width="120"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Text="Device" VerticalAlignment="Center" Foreground="{DynamicResource SubtextBrush}"/>
-                        <ComboBox Grid.Column="1" ItemsSource="{Binding ScreenPresets}" SelectedItem="{Binding ScreenPreset}"/>
+                        <TextBlock Text="Device" VerticalAlignment="Center" Style="{StaticResource FieldLabel}"/>
+                        <ComboBox Grid.Column="1" ItemsSource="{Binding ScreenPresets}" SelectedItem="{Binding ScreenPreset}"
+                                  AutomationProperties.Name="Screen preset"/>
                     </Grid>
                     <TextBlock Foreground="{DynamicResource OverlayBrush}" FontSize="11" Margin="0,6,0,0">
-                        Picking a preset overwrites the Width / Height / DPI fields above.
+                        Picking a preset updates Width, Height, and DPI above.
                     </TextBlock>
                 </StackPanel>
             </Border>
@@ -80,8 +88,9 @@
                             <ColumnDefinition Width="120"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Text="hw.gpu.mode" VerticalAlignment="Center" Foreground="{DynamicResource SubtextBrush}" FontFamily="Cascadia Mono"/>
-                        <ComboBox Grid.Column="1" ItemsSource="{Binding GpuModes}" SelectedItem="{Binding GpuMode}"/>
+                        <TextBlock Text="hw.gpu.mode" VerticalAlignment="Center" Style="{StaticResource FieldLabel}" FontFamily="Cascadia Mono"/>
+                        <ComboBox Grid.Column="1" ItemsSource="{Binding GpuModes}" SelectedItem="{Binding GpuMode}"
+                                  AutomationProperties.Name="GPU mode"/>
                     </Grid>
                     <TextBlock Foreground="{DynamicResource OverlayBrush}" FontSize="11" Margin="0,6,0,0" TextWrapping="Wrap">
                         <Run FontWeight="SemiBold">host</Run>: native GPU passthrough — fastest on a real desktop.
@@ -103,11 +112,11 @@
             <Border Style="{StaticResource Card}">
                 <StackPanel>
                     <TextBlock Style="{StaticResource SectionHeader}" Text="Apply"/>
-                    <StackPanel Orientation="Horizontal">
-                        <Button Content="Save config" Style="{StaticResource PrimaryButton}" Command="{Binding ApplyCommand}"/>
-                        <Button Content="Resize disk only" Style="{StaticResource FlatButton}" Command="{Binding ResizeDiskCommand}" CommandParameter="resize" Margin="8,0,0,0"/>
-                        <Button Content="Resize + Wipe Data" Style="{StaticResource DangerButton}" Command="{Binding ResizeDiskCommand}" CommandParameter="wipe" Margin="8,0,0,0"/>
-                    </StackPanel>
+                    <WrapPanel Margin="0,0,-8,-8">
+                        <Button Content="Save config" Style="{StaticResource PrimaryButton}" Command="{Binding ApplyCommand}" Margin="0,0,8,8"/>
+                        <Button Content="Resize disk file" Style="{StaticResource FlatButton}" Command="{Binding ResizeDiskCommand}" CommandParameter="resize" Margin="0,0,8,8"/>
+                        <Button Content="Resize and wipe data" Style="{StaticResource DangerButton}" Command="{Binding ResizeDiskCommand}" CommandParameter="wipe" Margin="0,0,8,8"/>
+                    </WrapPanel>
                     <TextBlock Foreground="{DynamicResource OverlayBrush}" FontSize="12" Margin="0,8,0,0" TextWrapping="Wrap">
                         Resize-only grows the qcow2 file but Android's ext4 won't auto-expand — apps still see the old partition size.
                         Resize + Wipe Data deletes overlays so the partition recreates at the new size on next boot.

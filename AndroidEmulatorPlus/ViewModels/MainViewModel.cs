@@ -63,7 +63,7 @@ public sealed partial class MainViewModel : ObservableObject
         RefreshSdk();
         // If the SDK isn't there yet, land on Install rather than the empty AVDs list.
         if (!_sdk.IsReady) _activeSection = "Install";
-        Log.Info("AndroidEmulatorPlus v0.2.0 ready.");
+        Log.Info("AndroidEmulatorPlus v0.2.1 ready.");
     }
 
     [RelayCommand]
@@ -168,7 +168,7 @@ public sealed partial class MainViewModel : ObservableObject
         _scrcpy.Launch(emu.Serial);
     }
 
-    /// <summary>F5 — refresh whatever tab is in focus.</summary>
+    /// <summary>Refresh whatever tab is currently active.</summary>
     [RelayCommand]
     private void RefreshActive()
     {
@@ -185,7 +185,7 @@ public sealed partial class MainViewModel : ObservableObject
         }
     }
 
-    /// <summary>Ctrl+L — clear the in-app log panel.</summary>
+    /// <summary>Clear the in-app log panel.</summary>
     [RelayCommand]
     private void ClearLog() => Log.Clear();
 

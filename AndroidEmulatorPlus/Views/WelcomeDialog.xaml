@@ -16,9 +16,9 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <TextBlock FontSize="20" FontWeight="SemiBold" Foreground="{DynamicResource LavenderBrush}" Text="Welcome to AndroidEmulatorPlus"/>
+        <TextBlock FontSize="20" FontWeight="SemiBold" Foreground="{DynamicResource LavenderBrush}" Text="Set up AndroidEmulatorPlus"/>
         <TextBlock Grid.Row="1" Foreground="{DynamicResource SubtextBrush}" TextWrapping="Wrap" Margin="0,4,0,12">
-            This wizard walks through the four-step flow the app is built around. Each step has a button that jumps to the matching tab — close the wizard any time to explore on your own.
+            This setup guide follows the four-step flow the app is built around. Each step opens the matching tab; close it any time to explore on your own.
         </TextBlock>
 
         <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
@@ -27,7 +27,7 @@
                     <StackPanel>
                         <TextBlock Style="{StaticResource SectionHeader}" Text="1. Install / SDK"/>
                         <TextBlock Foreground="{DynamicResource SubtextBrush}" TextWrapping="Wrap">
-                            If you don't have the Android SDK yet, the Install tab can fetch the command-line tools (~150 MB). Then "Browse online…" on the AVDs tab installs a system image. The wizard's first job is to make sure those pieces exist.
+                            If you do not have the Android SDK yet, the Install tab can fetch the command-line tools. Then "Browse online..." on the AVDs tab installs a system image.
                         </TextBlock>
                         <TextBlock x:Name="SdkStatus" Foreground="{DynamicResource YellowBrush}" Margin="0,6,0,0" FontWeight="SemiBold"/>
                         <Button Content="Go to Install / SDK" Style="{StaticResource FlatButton}" HorizontalAlignment="Left" Margin="0,10,0,0" Click="GoToInstall_Click"/>
@@ -37,7 +37,7 @@
                     <StackPanel>
                         <TextBlock Style="{StaticResource SectionHeader}" Text="2. Create an AVD"/>
                         <TextBlock Foreground="{DynamicResource SubtextBrush}" TextWrapping="Wrap">
-                            From the AVDs tab pick a device profile (phone, tablet, Wear OS, TV, Auto) plus a system image. The "Browse online…" button installs new images via sdkmanager. Click Create.
+                            From the AVDs tab pick a device profile plus a system image. The "Browse online..." button installs new images through sdkmanager.
                         </TextBlock>
                         <TextBlock x:Name="AvdStatus" Foreground="{DynamicResource YellowBrush}" Margin="0,6,0,0" FontWeight="SemiBold"/>
                         <Button Content="Go to AVDs" Style="{StaticResource FlatButton}" HorizontalAlignment="Left" Margin="0,10,0,0" Click="GoToAvd_Click"/>

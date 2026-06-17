@@ -16,14 +16,17 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource LavenderBrush}" Text="Install a system image"/>
-        <TextBlock Grid.Row="0" Foreground="{DynamicResource SubtextBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,22,0,12">
-            Pulled from `sdkmanager --list`. Pick one and click Install. The download is large (200-700 MB) and the disk install pulls several GB more.
-        </TextBlock>
+        <StackPanel Grid.Row="0">
+            <TextBlock FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource LavenderBrush}" Text="Install a system image"/>
+            <TextBlock Foreground="{DynamicResource SubtextBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,4,0,12">
+                Pulled from <Run FontFamily="Cascadia Mono">sdkmanager --list</Run>. Pick one and install. Downloads are large, and the extracted image can use several GB.
+            </TextBlock>
+        </StackPanel>
 
         <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,8,0,8">
-            <TextBlock Text="Filter:" Foreground="{DynamicResource SubtextBrush}" VerticalAlignment="Center"/>
-            <TextBox x:Name="FilterBox" Width="240" Margin="8,0,0,0" TextChanged="FilterBox_TextChanged"/>
+            <TextBlock Text="Filter" Style="{StaticResource FieldLabel}" VerticalAlignment="Center"/>
+            <TextBox x:Name="FilterBox" Width="240" Margin="8,0,0,0" TextChanged="FilterBox_TextChanged"
+                     AutomationProperties.Name="Filter system images"/>
             <Button x:Name="RefreshButton" Content="Refresh" Style="{StaticResource FlatButton}" Margin="12,0,0,0" Click="Refresh_Click"/>
             <TextBlock x:Name="StatusText" Foreground="{DynamicResource OverlayBrush}" Margin="14,0,0,0" VerticalAlignment="Center"/>
         </StackPanel>

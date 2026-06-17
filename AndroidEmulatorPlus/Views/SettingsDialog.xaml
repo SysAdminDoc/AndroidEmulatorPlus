@@ -2,12 +2,13 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Settings"
-        Width="640" SizeToContent="Height"
+        Width="680" Height="720" MinHeight="520" MaxHeight="760"
         WindowStyle="ToolWindow"
         WindowStartupLocation="CenterOwner"
-        ResizeMode="NoResize"
+        ResizeMode="CanResizeWithGrip"
         Background="{DynamicResource BaseBrush}"
         Foreground="{DynamicResource TextBrush}">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
     <StackPanel Margin="24,18">
         <TextBlock FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource LavenderBrush}" Text="Settings"/>
         <TextBlock Foreground="{DynamicResource SubtextBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,4,0,12">
@@ -22,8 +23,8 @@
                         <ColumnDefinition Width="160"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="Theme" Foreground="{DynamicResource SubtextBrush}" VerticalAlignment="Center"/>
-                    <ComboBox Grid.Column="1" x:Name="ThemeBox">
+                    <TextBlock Text="Theme" Style="{StaticResource FieldLabel}" VerticalAlignment="Center"/>
+                    <ComboBox Grid.Column="1" x:Name="ThemeBox" AutomationProperties.Name="Theme">
                         <ComboBoxItem Content="mocha"/>
                         <ComboBoxItem Content="latte"/>
                     </ComboBox>
@@ -44,13 +45,13 @@
                         <RowDefinition/>
                         <RowDefinition/>
                     </Grid.RowDefinitions>
-                    <TextBlock Text="SDK root override" Foreground="{DynamicResource SubtextBrush}" VerticalAlignment="Center"/>
-                    <TextBox Grid.Column="1" x:Name="SdkRootBox" Margin="0,0,4,0"/>
-                    <Button Grid.Column="2" Content="Browse…" Style="{StaticResource FlatButton}" Click="BrowseSdk_Click" MinWidth="0" Padding="10,4"/>
+                    <TextBlock Text="SDK root override" Style="{StaticResource FieldLabel}" VerticalAlignment="Center"/>
+                    <TextBox Grid.Column="1" x:Name="SdkRootBox" Margin="0,0,4,0" AutomationProperties.Name="SDK root override"/>
+                    <Button Grid.Column="2" Content="Browse..." Style="{StaticResource FlatButton}" Click="BrowseSdk_Click" MinWidth="0" Padding="10,4"/>
 
-                    <TextBlock Grid.Row="1" Text="Media dir (screenshots / recordings)" Foreground="{DynamicResource SubtextBrush}" VerticalAlignment="Center" Margin="0,8,0,0"/>
-                    <TextBox Grid.Row="1" Grid.Column="1" x:Name="MediaDirBox" Margin="0,8,4,0"/>
-                    <Button Grid.Row="1" Grid.Column="2" Content="Browse…" Style="{StaticResource FlatButton}" Click="BrowseMedia_Click" MinWidth="0" Padding="10,4" Margin="0,8,0,0"/>
+                    <TextBlock Grid.Row="1" Text="Media directory" Style="{StaticResource FieldLabel}" VerticalAlignment="Center" Margin="0,8,0,0"/>
+                    <TextBox Grid.Row="1" Grid.Column="1" x:Name="MediaDirBox" Margin="0,8,4,0" AutomationProperties.Name="Media output directory"/>
+                    <Button Grid.Row="1" Grid.Column="2" Content="Browse..." Style="{StaticResource FlatButton}" Click="BrowseMedia_Click" MinWidth="0" Padding="10,4" Margin="0,8,0,0"/>
                 </Grid>
                 <TextBlock Foreground="{DynamicResource OverlayBrush}" FontSize="11" Margin="0,8,0,0" TextWrapping="Wrap">
                     Leave SDK root empty to autodetect via <Run FontFamily="Cascadia Mono">$ANDROID_HOME</Run> → <Run FontFamily="Cascadia Mono">%LOCALAPPDATA%\Android\Sdk</Run> → fallbacks.
@@ -66,8 +67,8 @@
                         <ColumnDefinition Width="160"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="HTTP proxy" Foreground="{DynamicResource SubtextBrush}" VerticalAlignment="Center"/>
-                    <TextBox Grid.Column="1" x:Name="ProxyBox"/>
+                    <TextBlock Text="HTTP proxy" Style="{StaticResource FieldLabel}" VerticalAlignment="Center"/>
+                    <TextBox Grid.Column="1" x:Name="ProxyBox" AutomationProperties.Name="HTTP proxy"/>
                 </Grid>
                 <TextBlock Foreground="{DynamicResource OverlayBrush}" FontSize="11" Margin="0,6,0,0" TextWrapping="Wrap">
                     Format: <Run FontFamily="Cascadia Mono">http://host:port</Run>. Empty = direct. Applied on next launch.
@@ -90,7 +91,7 @@
                 <TextBlock Style="{StaticResource SectionHeader}" Text="Updates"/>
                 <CheckBox x:Name="AutoUpdatesBox" Content="Check for app updates on startup" />
                 <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                    <Button x:Name="CheckUpdatesButton" Content="Check now" Style="{StaticResource FlatButton}" Click="CheckUpdates_Click"/>
+                    <Button x:Name="CheckUpdatesButton" Content="Check for updates" Style="{StaticResource FlatButton}" Click="CheckUpdates_Click"/>
                     <Button x:Name="RestartForUpdateButton" Content="Download and restart" Style="{StaticResource PrimaryButton}" Margin="10,0,0,0" Click="RestartForUpdate_Click"/>
                 </StackPanel>
                 <TextBlock x:Name="UpdateStatusText" Foreground="{DynamicResource OverlayBrush}" FontSize="11" Margin="0,6,0,0" TextWrapping="Wrap">
@@ -103,7 +104,7 @@
             <StackPanel>
                 <TextBlock Style="{StaticResource SectionHeader}" Text="Help"/>
                 <StackPanel Orientation="Horizontal">
-                    <Button Content="Show welcome wizard…" Style="{StaticResource FlatButton}" Click="ShowWizard_Click"/>
+                    <Button Content="Show welcome wizard..." Style="{StaticResource FlatButton}" Click="ShowWizard_Click"/>
                 </StackPanel>
                 <TextBlock Foreground="{DynamicResource OverlayBrush}" FontSize="11" Margin="0,6,0,0" TextWrapping="Wrap">
                     Re-opens the four-step onboarding wizard. Closes Settings first; reopen from here any time.
@@ -124,4 +125,5 @@
             <Button Content="Save" Style="{StaticResource PrimaryButton}" Margin="10,0,0,0" Click="Save_Click" IsDefault="True"/>
         </StackPanel>
     </StackPanel>
+    </ScrollViewer>
 </Window>

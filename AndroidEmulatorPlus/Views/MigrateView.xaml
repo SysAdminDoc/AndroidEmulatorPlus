@@ -78,23 +78,26 @@
         <Border Grid.Row="2" Style="{StaticResource Card}">
             <StackPanel>
                 <TextBlock Style="{StaticResource SectionHeader}" Text="Scope"/>
-                <WrapPanel>
-                    <CheckBox Content="APKs" IsChecked="{Binding DoApk}" Margin="0,0,18,0"/>
-                    <CheckBox Content="Internal data (/data/data)" IsChecked="{Binding DoInternal}" Margin="0,0,18,0"/>
-                    <CheckBox Content="External data (/sdcard/Android/data)" IsChecked="{Binding DoExternal}" Margin="0,0,18,0"/>
-                    <CheckBox Content="OBB (game data — can be huge)" IsChecked="{Binding DoObb}" Margin="0,0,18,0" ToolTip="Copies /sdcard/Android/obb/&lt;pkg&gt; — opt-in because game OBBs are often multi-GB"/>
+                <WrapPanel Margin="0,0,-18,-6">
+                    <CheckBox Content="APKs" IsChecked="{Binding DoApk}" Margin="0,0,18,6"/>
+                    <CheckBox Content="Internal data (/data/data)" IsChecked="{Binding DoInternal}" Margin="0,0,18,6"/>
+                    <CheckBox Content="External data (/sdcard/Android/data)" IsChecked="{Binding DoExternal}" Margin="0,0,18,6"/>
+                    <CheckBox Content="OBB game data" IsChecked="{Binding DoObb}" Margin="0,0,18,6" ToolTip="Copies /sdcard/Android/obb/&lt;pkg&gt;. Opt in because game OBBs are often multi-GB."/>
                 </WrapPanel>
                 <CheckBox Content="Force-stop source phone before tar" IsChecked="{Binding ForceStopOnPhone}" Margin="0,8,0,0"
                           ToolTip="Closes the app on the phone before tarring /data/data so SQLite databases are not captured mid-write. The target emulator app is also stopped before restore."/>
                 <CheckBox Content="Force-migrate no-backup apps (override allowBackup=false skip)" IsChecked="{Binding ForceDataForNoBackup}" Margin="0,4,0,0"
                           ToolTip="By default the data leg is skipped for packages with android:allowBackup=&quot;false&quot; because the restored data is usually rejected. Enable to push it anyway."/>
-                <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
-                    <TextBlock Text="Filter:" VerticalAlignment="Center" Foreground="{DynamicResource SubtextBrush}"/>
-                    <TextBox Text="{Binding Filter, UpdateSourceTrigger=PropertyChanged}" Width="240" Margin="8,0,0,0"/>
-                    <Button Content="All" Style="{StaticResource FlatButton}" Command="{Binding SelectAllCommand}" Margin="12,0,0,0"/>
-                    <Button Content="None" Style="{StaticResource FlatButton}" Command="{Binding SelectNoneCommand}" Margin="8,0,0,0"/>
-                    <Button Content="Refresh" Style="{StaticResource FlatButton}" Command="{Binding RefreshCommand}" Margin="8,0,0,0"/>
-                </StackPanel>
+                <WrapPanel Margin="0,14,-8,-8">
+                    <StackPanel Width="260" Margin="0,0,12,8">
+                        <TextBlock Text="Filter packages" Style="{StaticResource FieldLabel}"/>
+                        <TextBox Text="{Binding Filter, UpdateSourceTrigger=PropertyChanged}"
+                                 AutomationProperties.Name="Filter phone packages"/>
+                    </StackPanel>
+                    <Button Content="Select all" Style="{StaticResource FlatButton}" Command="{Binding SelectAllCommand}" Margin="0,20,8,8"/>
+                    <Button Content="Select none" Style="{StaticResource FlatButton}" Command="{Binding SelectNoneCommand}" Margin="0,20,8,8"/>
+                    <Button Content="Refresh packages" Style="{StaticResource FlatButton}" Command="{Binding RefreshCommand}" Margin="0,20,8,8"/>
+                </WrapPanel>
             </StackPanel>
         </Border>
 
@@ -118,19 +121,22 @@
                     <ItemsControl ItemsSource="{Binding FilteredPackages}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Grid Margin="0,3">
+                            <Border Background="{DynamicResource CrustBrush}" BorderBrush="{DynamicResource SurfaceBrush}" BorderThickness="1"
+                                    CornerRadius="6" Padding="9,7" Margin="0,3">
+                            <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <CheckBox IsChecked="{Binding IsSelected}" Content="{Binding Package}"/>
-                                <Border Grid.Column="1" Style="{StaticResource StatusPill}" Margin="6,2,0,0"
+                                <Border Grid.Column="1" Style="{StaticResource StatusPill}" Margin="8,0,0,0"
                                         Background="{DynamicResource YellowBrush}"
                                         Visibility="{Binding AllowBackup, Converter={x:Static views:NotBoolToVisibilityConverter.Instance}}"
-                                        ToolTip="android:allowBackup=&quot;false&quot; — restored data will be rejected by the app">
+                                        ToolTip="android:allowBackup=&quot;false&quot;; restored data is usually rejected by the app">
                                     <TextBlock Text="No backup" FontSize="11" Foreground="{DynamicResource CrustBrush}" FontWeight="SemiBold"/>
                                 </Border>
                             </Grid>
+                            </Border>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                     </ItemsControl>
@@ -154,7 +160,8 @@
                 </StackPanel>
                 <ProgressBar Grid.Column="1" Margin="14,0" VerticalAlignment="Center"
                              Value="{Binding ProgressFraction}" Minimum="0" Maximum="1"/>
-                <TextBlock Grid.Column="2" Text="{Binding StepText}" Foreground="{DynamicResource OverlayBrush}" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="2" Text="{Binding StepText}" Foreground="{DynamicResource OverlayBrush}" VerticalAlignment="Center"
+                           MaxWidth="280" TextTrimming="CharacterEllipsis"/>
             </Grid>
             <TextBlock Text="{Binding Summary}" Foreground="{DynamicResource GreenBrush}" Margin="0,6,0,0"/>
 

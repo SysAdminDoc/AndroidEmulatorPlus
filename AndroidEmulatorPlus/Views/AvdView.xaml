@@ -17,15 +17,13 @@
             </StackPanel>
         </StackPanel>
 
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
             <Grid>
                 <Border Style="{StaticResource Card}"
                         Visibility="{Binding HasAvds, Converter={x:Static views:NotBoolToVisibilityConverter.Instance}}">
                     <StackPanel>
-                        <TextBlock Style="{StaticResource SectionHeader}" Text="No AVDs yet"/>
-                        <TextBlock Foreground="{DynamicResource SubtextBrush}" TextWrapping="Wrap">
-                            Create one using the form below. If the System image dropdown is empty, install a system image from the Install / SDK tab first (or use Android Studio's SDK Manager).
-                        </TextBlock>
+                        <TextBlock Foreground="{DynamicResource LavenderBrush}" FontWeight="SemiBold" TextWrapping="Wrap"
+                                   Text="No AVDs yet. Create one below, or install a system image first if the list is empty."/>
                     </StackPanel>
                 </Border>
                 <ItemsControl ItemsSource="{Binding Avds}"
@@ -65,30 +63,32 @@
                                             Command="{Binding DataContext.LaunchColdCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                             CommandParameter="{Binding}"/>
                                     <Button Style="{StaticResource SmallButton}" Margin="8,0,0,0" Padding="10,8"
-                                            Click="OverflowButton_Click" Content="⋯">
+                                            AutomationProperties.Name="Open AVD actions"
+                                            ToolTip="Show actions for this AVD"
+                                            Click="OverflowButton_Click" Content="...">
                                         <Button.ContextMenu>
                                             <ContextMenu>
-                                                <MenuItem Header="Launch with options…"
+                                                <MenuItem Header="Launch with options..."
                                                           Command="{Binding DataContext.LaunchWithOptionsCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                           CommandParameter="{Binding}"/>
                                                 <Separator/>
                                                 <MenuItem Header="Show on disk"
                                                           Command="{Binding DataContext.ShowOnDiskCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                           CommandParameter="{Binding}"/>
-                                                <MenuItem Header="Rename…"
+                                                <MenuItem Header="Rename..."
                                                           Command="{Binding DataContext.RenameCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                           CommandParameter="{Binding}"/>
-                                                <MenuItem Header="Duplicate…"
+                                                <MenuItem Header="Duplicate..."
                                                           Command="{Binding DataContext.DuplicateCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                           CommandParameter="{Binding}"/>
-                                                <MenuItem Header="Snapshots…"
+                                                <MenuItem Header="Snapshots..."
                                                           Command="{Binding DataContext.ManageSnapshotsCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                           CommandParameter="{Binding}"/>
                                                 <MenuItem Header="Create desktop shortcut"
                                                           Command="{Binding DataContext.CreateShortcutCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                           CommandParameter="{Binding}"/>
                                                 <Separator/>
-                                                <MenuItem Header="Delete AVD…"
+                                                <MenuItem Header="Delete AVD..."
                                                           Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                           CommandParameter="{Binding}"/>
                                             </ContextMenu>
@@ -106,38 +106,30 @@
         <Border Grid.Row="2" Style="{StaticResource Card}" Margin="0,12,0,0">
             <StackPanel>
                 <TextBlock Style="{StaticResource SectionHeader}" Text="Create new AVD"/>
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="2*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <StackPanel Margin="0,0,8,0">
-                        <TextBlock Text="Name" Foreground="{DynamicResource SubtextBrush}" Margin="0,0,0,4"/>
-                        <TextBox Text="{Binding NewName, UpdateSourceTrigger=PropertyChanged}"/>
+                <StackPanel>
+                    <StackPanel>
+                        <TextBlock Text="Name" Style="{StaticResource FieldLabel}"/>
+                        <TextBox Text="{Binding NewName, UpdateSourceTrigger=PropertyChanged}"
+                                 AutomationProperties.Name="New AVD name"/>
                     </StackPanel>
-                    <StackPanel Grid.Column="1" Margin="8,0">
-                        <TextBlock Text="Device profile" Foreground="{DynamicResource SubtextBrush}" Margin="0,0,0,4"/>
-                        <ComboBox ItemsSource="{Binding AvailableDevices}" SelectedItem="{Binding NewDevice}" IsEditable="True"/>
+                    <StackPanel Margin="0,12,0,0">
+                        <TextBlock Text="Device profile" Style="{StaticResource FieldLabel}"/>
+                        <ComboBox ItemsSource="{Binding AvailableDevices}" SelectedItem="{Binding NewDevice}" IsEditable="True"
+                                  AutomationProperties.Name="Device profile"/>
                     </StackPanel>
-                    <StackPanel Grid.Column="2" Margin="8,0">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="System image" Foreground="{DynamicResource SubtextBrush}" Margin="0,0,0,4"/>
-                            <Button Grid.Column="1" Content="Browse online…" Style="{StaticResource FlatButton}"
-                                    MinWidth="0" Padding="8,2" MinHeight="0"
-                                    Command="{Binding BrowseSystemImagesCommand}"
-                                    ToolTip="sdkmanager --list, then install a new system image"/>
-                        </Grid>
-                        <ComboBox ItemsSource="{Binding AvailableImages}" SelectedItem="{Binding NewImage}"/>
+                    <StackPanel Margin="0,12,0,0">
+                        <TextBlock Text="System image" Style="{StaticResource FieldLabel}"/>
+                        <ComboBox ItemsSource="{Binding AvailableImages}" SelectedItem="{Binding NewImage}"
+                                  AutomationProperties.Name="System image"/>
                     </StackPanel>
-                    <Button Grid.Column="3" Content="Create" Style="{StaticResource PrimaryButton}" Margin="12,18,0,0"
-                            Command="{Binding CreateCommand}" VerticalAlignment="Bottom"/>
-                </Grid>
+                    <WrapPanel Margin="0,12,-8,-8">
+                        <Button Content="Browse online..." Style="{StaticResource FlatButton}" Margin="0,0,8,8"
+                                Command="{Binding BrowseSystemImagesCommand}"
+                                ToolTip="sdkmanager --list, then install a new system image"/>
+                        <Button Content="Create" Style="{StaticResource PrimaryButton}" Margin="0,0,8,8"
+                                Command="{Binding CreateCommand}"/>
+                    </WrapPanel>
+                </StackPanel>
             </StackPanel>
         </Border>
     </Grid>

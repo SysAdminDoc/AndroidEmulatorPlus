@@ -106,6 +106,8 @@
                                 Visibility="{Binding IsBusy, Converter={x:Static views:BoolToVisibilityConverter.Instance}}"/>
                         <TextBlock Text="{Binding Step}" Foreground="{DynamicResource OverlayBrush}" Margin="4,0,8,8" VerticalAlignment="Center"/>
                     </WrapPanel>
+                    <ProgressBar IsIndeterminate="{Binding IsBusy}" Margin="0,6,0,0"
+                                 Visibility="{Binding IsBusy, Converter={x:Static views:BoolToVisibilityConverter.Instance}}"/>
                     <TextBlock Text="{Binding CmdlineToolsNote}" Foreground="{DynamicResource YellowBrush}" Margin="0,6,0,0" TextWrapping="Wrap" FontSize="12"
                                Visibility="{Binding HasCmdlineToolsNote, Converter={x:Static views:BoolToVisibilityConverter.Instance}}"/>
                     <TextBlock Foreground="{DynamicResource SubtextBrush}" Margin="0,18,0,0" TextWrapping="Wrap">

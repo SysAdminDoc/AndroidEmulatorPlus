@@ -24,12 +24,14 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <StackPanel Margin="0,0,8,0">
-                        <TextBlock Text="Priority filter" Foreground="{DynamicResource SubtextBrush}" Margin="0,0,0,4"/>
-                        <TextBox Text="{Binding Filter, UpdateSourceTrigger=PropertyChanged}" FontFamily="Cascadia Mono"/>
+                        <TextBlock Text="Priority filter" Style="{StaticResource FieldLabel}"/>
+                        <TextBox Text="{Binding Filter, UpdateSourceTrigger=PropertyChanged}" FontFamily="Cascadia Mono"
+                                 AutomationProperties.Name="Logcat priority filter"/>
                     </StackPanel>
                     <StackPanel Grid.Column="1" Margin="8,0,0,0">
-                        <TextBlock Text="Package prefix (optional)" Foreground="{DynamicResource SubtextBrush}" Margin="0,0,0,4"/>
-                        <TextBox Text="{Binding PackageFilter, UpdateSourceTrigger=PropertyChanged}" FontFamily="Cascadia Mono"/>
+                        <TextBlock Text="Package prefix (optional)" Style="{StaticResource FieldLabel}"/>
+                        <TextBox Text="{Binding PackageFilter, UpdateSourceTrigger=PropertyChanged}" FontFamily="Cascadia Mono"
+                                 AutomationProperties.Name="Logcat package prefix"/>
                     </StackPanel>
                 </Grid>
                 <WrapPanel Margin="0,12,-8,-8">
@@ -40,11 +42,11 @@
                     <Button Content="Stop" Style="{StaticResource DangerButton}" Margin="0,0,8,8"
                             Command="{Binding StopCommand}"
                             IsEnabled="{Binding IsStreaming}"/>
-                    <Button Content="Clear buffer (adb logcat -c)" Style="{StaticResource FlatButton}" Margin="0,0,8,8"
+                    <Button Content="Clear device buffer" Style="{StaticResource FlatButton}" Margin="0,0,8,8"
                             Command="{Binding ClearBufferCommand}"/>
                     <Button Content="Clear view" Style="{StaticResource FlatButton}" Margin="0,0,8,8"
                             Command="{Binding ClearViewCommand}"/>
-                    <Button Content="Save…" Style="{StaticResource FlatButton}" Margin="0,0,8,8"
+                    <Button Content="Save log..." Style="{StaticResource FlatButton}" Margin="0,0,8,8"
                             Command="{Binding SaveCommand}"/>
                     <TextBlock Text="{Binding Status}" Foreground="{DynamicResource OverlayBrush}" Margin="6,0,8,8" VerticalAlignment="Center"/>
                 </WrapPanel>
@@ -74,7 +76,7 @@
                 </ListBox.ItemTemplate>
                 <ListBox.ItemContainerStyle>
                     <Style TargetType="ListBoxItem">
-                        <Setter Property="Padding" Value="0"/>
+                        <Setter Property="Padding" Value="4,2"/>
                         <Setter Property="BorderThickness" Value="0"/>
                         <Setter Property="Background" Value="Transparent"/>
                     </Style>

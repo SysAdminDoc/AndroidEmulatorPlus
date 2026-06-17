@@ -31,7 +31,7 @@
                     <TextBlock Style="{StaticResource SectionHeader}" Text="Curated catalog"/>
                     <StackPanel Grid.Column="1" Orientation="Horizontal">
                         <Button Content="Open homepage" Style="{StaticResource FlatButton}" Click="OpenHomepage_Click" Padding="10,4" MinHeight="0"/>
-                        <Button Content="Install from zip…" Style="{StaticResource FlatButton}" Click="InstallFromZip_Click" Margin="8,0,0,0" Padding="10,4" MinHeight="0"/>
+                        <Button Content="Install from ZIP..." Style="{StaticResource FlatButton}" Click="InstallFromZip_Click" Margin="8,0,0,0" Padding="10,4" MinHeight="0"/>
                         <Button Content="Install selected" Style="{StaticResource PrimaryButton}" Click="InstallCatalog_Click" Margin="8,0,0,0" Padding="10,4" MinHeight="0"/>
                     </StackPanel>
                 </Grid>
@@ -74,7 +74,7 @@
                                     <Run Text="{Binding Id}"/>
                                     <Run Text=") "/>
                                     <Run Text="{Binding Version}"/>
-                                    <Run Text=" • "/>
+                                    <Run Text=" - "/>
                                     <Run Text="{Binding Enabled}"/>
                                 </TextBlock>
                             </DataTemplate>

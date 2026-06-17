@@ -5,7 +5,7 @@
         <StackPanel MaxWidth="900" HorizontalAlignment="Left">
             <TextBlock Style="{StaticResource HeaderText}" Text="Console"/>
             <TextBlock Style="{StaticResource SubheaderText}" TextWrapping="Wrap">
-                Sensor / GPS / battery / telephony / network simulation against a running emulator via <Run FontFamily="Cascadia Mono">adb emu …</Run> (same surface as telnet'ing the emulator console).
+                Sensor / GPS / battery / telephony / network simulation against a running emulator via <Run FontFamily="Cascadia Mono">adb emu</Run>. Use it for repeatable app-testing conditions without leaving this window.
             </TextBlock>
 
             <Border Style="{StaticResource Card}">
@@ -18,10 +18,10 @@
                             <ColumnDefinition Width="120"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Text="Latitude" Foreground="{DynamicResource SubtextBrush}" VerticalAlignment="Center"/>
-                        <TextBox  Grid.Column="1" Text="{Binding GpsLatitude}"/>
-                        <TextBlock Grid.Column="2" Text="Longitude" Foreground="{DynamicResource SubtextBrush}" VerticalAlignment="Center" Margin="14,0,0,0"/>
-                        <TextBox  Grid.Column="3" Text="{Binding GpsLongitude}"/>
+                        <TextBlock Text="Latitude" Style="{StaticResource FieldLabel}" VerticalAlignment="Center"/>
+                        <TextBox  Grid.Column="1" Text="{Binding GpsLatitude}" AutomationProperties.Name="GPS latitude"/>
+                        <TextBlock Grid.Column="2" Text="Longitude" Style="{StaticResource FieldLabel}" VerticalAlignment="Center" Margin="14,0,0,0"/>
+                        <TextBox  Grid.Column="3" Text="{Binding GpsLongitude}" AutomationProperties.Name="GPS longitude"/>
                     </Grid>
                     <Button Content="Set location" Style="{StaticResource FlatButton}" HorizontalAlignment="Left" Margin="0,10,0,0" Command="{Binding SetGeoCommand}"/>
                 </StackPanel>
@@ -36,8 +36,9 @@
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="40"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Text="Capacity (%)" Foreground="{DynamicResource SubtextBrush}" VerticalAlignment="Center"/>
-                        <Slider Grid.Column="1" Minimum="0" Maximum="100" Value="{Binding BatteryPercent}" VerticalAlignment="Center"/>
+                        <TextBlock Text="Capacity (%)" Style="{StaticResource FieldLabel}" VerticalAlignment="Center"/>
+                        <Slider Grid.Column="1" Minimum="0" Maximum="100" Value="{Binding BatteryPercent}" VerticalAlignment="Center"
+                                AutomationProperties.Name="Battery capacity percent"/>
                         <TextBlock Grid.Column="2" Text="{Binding BatteryPercent}" HorizontalAlignment="Right" VerticalAlignment="Center"/>
                     </Grid>
                     <Grid Margin="0,8,0,0">
@@ -45,8 +46,9 @@
                             <ColumnDefinition Width="120"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Text="Status" Foreground="{DynamicResource SubtextBrush}" VerticalAlignment="Center"/>
-                        <ComboBox Grid.Column="1" ItemsSource="{Binding PowerStates}" SelectedItem="{Binding PowerStatus}"/>
+                        <TextBlock Text="Status" Style="{StaticResource FieldLabel}" VerticalAlignment="Center"/>
+                        <ComboBox Grid.Column="1" ItemsSource="{Binding PowerStates}" SelectedItem="{Binding PowerStatus}"
+                                  AutomationProperties.Name="Battery status"/>
                     </Grid>
                     <Button Content="Apply battery state" Style="{StaticResource FlatButton}" HorizontalAlignment="Left" Margin="0,10,0,0" Command="{Binding SetBatteryCommand}"/>
                 </StackPanel>
@@ -60,13 +62,13 @@
                             <ColumnDefinition Width="120"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Text="Incoming call" Foreground="{DynamicResource SubtextBrush}" VerticalAlignment="Center"/>
+                        <TextBlock Text="Incoming call" Style="{StaticResource FieldLabel}" VerticalAlignment="Center"/>
                         <Grid Grid.Column="1">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <TextBox Text="{Binding GsmNumber}" FontFamily="Cascadia Mono"/>
+                            <TextBox Text="{Binding GsmNumber}" FontFamily="Cascadia Mono" AutomationProperties.Name="Incoming call number"/>
                             <Button Grid.Column="1" Content="Ring" Style="{StaticResource FlatButton}" Margin="8,0,0,0" Command="{Binding RingCommand}"/>
                         </Grid>
                     </Grid>
@@ -75,10 +77,10 @@
                             <ColumnDefinition Width="120"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Text="Incoming SMS" Foreground="{DynamicResource SubtextBrush}" VerticalAlignment="Center"/>
+                        <TextBlock Text="Incoming SMS" Style="{StaticResource FieldLabel}" VerticalAlignment="Center"/>
                         <StackPanel Grid.Column="1">
-                            <TextBox Text="{Binding SmsNumber}" FontFamily="Cascadia Mono"/>
-                            <TextBox Text="{Binding SmsBody}" Margin="0,6,0,0"/>
+                            <TextBox Text="{Binding SmsNumber}" FontFamily="Cascadia Mono" AutomationProperties.Name="Incoming SMS number"/>
+                            <TextBox Text="{Binding SmsBody}" Margin="0,6,0,0" AutomationProperties.Name="Incoming SMS body"/>
                             <Button Content="Send SMS" Style="{StaticResource FlatButton}" HorizontalAlignment="Left" Margin="0,8,0,0" Command="{Binding SendSmsCommand}"/>
                         </StackPanel>
                     </Grid>
@@ -95,10 +97,12 @@
                             <ColumnDefinition Width="120"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Text="Speed preset" Foreground="{DynamicResource SubtextBrush}" VerticalAlignment="Center"/>
-                        <ComboBox Grid.Column="1" ItemsSource="{Binding Speeds}" SelectedItem="{Binding NetworkSpeed}"/>
-                        <TextBlock Grid.Column="2" Text="Delay preset" Foreground="{DynamicResource SubtextBrush}" VerticalAlignment="Center" Margin="14,0,0,0"/>
-                        <ComboBox Grid.Column="3" ItemsSource="{Binding Delays}" SelectedItem="{Binding NetworkDelay}"/>
+                        <TextBlock Text="Speed preset" Style="{StaticResource FieldLabel}" VerticalAlignment="Center"/>
+                        <ComboBox Grid.Column="1" ItemsSource="{Binding Speeds}" SelectedItem="{Binding NetworkSpeed}"
+                                  AutomationProperties.Name="Network speed preset"/>
+                        <TextBlock Grid.Column="2" Text="Delay preset" Style="{StaticResource FieldLabel}" VerticalAlignment="Center" Margin="14,0,0,0"/>
+                        <ComboBox Grid.Column="3" ItemsSource="{Binding Delays}" SelectedItem="{Binding NetworkDelay}"
+                                  AutomationProperties.Name="Network delay preset"/>
                     </Grid>
                     <Button Content="Apply network" Style="{StaticResource FlatButton}" HorizontalAlignment="Left" Margin="0,10,0,0" Command="{Binding SetNetworkCommand}"/>
                 </StackPanel>
@@ -121,14 +125,15 @@
                 <StackPanel>
                     <TextBlock Style="{StaticResource SectionHeader}" Text="Raw command"/>
                     <TextBlock Foreground="{DynamicResource OverlayBrush}" FontSize="11" TextWrapping="Wrap">
-                        Sends arbitrary <Run FontFamily="Cascadia Mono">adb emu …</Run>. Examples: <Run FontFamily="Cascadia Mono">avd name</Run>, <Run FontFamily="Cascadia Mono">finger touch 1</Run>, <Run FontFamily="Cascadia Mono">rotate</Run>.
+                        Sends arbitrary <Run FontFamily="Cascadia Mono">adb emu</Run> arguments. Examples: <Run FontFamily="Cascadia Mono">avd name</Run>, <Run FontFamily="Cascadia Mono">finger touch 1</Run>, <Run FontFamily="Cascadia Mono">rotate</Run>.
                     </TextBlock>
                     <Grid Margin="0,8,0,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <TextBox Text="{Binding FreeFormArgs, UpdateSourceTrigger=PropertyChanged}" FontFamily="Cascadia Mono"/>
+                        <TextBox Text="{Binding FreeFormArgs, UpdateSourceTrigger=PropertyChanged}" FontFamily="Cascadia Mono"
+                                 AutomationProperties.Name="Raw emulator console command arguments"/>
                         <Button Grid.Column="1" Content="Send" Style="{StaticResource PrimaryButton}" Margin="8,0,0,0" Command="{Binding SendFreeFormCommand}"/>
                     </Grid>
                 </StackPanel>

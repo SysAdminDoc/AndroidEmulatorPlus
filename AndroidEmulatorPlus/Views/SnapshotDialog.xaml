@@ -34,7 +34,9 @@
         <TextBlock Grid.Row="3" x:Name="StatusText" Foreground="{DynamicResource YellowBrush}" Margin="0,8,0,0" TextWrapping="Wrap"/>
 
         <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+            <TextBlock Text="New snapshot" Style="{StaticResource FieldLabel}" VerticalAlignment="Center" Margin="0,0,8,0"/>
             <TextBox x:Name="SaveNameBox" Width="180" Margin="0,0,8,0" Text="my-snapshot"
+                     AutomationProperties.Name="New snapshot name"
                      ToolTip="Name to save the running emulator state under"/>
             <Button Content="Save" Style="{StaticResource FlatButton}" Click="Save_Click"/>
             <Button Content="Load" Style="{StaticResource PrimaryButton}" Margin="10,0,0,0" Click="Load_Click"/>

@@ -3,87 +3,82 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:views="clr-namespace:AndroidEmulatorPlus.Views"
         xmlns:vm="clr-namespace:AndroidEmulatorPlus.ViewModels"
-        Title="AndroidEmulatorPlus v0.2.0"
+        Title="AndroidEmulatorPlus v0.2.1"
         Width="1280" Height="820"
         MinWidth="980" MinHeight="640"
         Icon="Assets/aep.ico"
-        WindowStartupLocation="CenterScreen">
-    <Window.InputBindings>
-        <KeyBinding Modifiers="Ctrl" Key="D1" Command="{Binding NavigateCommand}" CommandParameter="Install"/>
-        <KeyBinding Modifiers="Ctrl" Key="D2" Command="{Binding NavigateCommand}" CommandParameter="Avd"/>
-        <KeyBinding Modifiers="Ctrl" Key="D3" Command="{Binding NavigateCommand}" CommandParameter="Root"/>
-        <KeyBinding Modifiers="Ctrl" Key="D4" Command="{Binding NavigateCommand}" CommandParameter="Migrate"/>
-        <KeyBinding Modifiers="Ctrl" Key="D5" Command="{Binding NavigateCommand}" CommandParameter="Apps"/>
-        <KeyBinding Modifiers="Ctrl" Key="D6" Command="{Binding NavigateCommand}" CommandParameter="Config"/>
-        <KeyBinding Modifiers="Ctrl" Key="D7" Command="{Binding NavigateCommand}" CommandParameter="Logcat"/>
-        <KeyBinding Modifiers="Ctrl" Key="D8" Command="{Binding NavigateCommand}" CommandParameter="Console"/>
-        <KeyBinding Key="F5" Command="{Binding RefreshActiveCommand}"/>
-        <KeyBinding Modifiers="Ctrl" Key="L" Command="{Binding ClearLogCommand}"/>
-        <KeyBinding Modifiers="Ctrl" Key="R" Command="{Binding ScreenshotCommand}"/>
-    </Window.InputBindings>
+        WindowStartupLocation="CenterScreen"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True">
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="56"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="210"/>
         </Grid.RowDefinitions>
 
         <!-- Top bar -->
-        <Border Grid.Row="0" Background="{DynamicResource MantleBrush}" BorderBrush="{DynamicResource SurfaceBrush}" BorderThickness="0,0,0,1">
+        <Border Grid.Row="0" MinHeight="56" Background="{DynamicResource MantleBrush}" BorderBrush="{DynamicResource SurfaceBrush}" BorderThickness="0,0,0,1">
             <Grid Margin="18,0">
                 <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="250"/>
                     <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock Text="AndroidEmulatorPlus" FontWeight="SemiBold" FontSize="16"
                                Foreground="{DynamicResource LavenderBrush}"/>
-                    <TextBlock Text="v0.2.0" Margin="8,1,0,0" Foreground="{DynamicResource OverlayBrush}" VerticalAlignment="Center"/>
+                    <TextBlock Text="v0.2.1" Margin="8,1,0,0" Foreground="{DynamicResource OverlayBrush}" VerticalAlignment="Center"/>
                 </StackPanel>
 
-                <Border Grid.Column="1" Style="{StaticResource StatusPill}" Margin="4" ToolTip="{Binding SdkDetailText}">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="SDK" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource OverlayBrush}" VerticalAlignment="Center"/>
-                        <TextBlock Text="{Binding SdkStatusText}" Margin="7,0,0,0" Foreground="{DynamicResource SubtextBrush}" FontSize="12"/>
-                    </StackPanel>
-                </Border>
-                <Border Grid.Column="2" Style="{StaticResource StatusPill}" Margin="4" Background="{DynamicResource SurfaceBrush}">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Phone" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource OverlayBrush}" VerticalAlignment="Center"/>
-                        <TextBlock Text="{Binding PhoneStatusText}" Margin="7,0,0,0" Foreground="{DynamicResource SubtextBrush}" FontSize="12"/>
-                    </StackPanel>
-                </Border>
-                <Border Grid.Column="3" Style="{StaticResource StatusPill}" Margin="4" Background="{DynamicResource SurfaceBrush}">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Emulator" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource OverlayBrush}" VerticalAlignment="Center"/>
-                        <TextBlock Text="{Binding EmulatorStatusText}" Margin="7,0,0,0" Foreground="{DynamicResource SubtextBrush}" FontSize="12"/>
-                    </StackPanel>
-                </Border>
-                <Button Grid.Column="4" Style="{StaticResource SmallButton}" Margin="10,8,0,8"
-                        Content="Screenshot"
-                        Command="{Binding ScreenshotCommand}"
-                        IsEnabled="{Binding HasEmulatorAttached}"
-                        ToolTip="Capture a PNG from the attached emulator"/>
-                <Button Grid.Column="5" Style="{StaticResource SmallButton}" Margin="8,8,0,8"
-                        Content="{Binding RecordButtonText}"
-                        Command="{Binding RecordCommand}"
-                        IsEnabled="{Binding HasEmulatorAttached}"
-                        ToolTip="Start / stop screenrecord on the attached emulator (capped at 3 min by Android)"/>
-                <Button Grid.Column="6" Style="{StaticResource SmallButton}" Margin="8,8,0,8"
-                        Content="scrcpy"
-                        Command="{Binding LaunchScrcpyCommand}"
-                        IsEnabled="{Binding HasEmulatorAttached}"
-                        ToolTip="Launch external scrcpy.exe against the attached emulator (winget install Genymobile.scrcpy)"/>
-                <Button Grid.Column="7" Style="{StaticResource SmallButton}" Margin="8,8,0,8"
-                        Content="Settings"
-                        Command="{Binding OpenSettingsCommand}"
-                        ToolTip="Theme, paths, network proxy — persists to %LOCALAPPDATA%\AndroidEmulatorPlus\settings.json"/>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Border Style="{StaticResource StatusPill}" Margin="4" ToolTip="{Binding SdkDetailText}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="SDK" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource OverlayBrush}" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding SdkStatusText}" Margin="7,0,0,0" Foreground="{DynamicResource SubtextBrush}" FontSize="12"
+                                       MaxWidth="96" TextTrimming="CharacterEllipsis"/>
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource StatusPill}" Margin="4" Background="{DynamicResource SurfaceBrush}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Phone" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource OverlayBrush}" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding PhoneStatusText}" Margin="7,0,0,0" Foreground="{DynamicResource SubtextBrush}" FontSize="12"
+                                       MaxWidth="140" TextTrimming="CharacterEllipsis"/>
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource StatusPill}" Margin="4" Background="{DynamicResource SurfaceBrush}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Emulator" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource OverlayBrush}" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding EmulatorStatusText}" Margin="7,0,0,0" Foreground="{DynamicResource SubtextBrush}" FontSize="12"
+                                       MaxWidth="150" TextTrimming="CharacterEllipsis"/>
+                        </StackPanel>
+                    </Border>
+                    <Button Style="{StaticResource SmallButton}" Margin="10,8,0,8"
+                            Content="Screenshot"
+                            AutomationProperties.Name="Capture emulator screenshot"
+                            Command="{Binding ScreenshotCommand}"
+                            IsEnabled="{Binding HasEmulatorAttached}"
+                            Visibility="{Binding HasEmulatorAttached, Converter={x:Static views:BoolToVisibilityConverter.Instance}}"
+                            ToolTip="Capture a PNG from the attached emulator"/>
+                    <Button Style="{StaticResource SmallButton}" Margin="8,8,0,8"
+                            Content="{Binding RecordButtonText}"
+                            AutomationProperties.Name="Record emulator screen"
+                            Command="{Binding RecordCommand}"
+                            IsEnabled="{Binding HasEmulatorAttached}"
+                            Visibility="{Binding HasEmulatorAttached, Converter={x:Static views:BoolToVisibilityConverter.Instance}}"
+                            ToolTip="Start / stop screenrecord on the attached emulator (capped at 3 min by Android)"/>
+                    <Button Style="{StaticResource SmallButton}" Margin="8,8,0,8"
+                            Content="Mirror"
+                            AutomationProperties.Name="Mirror emulator with scrcpy"
+                            Command="{Binding LaunchScrcpyCommand}"
+                            IsEnabled="{Binding HasEmulatorAttached}"
+                            Visibility="{Binding HasEmulatorAttached, Converter={x:Static views:BoolToVisibilityConverter.Instance}}"
+                            ToolTip="Launch external scrcpy.exe against the attached emulator (winget install Genymobile.scrcpy)"/>
+                    <Button Style="{StaticResource SmallButton}" Margin="8,8,0,8"
+                            Content="Settings"
+                            AutomationProperties.Name="Open settings"
+                            Command="{Binding OpenSettingsCommand}"
+                            ToolTip="Theme, paths, network proxy - persists to %LOCALAPPDATA%\AndroidEmulatorPlus\settings.json"/>
+                </StackPanel>
             </Grid>
         </Border>
 

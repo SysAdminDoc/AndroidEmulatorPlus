@@ -14,6 +14,8 @@
                 <StackPanel>
                     <TextBlock Style="{StaticResource SectionHeader}" Text="Target AVD"/>
                     <ComboBox ItemsSource="{Binding Avds}" SelectedItem="{Binding SelectedAvd}" DisplayMemberPath="Name"/>
+                    <ProgressBar IsIndeterminate="{Binding IsBusy}" Margin="0,12,0,0"
+                                 Visibility="{Binding IsBusy, Converter={x:Static views:BoolToVisibilityConverter.Instance}}"/>
                     <TextBlock Text="{Binding Status}" Margin="0,12,0,0" Foreground="{DynamicResource LavenderBrush}"/>
                     <TextBlock Text="{Binding Step}" Margin="0,4,0,0" Foreground="{DynamicResource OverlayBrush}"/>
                 </StackPanel>
@@ -39,20 +41,20 @@
                 <StackPanel>
                     <TextBlock Style="{StaticResource SectionHeader}" Text="Actions"/>
                     <WrapPanel Margin="0,0,-8,-8">
-                        <Button Content="Root with Latest Magisk" Style="{StaticResource PrimaryButton}" Margin="0,0,8,8" Command="{Binding RootCommand}" IsEnabled="{Binding IsBusy, Converter={x:Static views:NotBoolConverter.Instance}}"/>
+                        <Button Content="Root with latest Magisk" Style="{StaticResource PrimaryButton}" Margin="0,0,8,8" Command="{Binding RootCommand}" IsEnabled="{Binding IsBusy, Converter={x:Static views:NotBoolConverter.Instance}}"/>
                         <Button Content="Cancel" Style="{StaticResource DangerButton}" Margin="0,0,8,8"
                                 Command="{Binding CancelCommand}"
                                 Visibility="{Binding IsBusy, Converter={x:Static views:BoolToVisibilityConverter.Instance}}"/>
-                        <Button Content="Verify + Persist Policy" Style="{StaticResource FlatButton}" Command="{Binding VerifyCommand}" Margin="0,0,8,8"/>
-                        <Button Content="Un-Root (Restore Ramdisk)" Style="{StaticResource DangerButton}" Command="{Binding UnRootCommand}" Margin="0,0,8,8"/>
+                        <Button Content="Verify and persist policy" Style="{StaticResource FlatButton}" Command="{Binding VerifyCommand}" Margin="0,0,8,8"/>
+                        <Button Content="Un-root and restore ramdisk" Style="{StaticResource DangerButton}" Command="{Binding UnRootCommand}" Margin="0,0,8,8"/>
                         <Button Content="Dry run (LISTONLY)" Style="{StaticResource FlatButton}" Command="{Binding DryRunCommand}" Margin="0,0,8,8"
                                 ToolTip="Runs rootAVD LISTONLY to preview which AVDs would be patched. No files are changed."/>
-                        <Button Content="Modules…" Style="{StaticResource FlatButton}" Command="{Binding OpenModulesCommand}" Margin="0,0,8,8"
-                                ToolTip="Magisk module manager — install Shamiko, LSPosed, PlayIntegrityFork, etc. on the rooted emulator (R-03)."/>
+                        <Button Content="Modules..." Style="{StaticResource FlatButton}" Command="{Binding OpenModulesCommand}" Margin="0,0,8,8"
+                                ToolTip="Magisk module manager - install Shamiko, LSPosed, PlayIntegrityFork, etc. on the rooted emulator."/>
                     </WrapPanel>
                     <TextBlock Foreground="{DynamicResource SubtextBrush}" Margin="0,14,0,0" TextWrapping="Wrap">
-                        Workflow:  1. Launch the AVD from the AVDs tab.  2. Press "Root with Latest Magisk".
-                        3. Cold-boot the AVD (AVDs tab -> Cold Boot).  4. Press "Verify + Persist Policy".
+                        Workflow: 1. Launch the AVD from the AVDs tab. 2. Press "Root with latest Magisk".
+                        3. Cold boot the AVD from the AVDs tab. 4. Press "Verify and persist policy".
                     </TextBlock>
                     <TextBlock Foreground="{DynamicResource OverlayBrush}" Margin="0,10,0,0" TextWrapping="Wrap" FontSize="12">
                         Backups (.original) of the stock ramdisk are kept inside the system-image folder. Un-Root copies them back.
@@ -62,9 +64,9 @@
 
             <Border Style="{StaticResource Card}">
                 <StackPanel>
-                    <TextBlock Style="{StaticResource SectionHeader}" Text="KernelSU (alternative root)"/>
+                    <TextBlock Style="{StaticResource SectionHeader}" Text="KernelSU manual path"/>
                     <TextBlock Foreground="{DynamicResource SubtextBrush}" TextWrapping="Wrap">
-                        KernelSU requires a custom kernel image patched into the AVD's system-image, which is out of scope for this tool's rootAVD-based flow. To experiment manually:
+                        KernelSU uses a custom kernel image instead of the rootAVD ramdisk flow. Advanced users can test it manually:
                         <LineBreak/>1. Build or download a KernelSU-patched kernel for the matching API level.
                         <LineBreak/>2. Replace <Run FontFamily="Cascadia Mono">&lt;sys-image&gt;/kernel-ranchu</Run> with the patched kernel.
                         <LineBreak/>3. Cold-boot the AVD and install the KernelSU manager APK from <Run FontFamily="Cascadia Mono">github.com/tiann/KernelSU/releases</Run>.

@@ -20,28 +20,25 @@
 
         <Border Grid.Row="1" Style="{StaticResource Card}">
             <StackPanel>
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="Filter:" VerticalAlignment="Center" Foreground="{DynamicResource SubtextBrush}"/>
-                        <TextBox Text="{Binding Filter, UpdateSourceTrigger=PropertyChanged}" Width="240" Margin="8,0,0,0"/>
-                        <CheckBox Content="Include system" IsChecked="{Binding IncludeSystem}" Margin="16,0,0,0" VerticalAlignment="Center"/>
-                        <CheckBox Content="Include disabled" IsChecked="{Binding IncludeDisabled}" Margin="12,0,0,0" VerticalAlignment="Center"/>
-                        <CheckBox Content="Verify signatures" IsChecked="{Binding VerifySignaturesBeforeInstall}" Margin="12,0,0,0" VerticalAlignment="Center"
-                                  ToolTip="apksigner verify --print-certs runs before each install (R-08)"/>
+                <TextBlock Style="{StaticResource SectionHeader}" Text="Inventory controls"/>
+                <WrapPanel Margin="0,0,-10,-8">
+                    <StackPanel Width="260" Margin="0,0,12,8">
+                        <TextBlock Text="Filter packages" Style="{StaticResource FieldLabel}"/>
+                        <TextBox Text="{Binding Filter, UpdateSourceTrigger=PropertyChanged}"
+                                 AutomationProperties.Name="Filter installed packages"/>
                     </StackPanel>
-                    <StackPanel Grid.Column="1" Orientation="Horizontal">
-                        <Button Content="Refresh" Style="{StaticResource FlatButton}" Command="{Binding RefreshCommand}"/>
-                        <Button Content="Compute sizes" Style="{StaticResource FlatButton}" Command="{Binding ComputeSizesCommand}" Margin="8,0,0,0" ToolTip="Root required: runs du -sb /data/data/&lt;pkg&gt; for every loaded row"/>
-                        <Button Content="Install APK..." Style="{StaticResource FlatButton}" Command="{Binding InstallApkCommand}" Margin="8,0,0,0"/>
-                    </StackPanel>
-                </Grid>
-                <WrapPanel Margin="0,10,0,0">
-                    <Button Content="Select all" Style="{StaticResource FlatButton}" Command="{Binding SelectAllCommand}" Margin="0,0,8,0"/>
-                    <Button Content="Select none" Style="{StaticResource FlatButton}" Command="{Binding SelectNoneCommand}" Margin="0,0,8,0"/>
+                    <CheckBox Content="Include system apps" IsChecked="{Binding IncludeSystem}" Margin="0,20,14,8" VerticalAlignment="Center"/>
+                    <CheckBox Content="Include disabled apps" IsChecked="{Binding IncludeDisabled}" Margin="0,20,14,8" VerticalAlignment="Center"/>
+                    <CheckBox Content="Verify signatures before install" IsChecked="{Binding VerifySignaturesBeforeInstall}" Margin="0,20,14,8" VerticalAlignment="Center"
+                              ToolTip="Runs apksigner verify --print-certs before each install."/>
+                </WrapPanel>
+                <WrapPanel Margin="0,10,-8,-8">
+                    <Button Content="Refresh" Style="{StaticResource FlatButton}" Command="{Binding RefreshCommand}" Margin="0,0,8,8"/>
+                    <Button Content="Compute sizes" Style="{StaticResource FlatButton}" Command="{Binding ComputeSizesCommand}" Margin="0,0,8,8"
+                            ToolTip="Root required: runs du -sb /data/data/&lt;pkg&gt; for every loaded row"/>
+                    <Button Content="Install APK..." Style="{StaticResource FlatButton}" Command="{Binding InstallApkCommand}" Margin="0,0,8,8"/>
+                    <Button Content="Select all" Style="{StaticResource FlatButton}" Command="{Binding SelectAllCommand}" Margin="0,0,8,8"/>
+                    <Button Content="Select none" Style="{StaticResource FlatButton}" Command="{Binding SelectNoneCommand}" Margin="0,0,8,8"/>
                     <ItemsControl ItemsSource="{Binding BloatPresets}">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
@@ -52,7 +49,7 @@
                             <DataTemplate>
                                 <Button Content="{Binding Name}"
                                         ToolTip="{Binding Description}"
-                                        Style="{StaticResource FlatButton}" Margin="0,0,8,0"
+                                        Style="{StaticResource FlatButton}" Margin="0,0,8,8"
                                         Command="{Binding DataContext.ApplyPresetCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                         CommandParameter="{Binding}"/>
                             </DataTemplate>
@@ -82,18 +79,21 @@
                     <ItemsControl ItemsSource="{Binding FilteredApps}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Grid Margin="0,3">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-                                <CheckBox IsChecked="{Binding IsSelected}" Content="{Binding Package}"/>
-                                <Border Grid.Column="1" Style="{StaticResource StatusPill}" Margin="6,2,0,0">
-                                    <TextBlock Text="{Binding SourceTag}" FontSize="11" Foreground="{DynamicResource MauveBrush}"/>
-                                </Border>
-                                <TextBlock Grid.Column="2" Text="{Binding SizeText}" Foreground="{DynamicResource OverlayBrush}" FontFamily="Cascadia Mono" FontSize="11" VerticalAlignment="Center" Margin="10,0,0,0" MinWidth="60" TextAlignment="Right"/>
-                            </Grid>
+                            <Border Background="{DynamicResource CrustBrush}" BorderBrush="{DynamicResource SurfaceBrush}" BorderThickness="1"
+                                    CornerRadius="6" Padding="9,7" Margin="0,3">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <CheckBox IsChecked="{Binding IsSelected}" Content="{Binding Package}"/>
+                                    <Border Grid.Column="1" Style="{StaticResource StatusPill}" Margin="8,0,0,0">
+                                        <TextBlock Text="{Binding SourceTag}" FontSize="11" Foreground="{DynamicResource MauveBrush}"/>
+                                    </Border>
+                                    <TextBlock Grid.Column="2" Text="{Binding SizeText}" Foreground="{DynamicResource OverlayBrush}" FontFamily="Cascadia Mono" FontSize="11" VerticalAlignment="Center" Margin="10,0,0,0" MinWidth="60" TextAlignment="Right"/>
+                                </Grid>
+                            </Border>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                     </ItemsControl>
@@ -101,25 +101,28 @@
             </Grid>
         </Border>
 
-        <StackPanel Grid.Row="3" Margin="0,12,0,0">
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Text="Action mode:" Foreground="{DynamicResource SubtextBrush}" VerticalAlignment="Center"/>
-                <RadioButton GroupName="UninstallMode" Content="Uninstall (adb)" Margin="10,0,0,0"
-                             IsChecked="{Binding UninstallMode, Converter={x:Static views:EqualsConverter.Instance}, ConverterParameter=user, Mode=OneWay}"
-                             Command="{Binding SetUninstallModeUserCommand}" />
-                <RadioButton GroupName="UninstallMode" Content="Disable for user 0 (reversible)" Margin="14,0,0,0"
-                             IsChecked="{Binding UninstallMode, Converter={x:Static views:EqualsConverter.Instance}, ConverterParameter=user0, Mode=OneWay}"
-                             Command="{Binding SetUninstallModeUser0Command}" />
+        <Border Grid.Row="3" Style="{StaticResource Card}" Margin="0,12,0,0">
+            <StackPanel>
+                <TextBlock Style="{StaticResource SectionHeader}" Text="Selected app actions"/>
+                <WrapPanel Margin="0,0,-14,-8">
+                    <TextBlock Text="Removal mode" Style="{StaticResource FieldLabel}" VerticalAlignment="Center" Margin="0,4,10,8"/>
+                    <RadioButton GroupName="UninstallMode" Content="Uninstall with adb" Margin="0,2,14,8"
+                                 IsChecked="{Binding UninstallMode, Converter={x:Static views:EqualsConverter.Instance}, ConverterParameter=user, Mode=OneWay}"
+                                 Command="{Binding SetUninstallModeUserCommand}" />
+                    <RadioButton GroupName="UninstallMode" Content="Disable for user 0 (reversible)" Margin="0,2,14,8"
+                                 IsChecked="{Binding UninstallMode, Converter={x:Static views:EqualsConverter.Instance}, ConverterParameter=user0, Mode=OneWay}"
+                                 Command="{Binding SetUninstallModeUser0Command}" />
+                </WrapPanel>
+                <WrapPanel Margin="0,10,-8,-8">
+                    <Button Content="Uninstall selected" Style="{StaticResource DangerButton}" Command="{Binding UninstallSelectedCommand}" Margin="0,0,8,8"/>
+                    <Button Content="Re-enable selected" Style="{StaticResource FlatButton}" Command="{Binding ReinstallSelectedCommand}" Margin="0,0,8,8"
+                            ToolTip="Runs cmd package install-existing. Use for apps removed with Disable for user 0."/>
+                    <Button Content="Export data..." Style="{StaticResource FlatButton}" Command="{Binding ExportSelectedCommand}" Margin="0,0,8,8"
+                            ToolTip="Tar /data/data/&lt;pkg&gt; per selected app into a .zip. Root required."/>
+                    <Button Content="Import ZIP..." Style="{StaticResource FlatButton}" Command="{Binding ImportZipCommand}" Margin="0,0,8,8"
+                            ToolTip="Restore a .zip produced by Export data. Root required and package must be installed."/>
+                </WrapPanel>
             </StackPanel>
-            <WrapPanel Margin="0,10,-8,-8">
-                <Button Content="Uninstall selected" Style="{StaticResource DangerButton}" Command="{Binding UninstallSelectedCommand}" Margin="0,0,8,8"/>
-                <Button Content="Re-enable selected" Style="{StaticResource FlatButton}" Command="{Binding ReinstallSelectedCommand}" Margin="8,0,8,8"
-                        ToolTip="cmd package install-existing; only useful for apps removed via 'Disable for user 0'."/>
-                <Button Content="Export data..." Style="{StaticResource FlatButton}" Command="{Binding ExportSelectedCommand}" Margin="0,0,8,8"
-                        ToolTip="Tar /data/data/&lt;pkg&gt; per selected app into a .zip (root required)."/>
-                <Button Content="Import ZIP..." Style="{StaticResource FlatButton}" Command="{Binding ImportZipCommand}" Margin="0,0,8,8"
-                        ToolTip="Restore a .zip produced by Export data into /data/data/&lt;pkg&gt; (root required, package must be installed)."/>
-            </WrapPanel>
-        </StackPanel>
+        </Border>
     </Grid>
 </UserControl>
