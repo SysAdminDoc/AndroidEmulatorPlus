@@ -16,7 +16,13 @@ public partial class App : Application
         // Load the chosen palette + styles BEFORE any view binds. Theme choice
         // persists to settings.json; ThemeService can swap the palette live later.
         var theme = SettingsService.ReadThemeFromDisk();
-        var paletteUri = theme == "latte" ? "Themes/Latte.xaml" : "Themes/Mocha.xaml";
+        var paletteUri = theme switch
+        {
+            "latte" => "Themes/Latte.xaml",
+            "frappe" => "Themes/Frappe.xaml",
+            "macchiato" => "Themes/Macchiato.xaml",
+            _ => "Themes/Mocha.xaml",
+        };
         Resources.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri(paletteUri, UriKind.Relative) });
         Resources.MergedDictionaries.Add(new ResourceDictionary { Source = new Uri("Themes/Styles.xaml", UriKind.Relative) });
 
@@ -45,6 +51,7 @@ public partial class App : Application
         sc.AddSingleton<ApkSignerService>();
         sc.AddSingleton<ScrcpyService>();
         sc.AddSingleton<ConsoleService>();
+        sc.AddSingleton<NetworkProfileService>();
         sc.AddSingleton<MagiskService>();
         sc.AddSingleton<BundleInstallerService>();
         sc.AddSingleton<ScreenRecordService>();

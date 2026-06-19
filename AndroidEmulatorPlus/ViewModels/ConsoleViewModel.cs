@@ -13,6 +13,7 @@ public sealed partial class ConsoleViewModel : ObservableObject
     private readonly ConsoleService _console;
     private readonly AdbService _adb;
     private readonly DeviceMonitor _monitor;
+    private readonly NetworkProfileService _networkProfiles;
     private readonly LogService _log;
 
     [ObservableProperty] private double _gpsLatitude = 37.422;
@@ -24,19 +25,30 @@ public sealed partial class ConsoleViewModel : ObservableObject
     [ObservableProperty] private string _smsBody = "Test from AEP";
     [ObservableProperty] private string _networkSpeed = "full";
     [ObservableProperty] private string _networkDelay = "none";
+    [ObservableProperty] private NetworkProfile? _selectedNetworkProfile;
     [ObservableProperty] private string _freeFormArgs = "";
     [ObservableProperty] private string _lastResult = "";
 
     public IReadOnlyList<string> PowerStates { get; } = new[] { "full", "charging", "discharging", "not-charging", "unknown" };
     public IReadOnlyList<string> Speeds { get; } = new[] { "full", "gsm", "edge", "umts", "hsdpa", "lte" };
     public IReadOnlyList<string> Delays { get; } = new[] { "none", "gprs", "edge", "umts" };
+    public IReadOnlyList<NetworkProfile> NetworkProfiles => _networkProfiles.Profiles;
 
-    public ConsoleViewModel(ConsoleService console, AdbService adb, DeviceMonitor monitor, LogService log)
+    public ConsoleViewModel(ConsoleService console, AdbService adb, DeviceMonitor monitor,
+        NetworkProfileService networkProfiles, LogService log)
     {
         _console = console;
         _adb = adb;
         _monitor = monitor;
+        _networkProfiles = networkProfiles;
         _log = log;
+    }
+
+    partial void OnSelectedNetworkProfileChanged(NetworkProfile? value)
+    {
+        if (value is null) return;
+        NetworkSpeed = value.Speed;
+        NetworkDelay = value.Delay;
     }
 
     private string? ActiveSerial() => _monitor.Current.FirstOrDefault(d => d.IsEmulator && d.IsOnline)?.Serial;

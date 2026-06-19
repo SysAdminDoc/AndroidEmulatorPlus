@@ -26,6 +26,8 @@
                     <TextBlock Text="Theme" Style="{StaticResource FieldLabel}" VerticalAlignment="Center"/>
                     <ComboBox Grid.Column="1" x:Name="ThemeBox" AutomationProperties.Name="Theme">
                         <ComboBoxItem Content="mocha"/>
+                        <ComboBoxItem Content="frappe"/>
+                        <ComboBoxItem Content="macchiato"/>
                         <ComboBoxItem Content="latte"/>
                     </ComboBox>
                 </Grid>

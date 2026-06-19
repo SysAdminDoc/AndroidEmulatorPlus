@@ -74,9 +74,7 @@ public sealed class SettingsService
 
     private static AppSettings Normalize(AppSettings settings)
     {
-        settings.Theme = settings.Theme?.Equals("latte", StringComparison.OrdinalIgnoreCase) == true
-            ? "latte"
-            : "mocha";
+        settings.Theme = ThemeService.NormalizeThemeName(settings.Theme);
         settings.SdkRootOverride = NullIfWhiteSpace(settings.SdkRootOverride);
         settings.MediaDir = NullIfWhiteSpace(settings.MediaDir);
         settings.HttpProxy = NormalizeProxy(settings.HttpProxy);
@@ -128,11 +126,7 @@ public sealed class SettingsService
             if (!File.Exists(Path)) return "mocha";
             using var doc = JsonDocument.Parse(File.ReadAllText(Path));
             if (doc.RootElement.TryGetProperty("theme", out var t) && t.ValueKind == JsonValueKind.String)
-                return t.GetString()?.ToLowerInvariant() switch
-                {
-                    "latte" => "latte",
-                    _ => "mocha",
-                };
+                return ThemeService.NormalizeThemeName(t.GetString());
         }
         catch { }
         return "mocha";

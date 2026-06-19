@@ -1,5 +1,7 @@
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using AndroidEmulatorPlus.Services;
 using AndroidEmulatorPlus.ViewModels;
 
@@ -65,4 +67,23 @@ public partial class MainWindow : Window
     }
 
     private void ClearLog_Click(object sender, RoutedEventArgs e) => _log.Clear();
+
+    private string _logFilterText = "";
+
+    private void LogFilter_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        _logFilterText = LogFilterBox.Text ?? "";
+        var view = CollectionViewSource.GetDefaultView(_log.Entries);
+        if (string.IsNullOrWhiteSpace(_logFilterText))
+        {
+            view.Filter = null;
+        }
+        else
+        {
+            var filter = _logFilterText;
+            view.Filter = obj =>
+                obj is LogEntry entry &&
+                entry.Text.Contains(filter, StringComparison.OrdinalIgnoreCase);
+        }
+    }
 }

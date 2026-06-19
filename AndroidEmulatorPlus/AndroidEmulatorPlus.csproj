@@ -21,7 +21,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
     <PackageReference Include="Velopack" Version="1.2.0" />
   </ItemGroup>
@@ -30,6 +30,7 @@
     <EmbeddedResource Include="Resources\known-hashes.json" />
     <EmbeddedResource Include="Resources\bloat-presets.json" />
     <EmbeddedResource Include="Resources\magisk-modules.json" />
+    <EmbeddedResource Include="Resources\network-profiles.json" />
     <Resource Include="Assets\aep.ico" />
   </ItemGroup>
 

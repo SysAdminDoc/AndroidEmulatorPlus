@@ -1,0 +1,66 @@
+{
+  "_comment": "Network condition profiles for Console tab. Each profile maps to emulator console network speed and delay presets. Users can override via %LOCALAPPDATA%\\AndroidEmulatorPlus\\presets\\network-profiles.json.",
+  "version": 1,
+  "profiles": [
+    {
+      "id": "full",
+      "name": "Full speed (no throttle)",
+      "speed": "full",
+      "delay": "none"
+    },
+    {
+      "id": "wifi",
+      "name": "Wi-Fi",
+      "speed": "full",
+      "delay": "none"
+    },
+    {
+      "id": "lte",
+      "name": "LTE / 4G",
+      "speed": "lte",
+      "delay": "none"
+    },
+    {
+      "id": "hsdpa",
+      "name": "HSDPA / 3.5G",
+      "speed": "hsdpa",
+      "delay": "umts"
+    },
+    {
+      "id": "umts",
+      "name": "UMTS / 3G",
+      "speed": "umts",
+      "delay": "umts"
+    },
+    {
+      "id": "edge",
+      "name": "EDGE / 2.75G",
+      "speed": "edge",
+      "delay": "edge"
+    },
+    {
+      "id": "gprs",
+      "name": "GPRS / 2G",
+      "speed": "gsm",
+      "delay": "gprs"
+    },
+    {
+      "id": "subway",
+      "name": "Subway / Underground",
+      "speed": "edge",
+      "delay": "umts"
+    },
+    {
+      "id": "rural-3g",
+      "name": "Rural 3G",
+      "speed": "umts",
+      "delay": "umts"
+    },
+    {
+      "id": "congested-lte",
+      "name": "Congested LTE",
+      "speed": "hsdpa",
+      "delay": "edge"
+    }
+  ]
+}

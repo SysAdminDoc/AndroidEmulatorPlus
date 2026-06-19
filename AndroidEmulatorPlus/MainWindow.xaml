@@ -152,11 +152,17 @@
                 </Grid.RowDefinitions>
                 <Grid Grid.Row="0">
                     <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="Activity log" FontWeight="SemiBold" Foreground="{DynamicResource MauveBrush}"/>
-                    <Button Grid.Column="1" Content="Clear log" Style="{StaticResource SmallButton}" Click="ClearLog_Click"/>
+                    <TextBlock Text="Activity log" FontWeight="SemiBold" Foreground="{DynamicResource MauveBrush}" VerticalAlignment="Center"/>
+                    <TextBox Grid.Column="1" x:Name="LogFilterBox"
+                             Margin="12,0,8,0" Padding="4,2" FontSize="11"
+                             FontFamily="Cascadia Mono, Consolas, monospace"
+                             AutomationProperties.Name="Filter activity log"
+                             TextChanged="LogFilter_TextChanged"/>
+                    <Button Grid.Column="2" Content="Clear log" Style="{StaticResource SmallButton}" Click="ClearLog_Click"/>
                 </Grid>
                 <Border Grid.Row="1" Background="{DynamicResource CrustBrush}" BorderBrush="{DynamicResource SurfaceBrush}" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,7,0,0">
                     <ItemsControl ItemsSource="{Binding Log.Entries}" x:Name="LogList">

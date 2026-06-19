@@ -23,10 +23,28 @@ public sealed class ThemeService
     /// <summary>"mocha" or "latte".</summary>
     public string Current => _settings.Current.Theme;
 
+    public static readonly IReadOnlyList<string> AvailableThemes = new[] { "mocha", "frappe", "macchiato", "latte" };
+
+    public static string NormalizeThemeName(string? theme)
+    {
+        if (theme is null) return "mocha";
+        foreach (var t in AvailableThemes)
+            if (theme.Equals(t, System.StringComparison.OrdinalIgnoreCase)) return t;
+        return "mocha";
+    }
+
+    private static string ThemeToXamlPath(string norm) => norm switch
+    {
+        "latte" => "Themes/Latte.xaml",
+        "frappe" => "Themes/Frappe.xaml",
+        "macchiato" => "Themes/Macchiato.xaml",
+        _ => "Themes/Mocha.xaml",
+    };
+
     public void Apply(string theme)
     {
-        var norm = theme?.Equals("latte", System.StringComparison.OrdinalIgnoreCase) == true ? "latte" : "mocha";
-        var src = norm == "latte" ? "Themes/Latte.xaml" : "Themes/Mocha.xaml";
+        var norm = NormalizeThemeName(theme);
+        var src = ThemeToXamlPath(norm);
         var app = Application.Current;
         if (app is null) return;
         try

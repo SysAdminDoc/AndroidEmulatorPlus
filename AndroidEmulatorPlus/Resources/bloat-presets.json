@@ -85,6 +85,62 @@
         "com.oneplus.opbackup",
         "com.heytap.cloud"
       ]
+    },
+    {
+      "id": "motorola",
+      "name": "Motorola / My UX bloat",
+      "description": "Motorola preinstalls (Moto App Launcher, Moto Actions, Hello You).",
+      "packages": [
+        "com.motorola.launcher3",
+        "com.motorola.actions",
+        "com.motorola.helloyou",
+        "com.motorola.help",
+        "com.motorola.demo",
+        "com.motorola.gamemode",
+        "com.motorola.android.providers.pim",
+        "com.motorola.motocare",
+        "com.motorola.ccc.devicemanagement",
+        "com.motorola.brapps",
+        "com.motorola.tipsapp",
+        "com.motorola.genie"
+      ]
+    },
+    {
+      "id": "huawei",
+      "name": "Huawei / EMUI bloat",
+      "description": "Huawei EMUI / HarmonyOS preinstalls (AppGallery, HiCloud, Petal Maps).",
+      "packages": [
+        "com.huawei.appmarket",
+        "com.huawei.gamebox",
+        "com.huawei.intelligent",
+        "com.huawei.himovie.overseas",
+        "com.huawei.music",
+        "com.huawei.hifolder",
+        "com.huawei.hicloud",
+        "com.huawei.browser",
+        "com.huawei.health",
+        "com.huawei.wallet",
+        "com.huawei.maps.app",
+        "com.huawei.search",
+        "com.huawei.tips",
+        "com.huawei.hwid"
+      ]
+    },
+    {
+      "id": "nothing",
+      "name": "Nothing Phone / Nothing OS bloat",
+      "description": "Nothing OS preinstalls (Nothing Recorder, Weather, NFC).",
+      "packages": [
+        "com.nothing.recorder",
+        "com.nothing.weather",
+        "com.nothing.nfc",
+        "com.nothing.smartcenter",
+        "com.nothing.setupwizard",
+        "com.nothing.photos",
+        "com.nothing.compass",
+        "com.nothing.backuprestore",
+        "com.nothing.experienceplus"
+      ]
     }
   ]
 }
