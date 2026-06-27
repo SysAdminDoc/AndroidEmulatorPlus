@@ -69,13 +69,14 @@ public sealed class RootService
         }
     }
 
-    public async Task<string> DownloadLatestMagiskAsync(IProgress<string>? status, CancellationToken ct)
+    public async Task<string> DownloadLatestMagiskAsync(IProgress<string>? status, CancellationToken ct,
+        IProgress<(long received, long? total)>? downloadProgress = null)
     {
         status?.Report("Looking up latest Magisk release…");
         var info = await _dl.LatestMagiskAsync(ct) ?? throw new InvalidOperationException(
             "Could not resolve latest Magisk from GitHub releases. Check network connectivity.");
         status?.Report($"Downloading Magisk {info.Tag}…");
-        await _dl.DownloadAsync(info.Url, MagiskApkPath, null, ct);
+        await _dl.DownloadAsync(info.Url, MagiskApkPath, downloadProgress, ct);
 
         var assetName = System.IO.Path.GetFileName(new Uri(info.Url).LocalPath);
         var actualSha = HashVerificationService.ComputeSha256(MagiskApkPath);

@@ -55,6 +55,8 @@ public partial class App : Application
         sc.AddSingleton<MagiskService>();
         sc.AddSingleton<BundleInstallerService>();
         sc.AddSingleton<ScreenRecordService>();
+        sc.AddSingleton<CaCertService>();
+        sc.AddSingleton<FridaService>();
         sc.AddSingleton<DeviceMonitor>();
 
         sc.AddSingleton<MainViewModel>();

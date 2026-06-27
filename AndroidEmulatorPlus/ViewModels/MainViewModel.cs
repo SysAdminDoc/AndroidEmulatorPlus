@@ -63,7 +63,7 @@ public sealed partial class MainViewModel : ObservableObject
         RefreshSdk();
         // If the SDK isn't there yet, land on Install rather than the empty AVDs list.
         if (!_sdk.IsReady) _activeSection = "Install";
-        Log.Info("AndroidEmulatorPlus v0.2.1 ready.");
+        Log.Info("AndroidEmulatorPlus v0.2.2 ready.");
     }
 
     [RelayCommand]

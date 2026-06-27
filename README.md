@@ -1,6 +1,6 @@
 # AndroidEmulatorPlus
 
-[![Version](https://img.shields.io/badge/version-0.2.1-blue.svg)](https://github.com/SysAdminDoc/AndroidEmulatorPlus/releases)
+[![Version](https://img.shields.io/badge/version-0.2.2-blue.svg)](https://github.com/SysAdminDoc/AndroidEmulatorPlus/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-lightgrey.svg)](#)
 [![.NET](https://img.shields.io/badge/.NET-9.0-blueviolet.svg)](#)
@@ -23,7 +23,7 @@ pills:
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────┐
-│ AndroidEmulatorPlus v0.2.1  SDK ✓ … 📱 phone …  💻 emu … 📷 🎥 🖥 ⚙       │
+│ AndroidEmulatorPlus v0.2.2  SDK ✓ … 📱 phone …  💻 emu … 📷 🎥 🖥 ⚙       │
 ├────────────┬─────────────────────────────────────────────────────────────────┤
 │ ① Install  │                                                                 │
 │ ② AVDs     │                                                                 │
@@ -40,12 +40,12 @@ pills:
 
 | Section | What you can do |
 |---|---|
-| **① Install / SDK** | Detect Android SDK at standard locations. Download the command-line tools (~150 MB) and lay them out at `cmdline-tools/latest` with SHA-256 verification. Accept all SDK licenses in one click. Run `emulator -accel-check` with one-click remediation links on failure. Surface the rolling `crash.log` tail. |
+| **① Install / SDK** | Detect Android SDK at standard locations. Download the command-line tools (~150 MB) with visible progress, HTTP Range resume, and SHA-256 verification, then lay them out at `cmdline-tools/latest`. Accept all SDK licenses in one click. Run `emulator -accel-check` with one-click remediation links on failure. Surface the rolling `crash.log` tail. |
 | **② AVDs** | List existing AVDs with badge / running state. Launch / Cold Boot / Stop / "Launch with options…" (cold/wipe/headless/`-http-proxy`/`-dns-server`/cameras). Per-AVD overflow: Show on disk, Rename, Duplicate, Snapshots, Desktop shortcut, Delete (with confirm). Create from any installed system image. "Browse online…" runs `sdkmanager --list` to install new images on demand. |
-| **③ Root** | Patch the AVD's `ramdisk.img` with the latest Magisk via [rootAVD](https://gitlab.com/newbit/rootAVD) (revision-pinned). GitHub `digest` field is cross-checked against the in-tree manifest for supply-chain defense in depth. Magisk shell-policy persistence so `adb shell su` is headless thereafter. Inline "Launch & root" CTA if no emulator is attached. "Dry run (LISTONLY)" preview. **Modules…** sub-dialog installs Shamiko / LSPosed / PlayIntegrityFork / Tricky Store / Zygisk Detach (or arbitrary local `.zip`). |
+| **③ Root** | Patch the AVD's `ramdisk.img` with the latest Magisk via [rootAVD](https://gitlab.com/newbit/rootAVD) (revision-pinned). GitHub `digest` field is cross-checked against the in-tree manifest for supply-chain defense in depth. Magisk shell-policy persistence so `adb shell su` is headless thereafter. Inline "Launch & root" CTA if no emulator is attached. "Dry run (LISTONLY)" preview. **Modules…** sub-dialog installs Shamiko / LSPosed / PlayIntegrityFork / Tricky Store / Zygisk Detach (or arbitrary local `.zip`). Security-testing actions install a Burp/mitmproxy CA into the Magisk-backed system trust store and deploy/stop `frida-server` for the attached rooted emulator. |
 | **④ Migrate from Phone** | Detects a USB or Wi-Fi-paired phone (`adb pair` flow built in). Lists user packages with a `⚠ no-backup` pill for apps that declared `android:allowBackup="false"`. Pulls each APK (split-aware), installs on the emulator, then `tar`s `/data/data/<pkg>` over with UID remap + `restorecon`. Optional passes for `/sdcard/Android/data/<pkg>` and `/sdcard/Android/obb/<pkg>`. Force-stop the source app on the phone first to avoid torn SQLite DBs. Phone-side tar flavor is auto-detected (toybox vs. find-prune fallback). |
-| **⑤ Apps / Debloat** | Inventory installed apps (include system / disabled toggles, per-row tag pill). Apksigner signature verification before install with a cert-mismatch warning vs. the installed package. Multi-select uninstall or "Disable for user 0" (reversible). Drag-and-drop install for `.apk` / `.apks` / `.xapk` / `.apkm` (bundles auto-extracted, base APK ordered first, OBBs pushed). JSON-driven debloat presets (Google / Samsung / Pixel / Xiaomi / OnePlus); override at `%LOCALAPPDATA%\AndroidEmulatorPlus\presets\bloat.json`. Per-app data export → ZIP and Import from ZIP for cold archival. Compute per-app data size on demand (`du -sb /data/data/<pkg>`). |
-| **⑥ Configure** | Edit `config.ini`: RAM / vCPUs / disk size / fastboot flags. Screen preset picker (Pixel 7..9 Pro / Tablet / Fold / Nexus / TV). GPU mode picker (`hw.gpu.mode`: host / swiftshader_indirect / angle_indirect / guest / off) with inline guidance for VM / RDP scenarios. Resize the qcow2 partition with `qemu-img`, optionally wiping data so the inner ext4 actually grows (typed `WIPE` confirmation listing every snapshot about to be destroyed). |
+| **⑤ Apps / Debloat** | Inventory installed apps (include system / disabled toggles, per-row tag pill). Apksigner signature verification before install with a cert-mismatch warning vs. the installed package. Multi-select uninstall or "Disable for user 0" (reversible). Drag-and-drop install for `.apk` / `.apks` / `.xapk` / `.apkm` (bundles auto-extracted, base APK ordered first, OBBs pushed). JSON-driven debloat presets (Google / Samsung / Pixel / Xiaomi / OnePlus / Motorola / Huawei / Nothing); override at `%LOCALAPPDATA%\AndroidEmulatorPlus\presets\bloat.json`. Per-app data export → ZIP and Import from ZIP for cold archival. Compute per-app data size on demand (`du -sb /data/data/<pkg>`). |
+| **⑥ Configure** | Edit `config.ini`: RAM / vCPUs / disk size / fastboot flags. Screen preset picker (Pixel 7 through Pixel 10 Pro Fold / Tablet / Fold / Nexus / TV). GPU mode picker (`hw.gpu.mode`: host / swiftshader_indirect / angle_indirect / guest / off) with inline guidance for VM / RDP scenarios. Resize the qcow2 partition with `qemu-img`, optionally wiping data so the inner ext4 actually grows (typed `WIPE` confirmation listing every snapshot about to be destroyed). |
 | **⑦ Logcat** | Dedicated tab streaming `adb logcat -v threadtime` from the attached emulator with priority + package filters. Clear buffer (`logcat -c`) / Clear view / Save to file. Virtualizing 5000-line ring. |
 | **⑧ Console** | Emulator-console (`adb emu …`) sandbox: GPS (`geo fix`), battery (capacity + status), telephony (`gsm call`, `sms send`), network condition presets, manual clipboard pull/push, free-form command field. |
 
@@ -93,10 +93,10 @@ dotnet publish AndroidEmulatorPlus/AndroidEmulatorPlus.csproj \
   -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
 ```
 
-The CI workflow at `.github/workflows/build.yml` runs the same on
-`windows-latest`. On every `v*` tag push it packages a Velopack installer,
-portable bundle, full package, delta package when a previous release exists,
-and the `releases.win.json` feed used by in-app updates.
+Maintainer releases are built locally. Use `dotnet publish`, run the local test
+suite, create the Velopack packages on the release machine, then upload the
+installer, portable package, full package, delta package, and `releases.win.json`
+feed to the GitHub Release.
 
 ## Tests
 
@@ -107,13 +107,13 @@ dotnet test AndroidEmulatorPlus.Tests/AndroidEmulatorPlus.Tests.csproj
 Coverage: ini round-trip, raw-byte disk parsing, install-failed reason
 extraction, system-image sort, SHA-256 helper, `OrderBaseFirst`, AVD
 duplicate file-tree contract, debloat-preset merge, `allowBackup`
-parsing, known-hashes manifest schema.
+parsing, known-hashes manifest schema, CA certificate hashing, Frida release
+asset selection, and HTTP Range download resume.
 
 ## Project planning
 
-- [ROADMAP.md](ROADMAP.md) - active checklist and release blockers.
-- [COMPLETED.md](COMPLETED.md) - shipped roadmap history.
-- [RESEARCH_REPORT.md](RESEARCH_REPORT.md) - research summary and archive index.
+Maintainer planning files are kept in the local checkout. Public release history
+is represented by Git commits, tags, GitHub Releases, and this README.
 
 ## Typical workflow
 
@@ -122,7 +122,7 @@ parsing, known-hashes manifest schema.
 2. ② AVDs      →  Browse online… → install a Google Play system image
                   → Create "MyEmulator" → Launch → let Play Store sign in
 3. ③ Root      →  Root with latest Magisk → Cold Boot → Verify
-                  → Modules → Shamiko + LSPosed
+                  → Modules → Shamiko + LSPosed → CA cert / Frida if needed
 4. ④ Migrate   →  pair phone → pick packages → Start (3-10 minutes)
 5. ⑤ Apps      →  Verify signatures on, drop APKs to install,
                   preset-debloat what you don't want
@@ -141,7 +141,9 @@ Every binary downloaded by this app is hash-verified before use:
   `Resources/known-hashes.json` (curated, updated per release). Mismatch
   on either tier hard-fails and deletes the partial download.
 - **Android command-line tools ZIP** — verified against the same in-tree
-  manifest. Trust-on-first-use logging for unknown URLs / Magisk tags.
+  manifest. Trust-on-first-use logging for unknown URLs / Magisk tags. Large
+  downloads keep a `.download` sibling and resume with HTTP Range when the
+  server supports it.
 - **rootAVD bash script** — `git clone` pins a verified SHA
   (`RootService.RootAvdPinnedRef`). `master` is no longer trusted blindly.
 - **APK signatures** — pre-install verification via `apksigner verify
@@ -183,9 +185,9 @@ Settings dialog has a "no telemetry" reminder card.
 
 ## Theming
 
-Two Catppuccin palettes ship: **Mocha** (dark, default) and **Latte** (light).
-Switch in Settings — the theme swaps live thanks to the `DynamicResource`
-brush sweep; no restart needed.
+Four Catppuccin palettes ship: **Mocha** (dark, default), **Frappe**,
+**Macchiato**, and **Latte** (light). Switch in Settings — the theme swaps live
+thanks to the `DynamicResource` brush sweep; no restart needed.
 
 ## Acknowledgements
 

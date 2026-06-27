@@ -3,6 +3,7 @@ using AndroidEmulatorPlus.Models;
 using AndroidEmulatorPlus.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Win32;
 
 namespace AndroidEmulatorPlus.ViewModels;
 
@@ -16,6 +17,8 @@ public sealed partial class RootViewModel : ObservableObject
     private readonly SdkLocator _sdk;
     private readonly EmulatorService _emu;
     private readonly MagiskService _magisk;
+    private readonly CaCertService _caCert;
+    private readonly FridaService _frida;
 
     public ObservableCollection<Avd> Avds { get; } = new();
     [ObservableProperty] private Avd? _selectedAvd;
@@ -23,11 +26,19 @@ public sealed partial class RootViewModel : ObservableObject
     [ObservableProperty] private string _step = "";
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private bool _needsLaunch;
+    [ObservableProperty] private string _caCertStatus = "No CA certificate installed this session.";
+    [ObservableProperty] private string _fridaStatus = "No emulator attached.";
+    [ObservableProperty] private bool _isFridaRunning;
+    [ObservableProperty] private bool _hasDownloadProgress;
+    [ObservableProperty] private bool _isDownloadProgressIndeterminate = true;
+    [ObservableProperty] private double _downloadProgress;
+    [ObservableProperty] private string _downloadProgressText = "";
 
     private CancellationTokenSource? _cts;
 
     public RootViewModel(RootService root, AdbService adb, AvdService avds, LogService log,
-        DeviceMonitor monitor, SdkLocator sdk, EmulatorService emu, MagiskService magisk)
+        DeviceMonitor monitor, SdkLocator sdk, EmulatorService emu, MagiskService magisk,
+        CaCertService caCert, FridaService frida)
     {
         _root = root;
         _adb = adb;
@@ -37,6 +48,8 @@ public sealed partial class RootViewModel : ObservableObject
         _sdk = sdk;
         _emu = emu;
         _magisk = magisk;
+        _caCert = caCert;
+        _frida = frida;
         _monitor.Changed += _ => UpdateNeedsLaunch();
     }
 
@@ -72,8 +85,14 @@ public sealed partial class RootViewModel : ObservableObject
         {
             var rooted = await _adb.IsRootedAsync(emu.Serial);
             Status = rooted ? "Rooted (Magisk daemon active)" : "Not rooted (or root not granted to shell)";
+            await RefreshFridaStateAsync(emu.Serial);
         }
-        else Status = "No emulator running.";
+        else
+        {
+            Status = "No emulator running.";
+            FridaStatus = "No emulator attached.";
+            IsFridaRunning = false;
+        }
         UpdateNeedsLaunch();
     }
 
@@ -128,7 +147,9 @@ public sealed partial class RootViewModel : ObservableObject
         try
         {
             await _root.EnsureRootAvdAsync(progress, ct);
-            var tag = await _root.DownloadLatestMagiskAsync(progress, ct);
+            ResetDownloadProgress();
+            var tag = await _root.DownloadLatestMagiskAsync(progress, ct,
+                new Progress<(long received, long? total)>(ReportDownloadProgress));
             _log.Success($"Magisk {tag} cached.");
 
             var ramdisk = _root.FindRamdiskFor(SelectedAvd.Name)
@@ -164,6 +185,7 @@ public sealed partial class RootViewModel : ObservableObject
         {
             IsBusy = false;
             Step = "";
+            HasDownloadProgress = false;
             _cts?.Dispose();
             _cts = null;
         }
@@ -173,6 +195,118 @@ public sealed partial class RootViewModel : ObservableObject
     private void Cancel()
     {
         try { _cts?.Cancel(); } catch { }
+    }
+
+    [RelayCommand]
+    private async Task InstallCaCertAsync()
+    {
+        var emu = CurrentOnlineEmulator();
+        if (emu is null) { _log.Warning("CA cert install: no emulator attached."); return; }
+
+        var dlg = new OpenFileDialog
+        {
+            Title = "Choose proxy CA certificate",
+            Filter = "Certificate files (*.cer;*.crt;*.pem;*.der)|*.cer;*.crt;*.pem;*.der|All files (*.*)|*.*",
+            CheckFileExists = true,
+            Multiselect = false,
+        };
+        if (dlg.ShowDialog() != true) return;
+
+        IsBusy = true;
+        _cts = new CancellationTokenSource();
+        var progress = new Progress<string>(s => { Step = s; CaCertStatus = s; _log.Info(s); });
+        try
+        {
+            var ok = await _caCert.InstallCaCertAsync(emu.Serial, dlg.FileName, progress, _cts.Token);
+            CaCertStatus = ok ? "Installed. Reboot the emulator to activate." : "Install failed.";
+        }
+        catch (OperationCanceledException)
+        {
+            CaCertStatus = "Install cancelled.";
+            _log.Warning("CA cert install cancelled.");
+        }
+        catch (Exception ex)
+        {
+            CaCertStatus = "Install failed.";
+            _log.Error("CA cert install failed: " + ex.Message);
+        }
+        finally
+        {
+            IsBusy = false;
+            Step = "";
+            _cts?.Dispose();
+            _cts = null;
+        }
+    }
+
+    [RelayCommand]
+    private async Task DeployFridaAsync()
+    {
+        var emu = CurrentOnlineEmulator();
+        if (emu is null) { _log.Warning("Frida deploy: no emulator attached."); return; }
+
+        IsBusy = true;
+        ResetDownloadProgress();
+        _cts = new CancellationTokenSource();
+        var progress = new Progress<string>(s => { Step = s; FridaStatus = s; _log.Info(s); });
+        try
+        {
+            var ok = await _frida.DeployAsync(emu.Serial, progress,
+                new Progress<(long received, long? total)>(ReportDownloadProgress), _cts.Token);
+            IsFridaRunning = ok && await _frida.IsRunningAsync(emu.Serial);
+            FridaStatus = IsFridaRunning ? "frida-server is running." : "frida-server deployed; start status uncertain.";
+        }
+        catch (OperationCanceledException)
+        {
+            FridaStatus = "Deploy cancelled.";
+            _log.Warning("Frida deploy cancelled.");
+        }
+        catch (Exception ex)
+        {
+            FridaStatus = "Deploy failed.";
+            _log.Error("Frida deploy failed: " + ex.Message);
+        }
+        finally
+        {
+            IsBusy = false;
+            Step = "";
+            HasDownloadProgress = false;
+            _cts?.Dispose();
+            _cts = null;
+        }
+    }
+
+    [RelayCommand]
+    private async Task StopFridaAsync()
+    {
+        var emu = CurrentOnlineEmulator();
+        if (emu is null) { _log.Warning("Frida stop: no emulator attached."); return; }
+        IsBusy = true;
+        try
+        {
+            await _frida.StopAsync(emu.Serial);
+            IsFridaRunning = false;
+            FridaStatus = "frida-server stopped.";
+        }
+        catch (Exception ex)
+        {
+            FridaStatus = "Stop failed.";
+            _log.Error("Frida stop failed: " + ex.Message);
+        }
+        finally { IsBusy = false; }
+    }
+
+    [RelayCommand]
+    private async Task RefreshFridaStatusAsync()
+    {
+        var emu = CurrentOnlineEmulator();
+        if (emu is null)
+        {
+            FridaStatus = "No emulator attached.";
+            IsFridaRunning = false;
+            return;
+        }
+        await RefreshFridaStateAsync(emu.Serial);
     }
 
     /// <summary>B-08: rootAVD LISTONLY dry-run preview.</summary>
@@ -212,6 +346,61 @@ public sealed partial class RootViewModel : ObservableObject
             await RefreshAsync();
         }
         finally { IsBusy = false; }
+    }
+
+    private Device? CurrentOnlineEmulator()
+        => _monitor.Current.FirstOrDefault(d => d.IsEmulator && d.IsOnline);
+
+    private async Task RefreshFridaStateAsync(string serial)
+    {
+        try
+        {
+            IsFridaRunning = await _frida.IsRunningAsync(serial);
+            FridaStatus = IsFridaRunning ? "frida-server is running." : "frida-server is not running.";
+        }
+        catch (Exception ex)
+        {
+            IsFridaRunning = false;
+            FridaStatus = "Frida status unavailable.";
+            _log.Warning("Frida status check failed: " + ex.Message);
+        }
+    }
+
+    private void ResetDownloadProgress()
+    {
+        HasDownloadProgress = false;
+        IsDownloadProgressIndeterminate = true;
+        DownloadProgress = 0;
+        DownloadProgressText = "";
+    }
+
+    private void ReportDownloadProgress((long received, long? total) update)
+    {
+        HasDownloadProgress = true;
+        if (update.total is > 0)
+        {
+            IsDownloadProgressIndeterminate = false;
+            DownloadProgress = Math.Clamp(update.received * 100.0 / update.total.Value, 0, 100);
+            DownloadProgressText = $"{FormatBytes(update.received)} / {FormatBytes(update.total.Value)} ({DownloadProgress:0}%)";
+        }
+        else
+        {
+            IsDownloadProgressIndeterminate = true;
+            DownloadProgressText = $"{FormatBytes(update.received)} downloaded";
+        }
+    }
+
+    private static string FormatBytes(long bytes)
+    {
+        string[] units = ["B", "KB", "MB", "GB"];
+        var value = (double)bytes;
+        var unit = 0;
+        while (value >= 1024 && unit < units.Length - 1)
+        {
+            value /= 1024;
+            unit++;
+        }
+        return unit == 0 ? $"{bytes} B" : $"{value:0.0} {units[unit]}";
     }
 
     [RelayCommand]

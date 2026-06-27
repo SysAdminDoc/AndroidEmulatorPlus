@@ -9,9 +9,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <LangVersion>latest</LangVersion>
-    <Version>0.2.1</Version>
-    <FileVersion>0.2.1.0</FileVersion>
-    <InformationalVersion>0.2.1</InformationalVersion>
+    <Version>0.2.2</Version>
+    <FileVersion>0.2.2.0</FileVersion>
+    <InformationalVersion>0.2.2</InformationalVersion>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\aep.ico</ApplicationIcon>
     <StartupObject>AndroidEmulatorPlus.Program</StartupObject>
@@ -23,6 +23,7 @@
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
+    <PackageReference Include="SharpCompress" Version="0.49.1" />
     <PackageReference Include="Velopack" Version="1.2.0" />
   </ItemGroup>
 

@@ -29,6 +29,10 @@ public sealed partial class InstallViewModel : ObservableObject
     [ObservableProperty] private bool _accelOk;
     [ObservableProperty] private string _cmdlineToolsNote = "";
     [ObservableProperty] private bool _hasCmdlineToolsNote;
+    [ObservableProperty] private bool _hasDownloadProgress;
+    [ObservableProperty] private bool _isDownloadProgressIndeterminate = true;
+    [ObservableProperty] private double _downloadProgress;
+    [ObservableProperty] private string _downloadProgressText = "";
 
     private CancellationTokenSource? _cts;
 
@@ -170,7 +174,13 @@ public sealed partial class InstallViewModel : ObservableObject
             }
             Step = "Downloading command-line tools…";
             var zip = Path.Combine(Path.GetTempPath(), "android-cmdline-tools.zip");
-            await _dl.DownloadAsync(url: res.Url, dest: zip, ct: ct);
+            HasDownloadProgress = true;
+            IsDownloadProgressIndeterminate = true;
+            DownloadProgress = 0;
+            DownloadProgressText = "";
+            await _dl.DownloadAsync(url: res.Url, dest: zip,
+                progress: new Progress<(long received, long? total)>(ReportDownloadProgress),
+                ct: ct);
 
             Step = "Verifying download…";
             var check = _hash.VerifyCmdlineTools(res.Url, zip);
@@ -210,9 +220,39 @@ public sealed partial class InstallViewModel : ObservableObject
         {
             IsBusy = false;
             Step = "";
+            HasDownloadProgress = false;
             _cts?.Dispose();
             _cts = null;
         }
+    }
+
+    private void ReportDownloadProgress((long received, long? total) update)
+    {
+        HasDownloadProgress = true;
+        if (update.total is > 0)
+        {
+            IsDownloadProgressIndeterminate = false;
+            DownloadProgress = Math.Clamp(update.received * 100.0 / update.total.Value, 0, 100);
+            DownloadProgressText = $"{FormatBytes(update.received)} / {FormatBytes(update.total.Value)} ({DownloadProgress:0}%)";
+        }
+        else
+        {
+            IsDownloadProgressIndeterminate = true;
+            DownloadProgressText = $"{FormatBytes(update.received)} downloaded";
+        }
+    }
+
+    private static string FormatBytes(long bytes)
+    {
+        string[] units = ["B", "KB", "MB", "GB"];
+        var value = (double)bytes;
+        var unit = 0;
+        while (value >= 1024 && unit < units.Length - 1)
+        {
+            value /= 1024;
+            unit++;
+        }
+        return unit == 0 ? $"{bytes} B" : $"{value:0.0} {units[unit]}";
     }
 
     [RelayCommand]

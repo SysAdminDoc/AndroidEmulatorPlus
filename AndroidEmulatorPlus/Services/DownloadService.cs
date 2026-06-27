@@ -1,6 +1,7 @@
 using System.IO;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text.Json;
 
 namespace AndroidEmulatorPlus.Services;
@@ -37,17 +38,44 @@ public sealed class DownloadService : IDisposable
         _log.Info($"Downloading {Path.GetFileName(destPath)}…");
         Directory.CreateDirectory(Path.GetDirectoryName(destPath)!);
         var tmp = destPath + ".download";
-        try { File.Delete(tmp); } catch { }
-        using var resp = await _http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, ct);
+        var existingBytes = File.Exists(tmp) ? new FileInfo(tmp).Length : 0;
+        using var req = new HttpRequestMessage(HttpMethod.Get, url);
+        if (existingBytes > 0)
+        {
+            req.Headers.Range = new RangeHeaderValue(existingBytes, null);
+            _log.Info($"Resuming {Path.GetFileName(destPath)} from {existingBytes:N0} bytes.");
+        }
+
+        using var resp = await _http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead, ct);
+        if (existingBytes > 0 && resp.StatusCode == HttpStatusCode.RequestedRangeNotSatisfiable)
+        {
+            try { File.Delete(tmp); } catch { }
+            await DownloadAsync(url, dest, progress, ct);
+            return;
+        }
         resp.EnsureSuccessStatusCode();
-        var total = resp.Content.Headers.ContentLength;
+
+        var append = existingBytes > 0 && resp.StatusCode == HttpStatusCode.PartialContent;
+        if (existingBytes > 0 && !append)
+        {
+            _log.Warning($"{Path.GetFileName(destPath)} server ignored resume request; restarting download.");
+            try { File.Delete(tmp); } catch { }
+            existingBytes = 0;
+        }
+
+        var total = resp.Content.Headers.ContentRange?.Length
+            ?? (resp.Content.Headers.ContentLength.HasValue
+                ? existingBytes + resp.Content.Headers.ContentLength.Value
+                : null);
         await using var input = await resp.Content.ReadAsStreamAsync(ct);
         try
         {
-            await using (var output = File.Create(tmp))
+            await using (var output = new FileStream(tmp, append ? FileMode.Append : FileMode.Create,
+                FileAccess.Write, FileShare.None, 81920, useAsync: true))
             {
                 var buf = new byte[81920];
-                long received = 0;
+                long received = existingBytes;
+                progress?.Report((received, total));
                 int n;
                 while ((n = await input.ReadAsync(buf, ct)) > 0)
                 {
@@ -60,7 +88,7 @@ public sealed class DownloadService : IDisposable
         }
         catch
         {
-            try { File.Delete(tmp); } catch { }
+            _log.Warning($"Download interrupted; kept partial file for resume: {tmp}");
             throw;
         }
     }
