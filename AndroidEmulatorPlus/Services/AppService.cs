@@ -8,6 +8,11 @@ namespace AndroidEmulatorPlus.Services;
 
 public sealed class AppService
 {
+    private const int DefaultZipMaxEntries = 20_000;
+    private const long DefaultZipMaxEntryUncompressedBytes = 8L * 1024 * 1024 * 1024;
+    private const long DefaultZipMaxTotalUncompressedBytes = 32L * 1024 * 1024 * 1024;
+    private const double DefaultZipMaxCompressionRatio = 1_000d;
+
     private readonly AdbService _adb;
     private readonly LogService _log;
 
@@ -36,6 +41,10 @@ public sealed class AppService
     /// </summary>
     public BundleExtractResult ExtractBundle(string archivePath)
     {
+        if (!TryValidateZipForExtraction(archivePath, out var zipDetail))
+            throw new InvalidOperationException(
+                $"Bundle archive rejected before extraction: {zipDetail}");
+
         Directory.CreateDirectory(BundleStagingRoot);
         var work = Path.Combine(BundleStagingRoot, Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(work);
@@ -280,10 +289,16 @@ public sealed class AppService
         var staging = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "AndroidEmulatorPlus", "transfer", $"import-{Guid.NewGuid():N}");
-        Directory.CreateDirectory(staging);
         string? remoteTar = null;
         try
         {
+            if (!TryValidateZipForExtraction(zipPath, out var zipDetail))
+            {
+                _log.Error("Import zip rejected before extraction: " + zipDetail);
+                return false;
+            }
+
+            Directory.CreateDirectory(staging);
             ZipFile.ExtractToDirectory(zipPath, staging);
             var metaPath = Path.Combine(staging, "metadata.json");
             if (!File.Exists(metaPath)) { _log.Error("Import: metadata.json missing in zip."); return false; }
@@ -333,6 +348,119 @@ public sealed class AppService
                 catch (Exception ex) { _log.Warning($"Import remote cleanup failed for {remoteTar}: {ex.Message}"); }
             }
             try { Directory.Delete(staging, true); } catch { }
+        }
+    }
+
+    public static bool TryValidateZipForExtraction(
+        string zipPath,
+        out string detail,
+        int maxEntries = DefaultZipMaxEntries,
+        long maxEntryUncompressedBytes = DefaultZipMaxEntryUncompressedBytes,
+        long maxTotalUncompressedBytes = DefaultZipMaxTotalUncompressedBytes,
+        double maxCompressionRatio = DefaultZipMaxCompressionRatio)
+    {
+        if (maxEntries <= 0)
+        {
+            detail = "entry limit must be positive";
+            return false;
+        }
+
+        if (maxEntryUncompressedBytes <= 0 || maxTotalUncompressedBytes <= 0)
+        {
+            detail = "size limits must be positive";
+            return false;
+        }
+
+        try
+        {
+            using var zip = ZipFile.OpenRead(zipPath);
+            if (zip.Entries.Count == 0)
+            {
+                detail = "archive is empty";
+                return false;
+            }
+
+            if (zip.Entries.Count > maxEntries)
+            {
+                detail = $"archive has too many entries ({zip.Entries.Count} > {maxEntries})";
+                return false;
+            }
+
+            long totalUncompressed = 0;
+            foreach (var entry in zip.Entries)
+            {
+                var name = NormalizeZipEntryName(entry.FullName);
+                if (string.IsNullOrWhiteSpace(name))
+                {
+                    detail = "empty entry name";
+                    return false;
+                }
+
+                if (name.StartsWith("/", StringComparison.Ordinal)
+                    || name.Contains('\0')
+                    || Path.IsPathRooted(name))
+                {
+                    detail = $"absolute or invalid path '{entry.FullName}'";
+                    return false;
+                }
+
+                var parts = name.Split('/', StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Any(static part => part == ".."))
+                {
+                    detail = $"path traversal entry '{entry.FullName}'";
+                    return false;
+                }
+
+                if (entry.Length < 0 || entry.CompressedLength < 0)
+                {
+                    detail = $"invalid size metadata for '{entry.FullName}'";
+                    return false;
+                }
+
+                if (entry.Length > maxEntryUncompressedBytes)
+                {
+                    detail = $"entry '{entry.FullName}' is too large";
+                    return false;
+                }
+
+                if (entry.Length > 0 && entry.CompressedLength == 0)
+                {
+                    detail = $"entry '{entry.FullName}' has impossible compression metadata";
+                    return false;
+                }
+
+                if (entry.Length > 1024 * 1024
+                    && entry.CompressedLength > 0
+                    && entry.Length / (double)entry.CompressedLength > maxCompressionRatio)
+                {
+                    detail = $"entry '{entry.FullName}' compression ratio is too high";
+                    return false;
+                }
+
+                try
+                {
+                    checked { totalUncompressed += entry.Length; }
+                }
+                catch (OverflowException)
+                {
+                    detail = "archive uncompressed size overflows limits";
+                    return false;
+                }
+
+                if (totalUncompressed > maxTotalUncompressedBytes)
+                {
+                    detail = "archive uncompressed size exceeds limit";
+                    return false;
+                }
+            }
+
+            detail = "ok";
+            return true;
+        }
+        catch (Exception ex)
+        {
+            detail = ex.Message;
+            return false;
         }
     }
 
@@ -405,5 +533,13 @@ public sealed class AppService
         while (normalized.StartsWith("./", StringComparison.Ordinal))
             normalized = normalized[2..];
         return normalized.TrimEnd('/');
+    }
+
+    private static string NormalizeZipEntryName(string name)
+    {
+        var normalized = name.Replace('\\', '/').Trim();
+        while (normalized.StartsWith("./", StringComparison.Ordinal))
+            normalized = normalized[2..];
+        return normalized;
     }
 }

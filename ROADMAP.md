@@ -26,7 +26,7 @@ Tag legend:
 - `global.json` pins repository builds to .NET 9 with feature-band roll-forward.
 - `dotnet build AndroidEmulatorPlus.sln -c Release` and
   `dotnet test AndroidEmulatorPlus.Tests\AndroidEmulatorPlus.Tests.csproj -c Release`
-  pass locally (93 tests).
+  pass locally (104 tests).
 - Release smoke requiring accelerated API 35/API 36 AVDs is tracked in
   `Roadmap_Blocked.md` for a host with nested virtualization/Hyper-V available.
 
@@ -111,13 +111,6 @@ Research evidence and rationale in `RESEARCH.md`.
 ## Research-Driven Additions
 
 ### P0 - Data Safety and Trust
-
-- [ ] P0 - Add safe ZIP preflight before extracting app bundles and import ZIPs
-  Why: Tar and Magisk module archives are validated, but `.apks`/`.xapk`/`.apkm` and import ZIPs are extracted before equivalent traversal, bomb, entry-count, and size checks.
-  Evidence: `AndroidEmulatorPlus/Services/AppService.cs`; SharpCompress advisory GHSA-6c8g-7p36-r338; existing tar/module validation tests.
-  Touches: `AppService`, `BundleInstallerService`, `AppDataImportTarValidationTests`, new bundle/import ZIP validation tests.
-  Acceptance: Malicious ZIPs with absolute paths, `..`, huge declared size, excessive entries, or extreme compression ratio are rejected before extraction; valid SAI/APKMirror bundles still install.
-  Complexity: M
 
 - [ ] P0 - Verify Frida and Magisk-module downloads before install
   Why: Magisk and cmdline-tools have hash checks, but Frida server and catalog module downloads trust latest release assets without digest or pinned-manifest verification.
