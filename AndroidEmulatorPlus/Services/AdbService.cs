@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 namespace AndroidEmulatorPlus.Services;
 
 /// <summary>Thin async wrapper around adb.exe. Always disables MSYS path conversion.</summary>
-public sealed class AdbService
+public class AdbService
 {
     private readonly SdkLocator _sdk;
     private readonly LogService _log;
@@ -47,12 +47,12 @@ public sealed class AdbService
         return list;
     }
 
-    public Task<ProcessResult> ShellAsync(string serial, string command, CancellationToken ct = default)
+    public virtual Task<ProcessResult> ShellAsync(string serial, string command, CancellationToken ct = default)
         => ProcessRunner.RunAsync(_sdk.AdbRequired,
             new[] { "-s", serial, "shell", command },
             extraEnv: NoPathConv, ct: ct);
 
-    public Task<ProcessResult> RootShellAsync(string serial, string command, CancellationToken ct = default)
+    public virtual Task<ProcessResult> RootShellAsync(string serial, string command, CancellationToken ct = default)
         => ShellAsync(serial, $"/debug_ramdisk/su -c {ShellQuote(command)}", ct);
 
     public static string ShellQuote(string value)
@@ -68,12 +68,12 @@ public sealed class AdbService
            && value.Length <= 128
            && Regex.IsMatch(value, @"^[A-Za-z0-9._-]+$");
 
-    public Task<ProcessResult> PullAsync(string serial, string remote, string local, CancellationToken ct = default)
+    public virtual Task<ProcessResult> PullAsync(string serial, string remote, string local, CancellationToken ct = default)
         => ProcessRunner.RunAsync(_sdk.AdbRequired,
             new[] { "-s", serial, "pull", remote, local },
             extraEnv: NoPathConv, ct: ct);
 
-    public Task<ProcessResult> PushAsync(string serial, string local, string remote, CancellationToken ct = default)
+    public virtual Task<ProcessResult> PushAsync(string serial, string local, string remote, CancellationToken ct = default)
         => ProcessRunner.RunAsync(_sdk.AdbRequired,
             new[] { "-s", serial, "push", local, remote },
             extraEnv: NoPathConv, ct: ct);

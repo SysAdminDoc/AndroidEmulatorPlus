@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:views="clr-namespace:AndroidEmulatorPlus.Views"
         xmlns:vm="clr-namespace:AndroidEmulatorPlus.ViewModels"
-        Title="AndroidEmulatorPlus v0.2.2"
+        Title="AndroidEmulatorPlus v0.2.3"
         Width="1280" Height="820"
         MinWidth="980" MinHeight="640"
         Icon="Assets/aep.ico"
@@ -27,7 +27,7 @@
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock Text="AndroidEmulatorPlus" FontWeight="SemiBold" FontSize="16"
                                Foreground="{DynamicResource LavenderBrush}"/>
-                    <TextBlock Text="v0.2.2" Margin="8,1,0,0" Foreground="{DynamicResource OverlayBrush}" VerticalAlignment="Center"/>
+                    <TextBlock Text="v0.2.3" Margin="8,1,0,0" Foreground="{DynamicResource OverlayBrush}" VerticalAlignment="Center"/>
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">

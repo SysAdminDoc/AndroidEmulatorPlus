@@ -281,6 +281,7 @@ public sealed class AppService
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "AndroidEmulatorPlus", "transfer", $"import-{Guid.NewGuid():N}");
         Directory.CreateDirectory(staging);
+        string? remoteTar = null;
         try
         {
             ZipFile.ExtractToDirectory(zipPath, staging);
@@ -301,7 +302,7 @@ public sealed class AppService
                 return false;
             }
 
-            var remoteTar = $"/sdcard/aep-import-{pkg}.tar";
+            remoteTar = $"/sdcard/aep-import-{pkg}.tar";
             var push = await _adb.PushAsync(serial, tar, remoteTar, ct);
             if (!push.Success) { _log.Error("Import push failed."); return false; }
 
@@ -326,6 +327,11 @@ public sealed class AppService
         }
         finally
         {
+            if (remoteTar is not null)
+            {
+                try { await _adb.RootShellAsync(serial, $"rm -f {AdbService.ShellQuote(remoteTar)}", CancellationToken.None); }
+                catch (Exception ex) { _log.Warning($"Import remote cleanup failed for {remoteTar}: {ex.Message}"); }
+            }
             try { Directory.Delete(staging, true); } catch { }
         }
     }

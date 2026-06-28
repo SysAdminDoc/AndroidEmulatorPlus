@@ -26,7 +26,7 @@ Tag legend:
 - `global.json` pins repository builds to .NET 9 with feature-band roll-forward.
 - `dotnet build AndroidEmulatorPlus.sln -c Release` and
   `dotnet test AndroidEmulatorPlus.Tests\AndroidEmulatorPlus.Tests.csproj -c Release`
-  pass locally (86 tests).
+  pass locally (93 tests).
 - Release smoke requiring accelerated API 35/API 36 AVDs is tracked in
   `Roadmap_Blocked.md` for a host with nested virtualization/Hyper-V available.
 
@@ -111,13 +111,6 @@ Research evidence and rationale in `RESEARCH.md`.
 ## Research-Driven Additions
 
 ### P0 - Data Safety and Trust
-
-- [ ] P0 - Delete remote migration/import staging files on every failure path
-  Why: Failed migration or import can leave private app data tarballs in `/sdcard` on the phone or emulator.
-  Evidence: `AndroidEmulatorPlus/Services/MigrationService.cs`; `AndroidEmulatorPlus/Services/AppService.cs`; Android shared storage docs.
-  Touches: `MigrationService`, `AppService`, `AdbService`, migration/import tests.
-  Acceptance: Unit tests cover pull, validation, push, UID, extract, and cancellation failures and assert best-effort deletion of every remote temp tar on both source and target.
-  Complexity: M
 
 - [ ] P0 - Add safe ZIP preflight before extracting app bundles and import ZIPs
   Why: Tar and Magisk module archives are validated, but `.apks`/`.xapk`/`.apkm` and import ZIPs are extracted before equivalent traversal, bomb, entry-count, and size checks.

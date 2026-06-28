@@ -177,6 +177,8 @@ public sealed class MigrationService
         }
         finally
         {
+            await RemoveRemoteFileBestEffortAsync(phoneSerial, tarOnPhone, root: true);
+            await RemoveRemoteFileBestEffortAsync(emuSerial, tarOnEmu, root: true);
             try { File.Delete(local); } catch { }
         }
     }
@@ -226,6 +228,8 @@ public sealed class MigrationService
         }
         finally
         {
+            await RemoveRemoteFileBestEffortAsync(phoneSerial, tarOnPhone, root: true);
+            await RemoveRemoteFileBestEffortAsync(emuSerial, tarOnEmu, root: false);
             try { File.Delete(local); } catch { }
         }
     }
@@ -272,7 +276,23 @@ public sealed class MigrationService
         }
         finally
         {
+            await RemoveRemoteFileBestEffortAsync(phoneSerial, tarOnPhone, root: true);
+            await RemoveRemoteFileBestEffortAsync(emuSerial, tarOnEmu, root: true);
             try { File.Delete(local); } catch { }
+        }
+    }
+
+    private async Task RemoveRemoteFileBestEffortAsync(string serial, string remotePath, bool root)
+    {
+        try
+        {
+            var cmd = $"rm -f {Q(remotePath)}";
+            if (root) await _adb.RootShellAsync(serial, cmd, CancellationToken.None);
+            else await _adb.ShellAsync(serial, cmd, CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            _log.Warning($"Remote cleanup failed for {serial}:{remotePath}: {ex.Message}");
         }
     }
 

@@ -1,4 +1,7 @@
 using System.Reflection;
+using System.Formats.Tar;
+using System.IO;
+using AndroidEmulatorPlus.Helpers;
 using AndroidEmulatorPlus.Services;
 using Xunit;
 
@@ -31,5 +34,110 @@ public class MigrationServiceTests
     public void Fallback_when_no_known_token()
     {
         Assert.Equal("install failed", ParseFailReason("Cleanup deleted temp paths"));
+    }
+
+    [Theory]
+    [InlineData("pull")]
+    [InlineData("unsafe")]
+    [InlineData("push")]
+    [InlineData("uid")]
+    [InlineData("extract")]
+    public async Task TransferInternalData_CleansRemoteTars_OnFailurePaths(string failure)
+    {
+        var adb = new FakeAdb { Failure = failure };
+        var svc = new MigrationService(adb, new LogService());
+
+        var result = await svc.TransferInternalDataAsync("phone", "emu", "com.example.app", CancellationToken.None);
+
+        Assert.False(result.Success);
+        Assert.Contains(("phone", "/sdcard/com.example.app.tar", true), adb.Cleanup);
+        Assert.Contains(("emu", "/sdcard/com.example.app.tar", true), adb.Cleanup);
+    }
+
+    [Fact]
+    public async Task TransferInternalData_CleansRemoteTars_WhenCancelled()
+    {
+        var adb = new FakeAdb { Failure = "cancel" };
+        var svc = new MigrationService(adb, new LogService());
+
+        await Assert.ThrowsAsync<OperationCanceledException>(() =>
+            svc.TransferInternalDataAsync("phone", "emu", "com.example.app", new CancellationToken(canceled: true)));
+
+        Assert.Contains(("phone", "/sdcard/com.example.app.tar", true), adb.Cleanup);
+        Assert.Contains(("emu", "/sdcard/com.example.app.tar", true), adb.Cleanup);
+    }
+
+    private sealed class FakeAdb : AdbService
+    {
+        public FakeAdb() : base(new SdkLocator(), new LogService()) { }
+
+        public string Failure { get; set; } = "";
+        public List<(string serial, string remote, bool root)> Cleanup { get; } = new();
+
+        public override Task<ProcessResult> ShellAsync(string serial, string command, CancellationToken ct = default)
+        {
+            if (command.Contains("rm -f ", StringComparison.Ordinal))
+            {
+                Cleanup.Add((serial, ExtractQuotedRemote(command), false));
+                return Ok();
+            }
+            if (command.Contains("tar --help", StringComparison.Ordinal)) return Task.FromResult(new ProcessResult(0, "exclude\n", ""));
+            if (command.Contains("stat -c %s", StringComparison.Ordinal)) return Task.FromResult(new ProcessResult(0, "2048\n", ""));
+            if (command.Contains("am force-stop", StringComparison.Ordinal)) return Ok();
+            return Ok();
+        }
+
+        public override Task<ProcessResult> RootShellAsync(string serial, string command, CancellationToken ct = default)
+        {
+            if (command.Contains("rm -f ", StringComparison.Ordinal))
+            {
+                Cleanup.Add((serial, ExtractQuotedRemote(command), true));
+                return Ok();
+            }
+            if (command.Contains("tar --exclude", StringComparison.Ordinal)) return Ok();
+            if (command.Contains("stat -c %u", StringComparison.Ordinal))
+                return Task.FromResult(Failure == "uid"
+                    ? new ProcessResult(1, "", "missing")
+                    : new ProcessResult(0, "10001\n", ""));
+            if (command.Contains("tar -xf", StringComparison.Ordinal))
+                return Task.FromResult(Failure == "extract"
+                    ? new ProcessResult(1, "", "extract failed")
+                    : new ProcessResult(0, "OK\n", ""));
+            return Ok();
+        }
+
+        public override Task<ProcessResult> PullAsync(string serial, string remote, string local, CancellationToken ct = default)
+        {
+            if (Failure == "cancel") throw new OperationCanceledException();
+            if (Failure == "pull") return Task.FromResult(new ProcessResult(1, "", "pull failed"));
+            Directory.CreateDirectory(Path.GetDirectoryName(local)!);
+            WriteDataTar(local, Failure == "unsafe" ? "com.other.app/files/prefs.xml" : "com.example.app/files/prefs.xml");
+            return Ok();
+        }
+
+        public override Task<ProcessResult> PushAsync(string serial, string local, string remote, CancellationToken ct = default)
+            => Task.FromResult(Failure == "push"
+                ? new ProcessResult(1, "", "push failed")
+                : new ProcessResult(0, "ok", ""));
+
+        private static Task<ProcessResult> Ok() => Task.FromResult(new ProcessResult(0, "ok\n", ""));
+
+        private static string ExtractQuotedRemote(string command)
+        {
+            var marker = "rm -f ";
+            var value = command[(command.IndexOf(marker, StringComparison.Ordinal) + marker.Length)..].Trim();
+            return value.Trim('\'');
+        }
+
+        private static void WriteDataTar(string path, string entryName)
+        {
+            using var fs = File.Create(path);
+            using var writer = new TarWriter(fs, TarEntryFormat.Pax, leaveOpen: false);
+            var bytes = System.Text.Encoding.UTF8.GetBytes("data");
+            writer.WriteEntry(new PaxTarEntry(TarEntryType.RegularFile, entryName)
+            {
+                DataStream = new MemoryStream(bytes),
+            });
+        }
     }
 }

@@ -1,5 +1,7 @@
 using System.IO;
 using System.Formats.Tar;
+using System.IO.Compression;
+using AndroidEmulatorPlus.Helpers;
 using AndroidEmulatorPlus.Services;
 using Xunit;
 
@@ -59,6 +61,25 @@ public class AppDataImportTarValidationTests
         finally { File.Delete(tar); }
     }
 
+    [Fact]
+    public async Task ImportAppData_CleansRemoteTar_WhenUidLookupFails()
+    {
+        var adb = new ImportCleanupFakeAdb();
+        var service = new AppService(adb, new LogService());
+        var zip = WriteImportZip("com.example.app");
+        try
+        {
+            var ok = await service.ImportAppDataAsync("emu", zip);
+
+            Assert.False(ok);
+            Assert.Contains("/sdcard/aep-import-com.example.app.tar", adb.Cleanup);
+        }
+        finally
+        {
+            try { File.Delete(zip); } catch { }
+        }
+    }
+
     private static PaxTarEntry FileEntry(string name, string content)
     {
         var bytes = System.Text.Encoding.UTF8.GetBytes(content);
@@ -76,5 +97,54 @@ public class AppDataImportTarValidationTests
         foreach (var entry in entries)
             writer.WriteEntry(entry);
         return path;
+    }
+
+    private static string WriteImportZip(string pkg)
+    {
+        var root = Path.Combine(Path.GetTempPath(), $"aep-importzip-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(root);
+        var zip = Path.Combine(Path.GetTempPath(), $"aep-importzip-{Guid.NewGuid():N}.zip");
+        try
+        {
+            File.WriteAllText(Path.Combine(root, "metadata.json"),
+                $$"""{ "package": "{{pkg}}", "uid": 10001, "exported": "2026-01-01T00:00:00Z", "version": 1 }""");
+            var tar = Path.Combine(root, $"{pkg}.tar");
+            using (var fs = File.Create(tar))
+            using (var writer = new TarWriter(fs, TarEntryFormat.Pax, leaveOpen: false))
+            {
+                writer.WriteEntry(FileEntry($"{pkg}/files/prefs.xml", "ok"));
+            }
+            ZipFile.CreateFromDirectory(root, zip);
+            return zip;
+        }
+        finally
+        {
+            try { Directory.Delete(root, true); } catch { }
+        }
+    }
+
+    private sealed class ImportCleanupFakeAdb : AdbService
+    {
+        public ImportCleanupFakeAdb() : base(new SdkLocator(), new LogService()) { }
+
+        public List<string> Cleanup { get; } = new();
+
+        public override Task<ProcessResult> PushAsync(string serial, string local, string remote, CancellationToken ct = default)
+            => Task.FromResult(new ProcessResult(0, "ok", ""));
+
+        public override Task<ProcessResult> ShellAsync(string serial, string command, CancellationToken ct = default)
+            => Task.FromResult(new ProcessResult(0, "ok", ""));
+
+        public override Task<ProcessResult> RootShellAsync(string serial, string command, CancellationToken ct = default)
+        {
+            if (command.Contains("rm -f ", StringComparison.Ordinal))
+            {
+                Cleanup.Add(command[(command.IndexOf("rm -f ", StringComparison.Ordinal) + "rm -f ".Length)..].Trim().Trim('\''));
+                return Task.FromResult(new ProcessResult(0, "ok", ""));
+            }
+            if (command.Contains("stat -c %u", StringComparison.Ordinal))
+                return Task.FromResult(new ProcessResult(1, "", "missing"));
+            return Task.FromResult(new ProcessResult(0, "ok", ""));
+        }
     }
 }
