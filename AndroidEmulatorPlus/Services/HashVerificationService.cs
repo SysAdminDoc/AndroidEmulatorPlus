@@ -67,11 +67,53 @@ public sealed class HashVerificationService
         return Convert.ToHexString(bytes).ToLowerInvariant();
     }
 
+    public static string? NormalizeSha256Digest(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return null;
+        var normalized = value.Trim();
+        if (normalized.StartsWith("sha256:", StringComparison.OrdinalIgnoreCase))
+            normalized = normalized["sha256:".Length..];
+        normalized = normalized.Trim().ToLowerInvariant();
+        return normalized.Length == 64 && normalized.All(static ch => ch is >= '0' and <= '9' or >= 'a' and <= 'f')
+            ? normalized
+            : null;
+    }
+
     public HashCheck VerifyMagisk(string assetName, string filePath)
         => Verify(_magisk, assetName, filePath, "Magisk APK");
 
     public HashCheck VerifyCmdlineTools(string url, string filePath)
         => Verify(_cmdlineTools, url, filePath, "cmdline-tools ZIP");
+
+    public HashCheck VerifyExpectedSha256(string label, string key, string filePath, string expectedHash)
+    {
+        var expected = NormalizeSha256Digest(expectedHash);
+        var actual = ComputeSha256(filePath);
+        if (expected is null)
+        {
+            _log.Error($"{label} SHA-256 verifier received an invalid expected hash for [{key}].");
+            return new HashCheck(Ok: false, Known: true, ActualHash: actual, ExpectedHash: expectedHash,
+                Detail: "invalid expected SHA-256");
+        }
+
+        if (string.Equals(actual, expected, StringComparison.OrdinalIgnoreCase))
+        {
+            _log.Success($"{label} SHA-256 verified ({actual[..12]}...).");
+            return new HashCheck(Ok: true, Known: true, ActualHash: actual, ExpectedHash: expected, Detail: "ok");
+        }
+
+        _log.Error($"{label} SHA-256 MISMATCH for [{key}]. Expected {expected}, got {actual}.");
+        return new HashCheck(Ok: false, Known: true, ActualHash: actual, ExpectedHash: expected,
+            Detail: $"expected {expected}, got {actual}");
+    }
+
+    public HashCheck RecordTrustOnFirstUse(string label, string key, string filePath)
+    {
+        var actual = ComputeSha256(filePath);
+        _log.Warning($"{label} SHA-256 [{key}]: {actual} (no published digest; trust-on-first-use)");
+        return new HashCheck(Ok: true, Known: false, ActualHash: actual, ExpectedHash: null,
+            Detail: "no published digest - trust-on-first-use");
+    }
 
     private HashCheck Verify(IReadOnlyDictionary<string, string> table, string key, string filePath, string label)
     {

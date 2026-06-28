@@ -127,12 +127,7 @@ public sealed class DownloadService : IDisposable
                     var url = asset.GetProperty("browser_download_url").GetString() ?? "";
                     string? digest = null;
                     if (asset.TryGetProperty("digest", out var dProp) && dProp.ValueKind == JsonValueKind.String)
-                    {
-                        var d = dProp.GetString();
-                        // Format is "sha256:<hex>" — strip the algorithm prefix.
-                        if (d is not null && d.StartsWith("sha256:", StringComparison.OrdinalIgnoreCase))
-                            digest = d["sha256:".Length..].ToLowerInvariant();
-                    }
+                        digest = HashVerificationService.NormalizeSha256Digest(dProp.GetString());
                     return new MagiskAsset(tag, url, digest);
                 }
             }

@@ -13,16 +13,20 @@ public sealed class FridaService
     private readonly AdbService _adb;
     private readonly DownloadService _dl;
     private readonly LogService _log;
+    private readonly HashVerificationService _hash;
 
     private static string CacheDir => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "AndroidEmulatorPlus", "cache", "frida");
 
-    public FridaService(AdbService adb, DownloadService dl, LogService log)
+    public sealed record FridaReleaseAsset(string Tag, string Url, string Name, string? GitHubDigestSha256);
+
+    public FridaService(AdbService adb, DownloadService dl, LogService log, HashVerificationService hash)
     {
         _adb = adb;
         _dl = dl;
         _log = log;
+        _hash = hash;
     }
 
     public async Task<string?> DetectArchAsync(string serial, CancellationToken ct = default)
@@ -42,7 +46,7 @@ public sealed class FridaService
             _ => abi,
         };
 
-    public async Task<(string tag, string url)?> ResolveLatestAsync(string arch,
+    public async Task<FridaReleaseAsset?> ResolveLatestAsync(string arch,
         CancellationToken ct = default)
     {
         try
@@ -50,7 +54,7 @@ public sealed class FridaService
             var json = await _dl.FetchTextAsync(
                 "https://api.github.com/repos/frida/frida/releases/latest", ct);
             var selected = TrySelectReleaseAsset(json, arch);
-            if (selected is not null) return selected.Value;
+            if (selected is not null) return selected;
             _log.Warning($"No frida-server asset found for arch={arch}.");
         }
         catch (Exception ex)
@@ -60,7 +64,7 @@ public sealed class FridaService
         return null;
     }
 
-    public static (string tag, string url)? TrySelectReleaseAsset(string releaseJson, string arch)
+    public static FridaReleaseAsset? TrySelectReleaseAsset(string releaseJson, string arch)
     {
         using var doc = JsonDocument.Parse(releaseJson);
         var tag = doc.RootElement.GetProperty("tag_name").GetString() ?? "";
@@ -70,7 +74,11 @@ public sealed class FridaService
             var name = asset.GetProperty("name").GetString() ?? "";
             if (!name.Equals(pattern, StringComparison.OrdinalIgnoreCase)) continue;
             var url = asset.GetProperty("browser_download_url").GetString() ?? "";
-            return string.IsNullOrWhiteSpace(url) ? null : (tag, url);
+            if (string.IsNullOrWhiteSpace(url)) return null;
+            string? digest = null;
+            if (asset.TryGetProperty("digest", out var dProp) && dProp.ValueKind == JsonValueKind.String)
+                digest = HashVerificationService.NormalizeSha256Digest(dProp.GetString());
+            return new FridaReleaseAsset(tag, url, name, digest);
         }
         return null;
     }
@@ -93,7 +101,8 @@ public sealed class FridaService
         var release = await ResolveLatestAsync(arch, ct);
         if (release is null) return false;
 
-        var (tag, url) = release.Value;
+        var tag = release.Tag;
+        var url = release.Url;
         _log.Info($"Frida {tag} for android-{arch}");
 
         Directory.CreateDirectory(CacheDir);
@@ -108,6 +117,9 @@ public sealed class FridaService
                 progress?.Report($"Downloading frida-server {tag}...");
                 await _dl.DownloadAsync(url, xzPath, downloadProgress, ct);
             }
+
+            if (!VerifyDownloadedAsset("Frida server XZ", release.Name, xzPath, release.GitHubDigestSha256))
+                return false;
 
             progress?.Report("Decompressing frida-server...");
             try
@@ -172,5 +184,17 @@ public sealed class FridaService
     {
         await _adb.RootShellAsync(serial, "pkill -f frida-server 2>/dev/null", ct);
         _log.Info("frida-server stopped.");
+    }
+
+    private bool VerifyDownloadedAsset(string label, string key, string path, string? expectedSha256)
+    {
+        var check = expectedSha256 is null
+            ? _hash.RecordTrustOnFirstUse(label, key, path)
+            : _hash.VerifyExpectedSha256(label, key, path, expectedSha256);
+        if (check.Ok) return true;
+
+        try { File.Delete(path); } catch { }
+        try { File.Delete(path + ".download"); } catch { }
+        return false;
     }
 }

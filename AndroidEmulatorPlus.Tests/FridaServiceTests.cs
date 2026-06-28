@@ -29,7 +29,8 @@ public class FridaServiceTests
             },
             {
               "name": "frida-server-16.2.1-android-x86_64.xz",
-              "browser_download_url": "https://example.invalid/frida-x86_64.xz"
+              "browser_download_url": "https://example.invalid/frida-x86_64.xz",
+              "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
             }
           ]
         }
@@ -38,7 +39,9 @@ public class FridaServiceTests
         var selected = FridaService.TrySelectReleaseAsset(json, "x86_64");
 
         Assert.NotNull(selected);
-        Assert.Equal("16.2.1", selected.Value.tag);
-        Assert.Equal("https://example.invalid/frida-x86_64.xz", selected.Value.url);
+        Assert.Equal("16.2.1", selected.Tag);
+        Assert.Equal("frida-server-16.2.1-android-x86_64.xz", selected.Name);
+        Assert.Equal("https://example.invalid/frida-x86_64.xz", selected.Url);
+        Assert.Equal("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", selected.GitHubDigestSha256);
     }
 }

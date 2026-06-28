@@ -20,4 +20,32 @@ public class HashVerificationServiceTests
         }
         finally { File.Delete(path); }
     }
+
+    [Theory]
+    [InlineData("sha256:ABCDEFabcdefABCDEFabcdefABCDEFabcdefABCDEFabcdefABCDEFabcdefABCD", "abcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcd")]
+    [InlineData("abcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcd", "abcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcd")]
+    [InlineData("sha1:abcdef", null)]
+    [InlineData("not-a-hash", null)]
+    public void NormalizeSha256Digest_accepts_prefixed_or_raw_sha256(string input, string? expected)
+    {
+        Assert.Equal(expected, HashVerificationService.NormalizeSha256Digest(input));
+    }
+
+    [Fact]
+    public void VerifyExpectedSha256_rejects_mismatch()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"aep-hash-{Guid.NewGuid():N}.bin");
+        File.WriteAllText(path, "hello");
+        try
+        {
+            var service = new HashVerificationService(new LogService());
+            var check = service.VerifyExpectedSha256("test asset", "asset.bin", path,
+                "0000000000000000000000000000000000000000000000000000000000000000");
+
+            Assert.False(check.Ok);
+            Assert.True(check.Known);
+            Assert.Equal("2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824", check.ActualHash);
+        }
+        finally { File.Delete(path); }
+    }
 }

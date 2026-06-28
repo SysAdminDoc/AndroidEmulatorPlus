@@ -8,6 +8,36 @@ namespace AndroidEmulatorPlus.Tests;
 public class MagiskModuleZipValidationTests
 {
     [Fact]
+    public void TrySelectGitHubReleaseZipAsset_carries_digest_from_best_zip_asset()
+    {
+        const string json = """
+        {
+          "assets": [
+            {
+              "name": "other.zip",
+              "browser_download_url": "https://example.invalid/other.zip",
+              "size": 100,
+              "digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            },
+            {
+              "name": "zygisk-detach-v1.0.zip",
+              "browser_download_url": "https://example.invalid/zygisk-detach.zip",
+              "size": 50,
+              "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            }
+          ]
+        }
+        """;
+
+        var selected = MagiskService.TrySelectGitHubReleaseZipAsset(json, "zygisk-detach.zip");
+
+        Assert.NotNull(selected);
+        Assert.Equal("zygisk-detach-v1.0.zip", selected.FileName);
+        Assert.Equal("https://example.invalid/zygisk-detach.zip", selected.Url);
+        Assert.Equal("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", selected.GitHubDigestSha256);
+    }
+
+    [Fact]
     public void TryValidateModuleZip_accepts_module_prop_at_archive_root()
     {
         var zip = WriteZip(("module.prop", "id=test\nname=Test\nversion=1\nversionCode=1\n"));

@@ -26,7 +26,7 @@ Tag legend:
 - `global.json` pins repository builds to .NET 9 with feature-band roll-forward.
 - `dotnet build AndroidEmulatorPlus.sln -c Release` and
   `dotnet test AndroidEmulatorPlus.Tests\AndroidEmulatorPlus.Tests.csproj -c Release`
-  pass locally (104 tests).
+  pass locally (110 tests).
 - Release smoke requiring accelerated API 35/API 36 AVDs is tracked in
   `Roadmap_Blocked.md` for a host with nested virtualization/Hyper-V available.
 
@@ -111,13 +111,6 @@ Research evidence and rationale in `RESEARCH.md`.
 ## Research-Driven Additions
 
 ### P0 - Data Safety and Trust
-
-- [ ] P0 - Verify Frida and Magisk-module downloads before install
-  Why: Magisk and cmdline-tools have hash checks, but Frida server and catalog module downloads trust latest release assets without digest or pinned-manifest verification.
-  Evidence: `AndroidEmulatorPlus/Services/FridaService.cs`; `AndroidEmulatorPlus/Services/MagiskService.cs`; GitHub Releases asset digest field; Frida releases.
-  Touches: `DownloadService`, `HashVerificationService`, `FridaService`, `MagiskService`, `Resources/known-hashes.json`, related tests.
-  Acceptance: Frida and curated module installs verify GitHub `digest` when present and fall back to an explicit manifest/trust-on-first-use policy; mismatches delete partial downloads and block install.
-  Complexity: L
 
 ### P1 - Reliability and Release Readiness
 

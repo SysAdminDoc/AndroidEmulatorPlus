@@ -36,18 +36,22 @@ public sealed class MagiskService
     private readonly AdbService _adb;
     private readonly DownloadService _dl;
     private readonly LogService _log;
+    private readonly HashVerificationService _hash;
 
     public IReadOnlyList<MagiskModuleCatalogEntry> Catalog { get; }
+
+    public sealed record MagiskModuleDownload(string Url, string FileName, string? GitHubDigestSha256);
 
     public static string UserOverridePath => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "AndroidEmulatorPlus", "presets", "magisk-modules.json");
 
-    public MagiskService(AdbService adb, DownloadService dl, LogService log)
+    public MagiskService(AdbService adb, DownloadService dl, LogService log, HashVerificationService hash)
     {
         _adb = adb;
         _dl = dl;
         _log = log;
+        _hash = hash;
         Catalog = LoadCatalog();
     }
 
@@ -183,15 +187,17 @@ public sealed class MagiskService
         var resolved = await ResolveModuleDownloadAsync(uri, suggestedFileName, ct);
         if (resolved is null) return false;
 
-        var safeName = Path.GetFileName(resolved.Value.FileName);
+        var safeName = Path.GetFileName(resolved.FileName);
         if (string.IsNullOrWhiteSpace(safeName)) safeName = Path.GetFileName(suggestedFileName);
         if (!safeName.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))
             safeName += ".zip";
 
         var localZip = Path.Combine(cacheRoot, safeName);
         _log.Info($"Downloading module {safeName}…");
-        try { await _dl.DownloadAsync(resolved.Value.Url, localZip, ct: ct); }
+        try { await _dl.DownloadAsync(resolved.Url, localZip, ct: ct); }
         catch (Exception ex) { _log.Error("Module download failed: " + ex.Message); return false; }
+        if (!VerifyDownloadedAsset("Magisk module ZIP", resolved.FileName, localZip, resolved.GitHubDigestSha256))
+            return false;
         return await InstallFromZipAsync(serial, localZip, ct);
     }
 
@@ -205,31 +211,15 @@ public sealed class MagiskService
         return InstallFromUrlAsync(serial, entry.DownloadUrl, $"{entry.Id}.zip", ct);
     }
 
-    private async Task<(string Url, string FileName)?> ResolveModuleDownloadAsync(Uri uri, string suggestedFileName, CancellationToken ct)
+    private async Task<MagiskModuleDownload?> ResolveModuleDownloadAsync(Uri uri, string suggestedFileName, CancellationToken ct)
     {
         if (IsGitHubLatestReleaseUrl(uri, out var owner, out var repo))
         {
             var api = $"https://api.github.com/repos/{owner}/{repo}/releases/latest";
             try
             {
-                using var doc = JsonDocument.Parse(await _dl.FetchTextAsync(api, ct));
-                var assets = doc.RootElement.GetProperty("assets")
-                    .EnumerateArray()
-                    .Select(asset => new
-                    {
-                        Name = asset.GetProperty("name").GetString() ?? "",
-                        Url = asset.GetProperty("browser_download_url").GetString() ?? "",
-                        Size = asset.TryGetProperty("size", out var sizeProp) && sizeProp.TryGetInt64(out var size) ? size : 0L,
-                    })
-                    .Where(asset => asset.Name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase)
-                                    && Uri.TryCreate(asset.Url, UriKind.Absolute, out var assetUri)
-                                    && assetUri.Scheme.Equals(Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase))
-                    .OrderByDescending(asset => ScoreAssetName(asset.Name, suggestedFileName))
-                    .ThenByDescending(asset => asset.Size)
-                    .ToList();
-
-                var best = assets.FirstOrDefault();
-                if (best is not null) return (best.Url, best.Name);
+                var best = TrySelectGitHubReleaseZipAsset(await _dl.FetchTextAsync(api, ct), suggestedFileName);
+                if (best is not null) return best;
                 _log.Error($"No .zip asset found on latest GitHub release for {owner}/{repo}.");
                 return null;
             }
@@ -240,7 +230,32 @@ public sealed class MagiskService
             }
         }
 
-        return (uri.ToString(), Path.GetFileName(uri.LocalPath));
+        return new MagiskModuleDownload(uri.ToString(), Path.GetFileName(uri.LocalPath), GitHubDigestSha256: null);
+    }
+
+    public static MagiskModuleDownload? TrySelectGitHubReleaseZipAsset(string releaseJson, string suggestedFileName)
+    {
+        using var doc = JsonDocument.Parse(releaseJson);
+        var assets = doc.RootElement.GetProperty("assets")
+            .EnumerateArray()
+            .Select(asset => new
+            {
+                Name = asset.GetProperty("name").GetString() ?? "",
+                Url = asset.GetProperty("browser_download_url").GetString() ?? "",
+                Size = asset.TryGetProperty("size", out var sizeProp) && sizeProp.TryGetInt64(out var size) ? size : 0L,
+                Digest = asset.TryGetProperty("digest", out var digestProp) && digestProp.ValueKind == JsonValueKind.String
+                    ? HashVerificationService.NormalizeSha256Digest(digestProp.GetString())
+                    : null,
+            })
+            .Where(asset => asset.Name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase)
+                            && Uri.TryCreate(asset.Url, UriKind.Absolute, out var assetUri)
+                            && assetUri.Scheme.Equals(Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(asset => ScoreAssetName(asset.Name, suggestedFileName))
+            .ThenByDescending(asset => asset.Size)
+            .ToList();
+
+        var best = assets.FirstOrDefault();
+        return best is null ? null : new MagiskModuleDownload(best.Url, best.Name, best.Digest);
     }
 
     private static int ScoreAssetName(string assetName, string suggestedFileName)
@@ -382,5 +397,17 @@ public sealed class MagiskService
             detail = ex.Message;
             return false;
         }
+    }
+
+    private bool VerifyDownloadedAsset(string label, string key, string path, string? expectedSha256)
+    {
+        var check = expectedSha256 is null
+            ? _hash.RecordTrustOnFirstUse(label, key, path)
+            : _hash.VerifyExpectedSha256(label, key, path, expectedSha256);
+        if (check.Ok) return true;
+
+        try { File.Delete(path); } catch { }
+        try { File.Delete(path + ".download"); } catch { }
+        return false;
     }
 }

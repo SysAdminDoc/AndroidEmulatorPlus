@@ -1,6 +1,6 @@
 # AndroidEmulatorPlus
 
-[![Version](https://img.shields.io/badge/version-0.2.4-blue.svg)](https://github.com/SysAdminDoc/AndroidEmulatorPlus/releases)
+[![Version](https://img.shields.io/badge/version-0.2.5-blue.svg)](https://github.com/SysAdminDoc/AndroidEmulatorPlus/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-lightgrey.svg)](#)
 [![.NET](https://img.shields.io/badge/.NET-9.0-blueviolet.svg)](#)
@@ -23,7 +23,7 @@ pills:
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────┐
-│ AndroidEmulatorPlus v0.2.4  SDK ✓ … 📱 phone …  💻 emu … 📷 🎥 🖥 ⚙       │
+│ AndroidEmulatorPlus v0.2.5  SDK ✓ … 📱 phone …  💻 emu … 📷 🎥 🖥 ⚙       │
 ├────────────┬─────────────────────────────────────────────────────────────────┤
 │ ① Install  │                                                                 │
 │ ② AVDs     │                                                                 │
@@ -108,9 +108,9 @@ Coverage: ini round-trip, raw-byte disk parsing, install-failed reason
 extraction, system-image sort, SHA-256 helper, `OrderBaseFirst`, AVD
 duplicate file-tree contract, debloat-preset merge, `allowBackup`
 parsing, known-hashes manifest schema, CA certificate hashing, Frida release
-asset selection, HTTP Range download resume, safe ZIP extraction preflight, and
+asset selection and digest verification, HTTP Range download resume, safe ZIP extraction preflight, and
 remote migration/import staging cleanup failure paths. The current suite has
-104 tests.
+110 tests.
 
 ## Project planning
 
