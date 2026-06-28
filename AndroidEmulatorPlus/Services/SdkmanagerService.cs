@@ -2,6 +2,12 @@ using AndroidEmulatorPlus.Helpers;
 
 namespace AndroidEmulatorPlus.Services;
 
+public sealed record SdkInstalledPackage(string Path, string Version, string Description, string Location);
+public sealed record SdkPackageUpdate(string Path, string InstalledVersion, string AvailableVersion, string Description);
+public sealed record SdkPackageInventory(
+    IReadOnlyList<SdkInstalledPackage> Installed,
+    IReadOnlyList<SdkPackageUpdate> Updates);
+
 /// <summary>
 /// Wraps <c>sdkmanager.bat</c>. License acceptance is automated by piping a stream
 /// of 'y' lines into stdin (Google's official one-liner for unattended installs).
@@ -126,4 +132,71 @@ public sealed class SdkmanagerService
         }
         return list;
     }
+
+    public async Task<SdkPackageInventory> ListPackageInventoryAsync(CancellationToken ct = default)
+    {
+        if (_sdk.SdkManagerBat is null) return new SdkPackageInventory([], []);
+        var r = await ProcessRunner.RunAsync("cmd.exe",
+            new[] { "/c", _sdk.SdkManagerBat, "--list" },
+            extraEnv: NoPathConv,
+            timeout: TimeSpan.FromMinutes(3),
+            ct: ct);
+        return ParsePackageInventory(r.StdOut);
+    }
+
+    public static SdkPackageInventory ParsePackageInventory(string stdout)
+    {
+        var installed = new List<SdkInstalledPackage>();
+        var updates = new List<SdkPackageUpdate>();
+        var section = "";
+
+        foreach (var raw in stdout.Split('\n'))
+        {
+            var line = raw.Trim().Replace("\r", "");
+            if (string.IsNullOrWhiteSpace(line)) continue;
+            if (line.StartsWith("Installed packages", StringComparison.OrdinalIgnoreCase))
+            {
+                section = "installed";
+                continue;
+            }
+            if (line.StartsWith("Available Updates", StringComparison.OrdinalIgnoreCase))
+            {
+                section = "updates";
+                continue;
+            }
+            if (line.StartsWith("Available Packages", StringComparison.OrdinalIgnoreCase))
+            {
+                section = "available";
+                continue;
+            }
+            if (line.StartsWith("Path", StringComparison.OrdinalIgnoreCase)
+                || line.StartsWith("ID", StringComparison.OrdinalIgnoreCase)
+                || line.StartsWith("-", StringComparison.Ordinal))
+                continue;
+
+            var cells = line.Split('|').Select(static cell => cell.Trim()).ToArray();
+            if (section == "installed" && cells.Length >= 4 && !string.IsNullOrWhiteSpace(cells[0]))
+            {
+                installed.Add(new SdkInstalledPackage(cells[0], cells[1], cells[2], cells[3]));
+            }
+            else if (section == "updates" && cells.Length >= 3 && !string.IsNullOrWhiteSpace(cells[0]))
+            {
+                updates.Add(new SdkPackageUpdate(cells[0], cells[1], cells[2], Description: ""));
+            }
+        }
+
+        var descriptions = installed.ToDictionary(static p => p.Path, static p => p.Description, StringComparer.OrdinalIgnoreCase);
+        updates = updates
+            .Select(update => update with
+            {
+                Description = descriptions.GetValueOrDefault(update.Path) ?? ""
+            })
+            .ToList();
+        return new SdkPackageInventory(installed, updates);
+    }
+
+    public static bool IsUpdateManagedByAep(SdkPackageUpdate update)
+        => update.Path.Equals("emulator", StringComparison.OrdinalIgnoreCase)
+           || update.Path.Equals("platform-tools", StringComparison.OrdinalIgnoreCase)
+           || update.Path.StartsWith("system-images;", StringComparison.OrdinalIgnoreCase);
 }

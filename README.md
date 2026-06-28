@@ -1,6 +1,6 @@
 # AndroidEmulatorPlus
 
-[![Version](https://img.shields.io/badge/version-0.2.6-blue.svg)](https://github.com/SysAdminDoc/AndroidEmulatorPlus/releases)
+[![Version](https://img.shields.io/badge/version-0.2.7-blue.svg)](https://github.com/SysAdminDoc/AndroidEmulatorPlus/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-lightgrey.svg)](#)
 [![.NET](https://img.shields.io/badge/.NET-9.0-blueviolet.svg)](#)
@@ -23,7 +23,7 @@ pills:
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────┐
-│ AndroidEmulatorPlus v0.2.6  SDK ✓ … 📱 phone …  💻 emu … 📷 🎥 🖥 ⚙       │
+│ AndroidEmulatorPlus v0.2.7  SDK ✓ … 📱 phone …  💻 emu … 📷 🎥 🖥 ⚙       │
 ├────────────┬─────────────────────────────────────────────────────────────────┤
 │ ① Install  │                                                                 │
 │ ② AVDs     │                                                                 │
@@ -40,7 +40,7 @@ pills:
 
 | Section | What you can do |
 |---|---|
-| **① Install / SDK** | Detect Android SDK at standard locations. Download the command-line tools (~150 MB) with visible progress, HTTP Range resume, and SHA-256 verification, then lay them out at `cmdline-tools/latest`. Accept all SDK licenses in one click. Run `emulator -accel-check` with one-click remediation links on failure. Surface the rolling `crash.log` tail. |
+| **① Install / SDK** | Detect Android SDK at standard locations. Download the command-line tools (~150 MB) with visible progress, HTTP Range resume, and SHA-256 verification, then lay them out at `cmdline-tools/latest`. Accept all SDK licenses in one click. Run `emulator -accel-check` with one-click remediation links on failure. Check and update managed SDK packages (`emulator`, `platform-tools`, installed system images). Surface the rolling `crash.log` tail. |
 | **② AVDs** | List existing AVDs with badge / running state. Launch / Cold Boot / Stop / "Launch with options…" (cold/wipe/headless/`-http-proxy`/`-dns-server`/cameras). Per-AVD overflow: Show on disk, Rename, Duplicate, Snapshots, Desktop shortcut, Delete (with confirm). Create from any installed system image. "Browse online…" runs `sdkmanager --list` to install new images on demand. |
 | **③ Root** | Patch the AVD's `ramdisk.img` with the latest Magisk via [rootAVD](https://gitlab.com/newbit/rootAVD) (revision-pinned). GitHub `digest` field is cross-checked against the in-tree manifest for supply-chain defense in depth. Magisk shell-policy persistence so `adb shell su` is headless thereafter. Inline "Launch & root" CTA if no emulator is attached. "Dry run (LISTONLY)" preview. **Modules…** sub-dialog installs Shamiko / LSPosed / PlayIntegrityFork / Tricky Store / Zygisk Detach (or arbitrary local `.zip`). Security-testing actions install a Burp/mitmproxy CA into the Magisk-backed system trust store and deploy/stop `frida-server` for the attached rooted emulator. |
 | **④ Migrate from Phone** | Detects a USB or Wi-Fi-paired phone (`adb pair` flow built in). Lists user packages with a `⚠ no-backup` pill for apps that declared `android:allowBackup="false"`. Pulls each APK (split-aware), installs on the emulator, then `tar`s `/data/data/<pkg>` over with UID remap + `restorecon`. Optional passes for `/sdcard/Android/data/<pkg>` and `/sdcard/Android/obb/<pkg>`. Force-stop the source app on the phone first to avoid torn SQLite DBs. Phone-side tar flavor is auto-detected (toybox vs. find-prune fallback). |
@@ -109,9 +109,9 @@ Coverage: ini round-trip, raw-byte disk parsing, install-failed reason
 extraction, system-image sort, SHA-256 helper, `OrderBaseFirst`, AVD
 duplicate file-tree contract, debloat-preset merge, `allowBackup`
 parsing, known-hashes manifest schema, CA certificate hashing, Frida release
-asset selection and digest verification, ADB trust diagnostics, HTTP Range download resume, safe ZIP extraction preflight, and
+asset selection and digest verification, ADB trust diagnostics, SDK package update parsing, HTTP Range download resume, safe ZIP extraction preflight, and
 remote migration/import staging cleanup failure paths. The current suite has
-116 tests.
+122 tests.
 
 ## Project planning
 

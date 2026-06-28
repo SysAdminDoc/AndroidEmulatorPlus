@@ -26,7 +26,7 @@ Tag legend:
 - `global.json` pins repository builds to .NET 9 with feature-band roll-forward.
 - `dotnet build AndroidEmulatorPlus.sln -c Release` and
   `dotnet test AndroidEmulatorPlus.Tests\AndroidEmulatorPlus.Tests.csproj -c Release`
-  pass locally (116 tests).
+  pass locally (122 tests).
 - Release smoke requiring accelerated API 35/API 36 AVDs is tracked in
   `Roadmap_Blocked.md` for a host with nested virtualization/Hyper-V available.
 
@@ -113,13 +113,6 @@ Research evidence and rationale in `RESEARCH.md`.
 ### P0 - Data Safety and Trust
 
 ### P1 - Reliability and Release Readiness
-
-- [ ] P1 - Add SDK package update manager for emulator/platform-tools/system images
-  Why: Emulator and platform-tools releases carry security, wireless-debugging, and networking fixes; the app installs packages but does not surface installed-update drift.
-  Evidence: Android Emulator release notes; Android platform-tools release notes; `AndroidEmulatorPlus/Services/SdkmanagerService.cs`.
-  Touches: `SdkmanagerService`, `InstallViewModel`, `InstallView.xaml`, `Resources/known-hashes.json`, tests for sdkmanager output parsing.
-  Acceptance: Install tab lists installed SDK packages, available updates, package sizes when available, and can update emulator/platform-tools/system images with progress and rollback-safe status.
-  Complexity: L
 
 - [ ] P1 - Validate Velopack release feed and artifact contract
   Why: Auto-update exists, but releases need a local preflight proving `releases.win.json` and expected Velopack assets are present before users enable update checks.

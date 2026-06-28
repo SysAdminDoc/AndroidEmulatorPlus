@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.IO.Compression;
 using AndroidEmulatorPlus.Services;
@@ -33,6 +34,10 @@ public sealed partial class InstallViewModel : ObservableObject
     [ObservableProperty] private bool _isDownloadProgressIndeterminate = true;
     [ObservableProperty] private double _downloadProgress;
     [ObservableProperty] private string _downloadProgressText = "";
+    [ObservableProperty] private string _sdkPackageUpdateText = "Not checked.";
+    [ObservableProperty] private bool _hasSdkPackageUpdates;
+
+    public ObservableCollection<SdkPackageUpdate> SdkPackageUpdates { get; } = new();
 
     private CancellationTokenSource? _cts;
 
@@ -90,6 +95,80 @@ public sealed partial class InstallViewModel : ObservableObject
             StatusText = _sdk.IsReady ? "SDK looks good." : "SDK is missing pieces.";
         }
         LoadDiagnostics();
+    }
+
+    [RelayCommand]
+    private async Task RefreshSdkPackagesAsync()
+    {
+        if (!HasCmdlineTools)
+        {
+            SdkPackageUpdateText = "cmdline-tools not installed.";
+            HasSdkPackageUpdates = false;
+            SdkPackageUpdates.Clear();
+            return;
+        }
+
+        IsBusy = true;
+        Step = "Checking SDK package updates...";
+        try
+        {
+            var inventory = await _sdkman.ListPackageInventoryAsync();
+            var updates = inventory.Updates
+                .Where(SdkmanagerService.IsUpdateManagedByAep)
+                .OrderBy(static update => update.Path, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+            SdkPackageUpdates.Clear();
+            foreach (var update in updates)
+                SdkPackageUpdates.Add(update);
+            HasSdkPackageUpdates = SdkPackageUpdates.Count > 0;
+            SdkPackageUpdateText = HasSdkPackageUpdates
+                ? $"{SdkPackageUpdates.Count} update(s) available for emulator/platform-tools/system images."
+                : "emulator, platform-tools, and installed system images are current.";
+        }
+        catch (Exception ex)
+        {
+            SdkPackageUpdateText = "Update check failed: " + ex.Message;
+            HasSdkPackageUpdates = false;
+            _log.Warning(SdkPackageUpdateText);
+        }
+        finally
+        {
+            IsBusy = false;
+            Step = "";
+        }
+    }
+
+    [RelayCommand]
+    private async Task UpdateSdkPackagesAsync()
+    {
+        var packages = SdkPackageUpdates.Select(static update => update.Path).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        if (packages.Count == 0)
+        {
+            _log.Info("No SDK package updates selected.");
+            return;
+        }
+
+        IsBusy = true;
+        Step = "Updating SDK packages...";
+        try
+        {
+            var ok = await _sdkman.InstallAsync(packages, new Progress<string>(s => Step = s));
+            if (ok)
+            {
+                _log.Success($"Updated SDK packages: {string.Join(", ", packages)}");
+                Refresh();
+                await RefreshSdkPackagesAsync();
+            }
+            else
+            {
+                _log.Error("SDK package update failed.");
+            }
+        }
+        finally
+        {
+            IsBusy = false;
+            Step = "";
+        }
     }
 
     private void LoadDiagnostics()
