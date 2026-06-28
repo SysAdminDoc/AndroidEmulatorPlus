@@ -9,9 +9,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <LangVersion>latest</LangVersion>
-    <Version>0.2.5</Version>
-    <FileVersion>0.2.5.0</FileVersion>
-    <InformationalVersion>0.2.5</InformationalVersion>
+    <Version>0.2.6</Version>
+    <FileVersion>0.2.6.0</FileVersion>
+    <InformationalVersion>0.2.6</InformationalVersion>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\aep.ico</ApplicationIcon>
     <StartupObject>AndroidEmulatorPlus.Program</StartupObject>

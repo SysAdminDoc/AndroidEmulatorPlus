@@ -1,5 +1,6 @@
 using AndroidEmulatorPlus.Helpers;
 using AndroidEmulatorPlus.Models;
+using System.Globalization;
 using System.Text.RegularExpressions;
 
 namespace AndroidEmulatorPlus.Services;
@@ -45,6 +46,95 @@ public class AdbService
             list.Add(new Device(serial, state, model, product, serial.StartsWith("emulator-")));
         }
         return list;
+    }
+
+    public async Task<DeviceDiagnostics> GetDeviceDiagnosticsAsync(Device device, CancellationToken ct = default)
+    {
+        var platformTools = await PlatformToolsVersionAsync(ct);
+        if (!device.IsOnline)
+        {
+            return BuildDiagnostics(device, platformTools, apiLevel: null, securityPatch: null, DateTime.UtcNow);
+        }
+
+        string? apiLevel = null;
+        string? securityPatch = null;
+        try
+        {
+            var props = await ShellAsync(device.Serial,
+                "getprop ro.build.version.sdk; getprop ro.build.version.security_patch", ct);
+            (apiLevel, securityPatch) = ParseDeviceBuildProps(props.StdOut);
+        }
+        catch { }
+
+        return BuildDiagnostics(device, platformTools, apiLevel, securityPatch, DateTime.UtcNow);
+    }
+
+    public async Task<string?> PlatformToolsVersionAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            var r = await RawAsync(new[] { "version" }, ct);
+            return ParsePlatformToolsVersion(r.StdOut);
+        }
+        catch { return null; }
+    }
+
+    public static string InferTransport(Device device)
+    {
+        if (device.IsEmulator) return "emulator";
+        return device.Serial.Contains(':', StringComparison.Ordinal) ? "wireless" : "usb";
+    }
+
+    public static string? ParsePlatformToolsVersion(string stdout)
+    {
+        foreach (var raw in stdout.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var line = raw.Trim();
+            const string prefix = "Android Debug Bridge version ";
+            if (line.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                return line[prefix.Length..].Trim();
+            if (line.StartsWith("Version ", StringComparison.OrdinalIgnoreCase))
+                return line["Version ".Length..].Trim();
+        }
+        return null;
+    }
+
+    public static (string? ApiLevel, string? SecurityPatch) ParseDeviceBuildProps(string stdout)
+    {
+        var lines = stdout.Replace("\r", "", StringComparison.Ordinal)
+            .Split('\n', StringSplitOptions.None)
+            .Select(static line => line.Trim())
+            .ToArray();
+        var api = lines.Length > 0 && !string.IsNullOrWhiteSpace(lines[0]) ? lines[0] : null;
+        var patch = lines.Length > 1 && !string.IsNullOrWhiteSpace(lines[1]) ? lines[1] : null;
+        return (api, patch);
+    }
+
+    public static bool IsSecurityPatchStale(string? patch, DateTime utcNow, int maxAgeDays = 120)
+    {
+        if (!DateOnly.TryParseExact(patch, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var patchDate))
+            return false;
+        var age = DateOnly.FromDateTime(utcNow.Date).DayNumber - patchDate.DayNumber;
+        return age > maxAgeDays;
+    }
+
+    private static DeviceDiagnostics BuildDiagnostics(
+        Device device,
+        string? platformToolsVersion,
+        string? apiLevel,
+        string? securityPatch,
+        DateTime utcNow)
+    {
+        var transport = InferTransport(device);
+        var patchUnknown = string.IsNullOrWhiteSpace(securityPatch);
+        var patchStale = IsSecurityPatchStale(securityPatch, utcNow);
+        var api = string.IsNullOrWhiteSpace(apiLevel) ? "unknown" : apiLevel;
+        var patch = patchUnknown ? "unknown" : securityPatch!;
+        var tools = string.IsNullOrWhiteSpace(platformToolsVersion) ? "unknown" : platformToolsVersion;
+        var warning = patchUnknown ? "patch unknown" : patchStale ? "patch stale" : "patch current";
+        var summary = $"{transport}; API {api}; security patch {patch} ({warning}); platform-tools {tools}";
+        return new DeviceDiagnostics(device.Serial, transport, apiLevel, securityPatch, platformToolsVersion,
+            patchUnknown, patchStale, summary);
     }
 
     public virtual Task<ProcessResult> ShellAsync(string serial, string command, CancellationToken ct = default)

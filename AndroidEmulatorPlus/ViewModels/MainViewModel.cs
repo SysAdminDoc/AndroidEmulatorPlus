@@ -24,7 +24,9 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty] private string _sdkStatusText = "";
     [ObservableProperty] private string _sdkDetailText = "";
     [ObservableProperty] private string _phoneStatusText = "no phone";
+    [ObservableProperty] private string _phoneDetailText = "No phone connected.";
     [ObservableProperty] private string _emulatorStatusText = "no emulator";
+    [ObservableProperty] private string _emulatorDetailText = "No emulator connected.";
     [ObservableProperty] private bool _hasEmulatorAttached;
     [ObservableProperty] private bool _isRecording;
     [ObservableProperty] private string _recordButtonText = "Record";
@@ -63,7 +65,7 @@ public sealed partial class MainViewModel : ObservableObject
         RefreshSdk();
         // If the SDK isn't there yet, land on Install rather than the empty AVDs list.
         if (!_sdk.IsReady) _activeSection = "Install";
-        Log.Info("AndroidEmulatorPlus v0.2.5 ready.");
+        Log.Info("AndroidEmulatorPlus v0.2.6 ready.");
     }
 
     [RelayCommand]
@@ -92,13 +94,18 @@ public sealed partial class MainViewModel : ObservableObject
     }
 
     private string? _lastSeenEmuSerial;
+    private int _deviceDetailsGeneration;
+
     private void OnDevicesChanged(IReadOnlyList<Device> devs)
     {
         var emu = devs.FirstOrDefault(d => d.IsEmulator);
         var phone = devs.FirstOrDefault(d => !d.IsEmulator);
         EmulatorStatusText = emu is null ? "no emulator" : $"{emu.Serial}";
         PhoneStatusText = phone is null ? "no phone" : phone.Display;
+        PhoneDetailText = phone is null ? "No phone connected." : "Checking device trust details...";
+        EmulatorDetailText = emu is null ? "No emulator connected." : "Checking device trust details...";
         HasEmulatorAttached = emu is not null && emu.IsOnline;
+        _ = RefreshDeviceDiagnosticsAsync(phone, emu, ++_deviceDetailsGeneration);
 
         // C-16: auto-launch scrcpy when a new emulator comes online.
         var currentSerial = emu?.IsOnline == true ? emu.Serial : null;
@@ -109,6 +116,59 @@ public sealed partial class MainViewModel : ObservableObject
             try { _scrcpy.Launch(currentSerial); } catch { }
         }
         _lastSeenEmuSerial = currentSerial;
+    }
+
+    private async Task RefreshDeviceDiagnosticsAsync(Device? phone, Device? emu, int generation)
+    {
+        if (phone is not null)
+            await ApplyDiagnosticsAsync(phone, isPhone: true, generation);
+        if (emu is not null)
+            await ApplyDiagnosticsAsync(emu, isPhone: false, generation);
+    }
+
+    private async Task ApplyDiagnosticsAsync(Device device, bool isPhone, int generation)
+    {
+        DeviceDiagnostics details;
+        try
+        {
+            details = await _adb.GetDeviceDiagnosticsAsync(device);
+        }
+        catch (Exception ex)
+        {
+            if (generation != _deviceDetailsGeneration) return;
+            var fallback = $"{device.Display}: trust details unavailable ({ex.Message})";
+            if (isPhone) PhoneDetailText = fallback;
+            else EmulatorDetailText = fallback;
+            return;
+        }
+
+        if (generation != _deviceDetailsGeneration) return;
+        var status = BuildDeviceStatusText(device, details);
+        if (isPhone)
+        {
+            PhoneStatusText = status;
+            PhoneDetailText = $"{device.Display}: {details.Summary}";
+        }
+        else
+        {
+            EmulatorStatusText = status;
+            EmulatorDetailText = $"{device.Serial}: {details.Summary}";
+        }
+
+        if (details.IsPatchUnknown)
+            Log.Warning($"{device.Serial}: Android security patch level is unknown before privileged ADB actions.");
+        else if (details.IsPatchStale)
+            Log.Warning($"{device.Serial}: Android security patch level {details.SecurityPatch} is stale before privileged ADB actions.");
+        if (details.Transport == "wireless")
+            Log.Warning($"{device.Serial}: ADB transport is wireless; confirm this is a trusted network before migration/root actions.");
+    }
+
+    private static string BuildDeviceStatusText(Device device, DeviceDiagnostics details)
+    {
+        var name = device.IsEmulator ? device.Serial : device.Display;
+        var api = string.IsNullOrWhiteSpace(details.ApiLevel) ? "API ?" : $"API {details.ApiLevel}";
+        var patch = details.IsPatchUnknown ? "patch ?" : details.IsPatchStale ? "patch stale" : "patch ok";
+        return $"{name} · {details.Transport} · {api} · {patch}";
     }
 
     private string MediaDir => !string.IsNullOrWhiteSpace(_settings.Current.MediaDir)

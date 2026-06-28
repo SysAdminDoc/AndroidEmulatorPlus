@@ -26,7 +26,7 @@ Tag legend:
 - `global.json` pins repository builds to .NET 9 with feature-band roll-forward.
 - `dotnet build AndroidEmulatorPlus.sln -c Release` and
   `dotnet test AndroidEmulatorPlus.Tests\AndroidEmulatorPlus.Tests.csproj -c Release`
-  pass locally (110 tests).
+  pass locally (116 tests).
 - Release smoke requiring accelerated API 35/API 36 AVDs is tracked in
   `Roadmap_Blocked.md` for a host with nested virtualization/Hyper-V available.
 
@@ -113,13 +113,6 @@ Research evidence and rationale in `RESEARCH.md`.
 ### P0 - Data Safety and Trust
 
 ### P1 - Reliability and Release Readiness
-
-- [ ] P1 - Add ADB trust and patch-level warnings for connected devices
-  Why: Wireless debugging and rooted migration are powerful, but the UI does not show transport type, platform-tools version, Android security patch level, or stale/unknown trust state.
-  Evidence: Android ADB docs; platform-tools release notes; Android 2026 security bulletins; `AndroidEmulatorPlus/Services/AdbService.cs`; `MigrateView.xaml`.
-  Touches: `AdbService`, `DeviceMonitor`, `MainViewModel`, `MigrateViewModel`, `RootViewModel`, top-bar status UI.
-  Acceptance: Each attached phone/emulator shows USB/wireless/unknown transport, API level, patch level, platform-tools version, and warnings before migration/root/security-tool actions when patch level is stale or unknown.
-  Complexity: M
 
 - [ ] P1 - Add SDK package update manager for emulator/platform-tools/system images
   Why: Emulator and platform-tools releases carry security, wireless-debugging, and networking fixes; the app installs packages but does not surface installed-update drift.

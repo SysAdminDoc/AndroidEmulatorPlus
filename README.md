@@ -1,6 +1,6 @@
 # AndroidEmulatorPlus
 
-[![Version](https://img.shields.io/badge/version-0.2.5-blue.svg)](https://github.com/SysAdminDoc/AndroidEmulatorPlus/releases)
+[![Version](https://img.shields.io/badge/version-0.2.6-blue.svg)](https://github.com/SysAdminDoc/AndroidEmulatorPlus/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-lightgrey.svg)](#)
 [![.NET](https://img.shields.io/badge/.NET-9.0-blueviolet.svg)](#)
@@ -23,7 +23,7 @@ pills:
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────┐
-│ AndroidEmulatorPlus v0.2.5  SDK ✓ … 📱 phone …  💻 emu … 📷 🎥 🖥 ⚙       │
+│ AndroidEmulatorPlus v0.2.6  SDK ✓ … 📱 phone …  💻 emu … 📷 🎥 🖥 ⚙       │
 ├────────────┬─────────────────────────────────────────────────────────────────┤
 │ ① Install  │                                                                 │
 │ ② AVDs     │                                                                 │
@@ -55,7 +55,8 @@ media output dir, HTTP proxy, auto-scrcpy, Velopack updates, show wizard,
 telemetry-off statement).
 
 A live device-monitor in the top bar shows whether a phone and an emulator
-are currently attached over `adb`.
+are currently attached over `adb`, with transport, API level, security patch
+freshness, and platform-tools version in the status tooltips.
 
 ## Why this exists
 
@@ -108,9 +109,9 @@ Coverage: ini round-trip, raw-byte disk parsing, install-failed reason
 extraction, system-image sort, SHA-256 helper, `OrderBaseFirst`, AVD
 duplicate file-tree contract, debloat-preset merge, `allowBackup`
 parsing, known-hashes manifest schema, CA certificate hashing, Frida release
-asset selection and digest verification, HTTP Range download resume, safe ZIP extraction preflight, and
+asset selection and digest verification, ADB trust diagnostics, HTTP Range download resume, safe ZIP extraction preflight, and
 remote migration/import staging cleanup failure paths. The current suite has
-110 tests.
+116 tests.
 
 ## Project planning
 
