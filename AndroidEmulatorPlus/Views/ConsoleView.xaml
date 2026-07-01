@@ -123,14 +123,22 @@
 
             <Border Style="{StaticResource Card}">
                 <StackPanel>
-                    <TextBlock Style="{StaticResource SectionHeader}" Text="Clipboard sync (manual)"/>
-                    <TextBlock Foreground="{DynamicResource OverlayBrush}" FontSize="11" TextWrapping="Wrap">
-                        Manual round-trip to avoid the privacy cost of a background poll. Pull copies the emulator's primary clipboard into the host clipboard; Push goes the other way.
-                    </TextBlock>
-                    <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                    <TextBlock Style="{StaticResource SectionHeader}" Text="Clipboard"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
                         <Button Content="Pull from emulator" Style="{StaticResource FlatButton}" Command="{Binding PullClipboardCommand}" AutomationProperties.Name="Pull clipboard from emulator"/>
                         <Button Content="Push to emulator" Style="{StaticResource FlatButton}" Margin="8,0,0,0" Command="{Binding PushClipboardCommand}" AutomationProperties.Name="Push clipboard to emulator"/>
+                        <Button Style="{StaticResource FlatButton}" Margin="8,0,0,0"
+                                Command="{Binding ToggleClipboardSyncCommand}"
+                                AutomationProperties.Name="Toggle clipboard sync">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="Auto-sync:"/>
+                                <TextBlock Text="{Binding ClipboardSyncStatus}" Margin="6,0,0,0" Foreground="{DynamicResource LavenderBrush}"/>
+                            </StackPanel>
+                        </Button>
                     </StackPanel>
+                    <TextBlock Foreground="{DynamicResource OverlayBrush}" FontSize="11" TextWrapping="Wrap">
+                        Pull/Push do a single round-trip. Auto-sync polls every 2 seconds to keep host and emulator clipboards in sync.
+                    </TextBlock>
                 </StackPanel>
             </Border>
 

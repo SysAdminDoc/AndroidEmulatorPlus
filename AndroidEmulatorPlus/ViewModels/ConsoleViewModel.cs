@@ -36,6 +36,12 @@ public sealed partial class ConsoleViewModel : ObservableObject
     [ObservableProperty] private double _gyroX;
     [ObservableProperty] private double _gyroY;
     [ObservableProperty] private double _gyroZ;
+    [ObservableProperty] private bool _clipboardSyncEnabled;
+    [ObservableProperty] private string _clipboardSyncStatus = "Off";
+
+    private CancellationTokenSource? _clipSyncCts;
+    private string _lastEmuClip = "";
+    private string _lastHostClip = "";
 
     public IReadOnlyList<string> PowerStates { get; } = new[] { "full", "charging", "discharging", "not-charging", "unknown" };
     public IReadOnlyList<string> Speeds { get; } = new[] { "full", "gsm", "edge", "umts", "hsdpa", "lte" };
@@ -166,6 +172,75 @@ public sealed partial class ConsoleViewModel : ObservableObject
         catch (FormatException ex) { _log.Warning(ex.Message); return; }
         var r = await _console.SendAsync(s, args);
         LastResult = r.Combined.Trim();
+    }
+
+    [RelayCommand]
+    private void ToggleClipboardSync()
+    {
+        if (ClipboardSyncEnabled)
+        {
+            _clipSyncCts?.Cancel();
+            _clipSyncCts = null;
+            ClipboardSyncEnabled = false;
+            ClipboardSyncStatus = "Off";
+            _log.Info("Clipboard sync stopped.");
+            return;
+        }
+        ClipboardSyncEnabled = true;
+        ClipboardSyncStatus = "Syncing...";
+        _clipSyncCts = new CancellationTokenSource();
+        _ = ClipboardSyncLoopAsync(_clipSyncCts.Token);
+        _log.Info("Clipboard sync started.");
+    }
+
+    private async Task ClipboardSyncLoopAsync(CancellationToken ct)
+    {
+        try
+        {
+            while (!ct.IsCancellationRequested)
+            {
+                await Task.Delay(2000, ct);
+                if (ActiveSerial() is not { } s) continue;
+
+                try
+                {
+                    var hostText = "";
+                    if (System.Windows.Application.Current?.Dispatcher is { } d)
+                        hostText = await d.InvokeAsync(() =>
+                        {
+                            try { return System.Windows.Clipboard.GetText(); } catch { return ""; }
+                        });
+
+                    if (!string.IsNullOrEmpty(hostText) && hostText != _lastHostClip)
+                    {
+                        _lastHostClip = hostText;
+                        await _console.ClipboardSetAsync(_adb, s, hostText, ct);
+                        ClipboardSyncStatus = "Host → Emu";
+                    }
+
+                    var emuR = await _console.ClipboardGetAsync(_adb, s, ct);
+                    var emuText = emuR.Success ? emuR.StdOut.Trim() : "";
+                    if (!string.IsNullOrEmpty(emuText) && emuText != _lastEmuClip && emuText != _lastHostClip)
+                    {
+                        _lastEmuClip = emuText;
+                        if (System.Windows.Application.Current?.Dispatcher is { } d2)
+                            await d2.InvokeAsync(() =>
+                            {
+                                try { System.Windows.Clipboard.SetText(emuText); } catch { }
+                            });
+                        ClipboardSyncStatus = "Emu → Host";
+                    }
+                }
+                catch (OperationCanceledException) { throw; }
+                catch { }
+            }
+        }
+        catch (OperationCanceledException) { }
+        finally
+        {
+            ClipboardSyncEnabled = false;
+            ClipboardSyncStatus = "Off";
+        }
     }
 
     /// <summary>B-07 clipboard helpers — manual paste/pull, not background sync.</summary>
