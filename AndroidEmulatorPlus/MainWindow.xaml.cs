@@ -63,7 +63,11 @@ public partial class MainWindow : Window
     private void StartBackgroundUpdateCheck()
     {
         if (!_settings.Current.AutoUpdateChecks) return;
-        _ = Task.Run(() => _updates.CheckAndDownloadAsync(restart: false));
+        _ = Task.Run(async () =>
+        {
+            try { await _updates.CheckAndDownloadAsync(restart: false); }
+            catch (Exception ex) { _log.Warning($"Background update check failed: {ex.Message}"); }
+        });
     }
 
     private void ClearLog_Click(object sender, RoutedEventArgs e) => _log.Clear();

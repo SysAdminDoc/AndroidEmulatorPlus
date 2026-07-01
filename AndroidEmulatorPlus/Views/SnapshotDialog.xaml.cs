@@ -8,6 +8,7 @@ public partial class SnapshotDialog : Window
     private readonly SnapshotService _svc;
     private readonly string _avdName;
     private readonly string? _serial;
+    private bool _busy;
 
     public SnapshotDialog(SnapshotService svc, string avdName, string? runningSerial)
     {
@@ -31,8 +32,17 @@ public partial class SnapshotDialog : Window
         else StatusText.Text = $"Connected via {_serial}.";
     }
 
+    private void SetBusy(bool busy)
+    {
+        _busy = busy;
+        SaveBtn.IsEnabled = !busy;
+        LoadBtn.IsEnabled = !busy;
+        DeleteBtn.IsEnabled = !busy;
+    }
+
     private async void Save_Click(object sender, RoutedEventArgs e)
     {
+        if (_busy) return;
         if (_serial is null) { StatusText.Text = "Launch the AVD first."; return; }
         var name = (SaveNameBox.Text ?? "").Trim();
         if (string.IsNullOrEmpty(name)) { StatusText.Text = "Enter a snapshot name."; return; }
@@ -41,23 +51,35 @@ public partial class SnapshotDialog : Window
             StatusText.Text = "Snapshot names may contain only letters, digits, spaces, '.', '_' and '-'.";
             return;
         }
+        SetBusy(true);
         StatusText.Text = $"Saving snapshot '{name}'…";
-        var ok = await _svc.SaveAsync(_serial, name);
-        StatusText.Text = ok ? $"Snapshot '{name}' saved." : "Save failed - see log.";
-        if (ok) Refresh();
+        try
+        {
+            var ok = await _svc.SaveAsync(_serial, name);
+            StatusText.Text = ok ? $"Snapshot '{name}' saved." : "Save failed - see log.";
+            if (ok) Refresh();
+        }
+        finally { SetBusy(false); }
     }
 
     private async void Load_Click(object sender, RoutedEventArgs e)
     {
+        if (_busy) return;
         if (_serial is null) { StatusText.Text = "Launch the AVD first."; return; }
         if (List.SelectedItem is not Snapshot snap) { StatusText.Text = "Select a snapshot first."; return; }
+        SetBusy(true);
         StatusText.Text = $"Loading '{snap.Name}'…";
-        var ok = await _svc.LoadAsync(_serial, snap.Name);
-        StatusText.Text = ok ? $"Loaded '{snap.Name}'." : "Load failed - see log.";
+        try
+        {
+            var ok = await _svc.LoadAsync(_serial, snap.Name);
+            StatusText.Text = ok ? $"Loaded '{snap.Name}'." : "Load failed - see log.";
+        }
+        finally { SetBusy(false); }
     }
 
     private void Delete_Click(object sender, RoutedEventArgs e)
     {
+        if (_busy) return;
         if (List.SelectedItem is not Snapshot snap) { StatusText.Text = "Select a snapshot first."; return; }
         var ok = ConfirmDialog.Show(
             owner: this,

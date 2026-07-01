@@ -38,9 +38,9 @@
             <TextBox x:Name="SaveNameBox" Width="180" Margin="0,0,8,0" Text="my-snapshot"
                      AutomationProperties.Name="New snapshot name"
                      ToolTip="Name to save the running emulator state under"/>
-            <Button Content="Save" Style="{StaticResource FlatButton}" Click="Save_Click" AutomationProperties.Name="Save snapshot"/>
-            <Button Content="Load" Style="{StaticResource PrimaryButton}" Margin="10,0,0,0" Click="Load_Click" AutomationProperties.Name="Load snapshot"/>
-            <Button Content="Delete" Style="{StaticResource DangerButton}" Margin="10,0,0,0" Click="Delete_Click" AutomationProperties.Name="Delete snapshot"/>
+            <Button x:Name="SaveBtn" Content="Save" Style="{StaticResource FlatButton}" Click="Save_Click" AutomationProperties.Name="Save snapshot"/>
+            <Button x:Name="LoadBtn" Content="Load" Style="{StaticResource PrimaryButton}" Margin="10,0,0,0" Click="Load_Click" AutomationProperties.Name="Load snapshot"/>
+            <Button x:Name="DeleteBtn" Content="Delete" Style="{StaticResource DangerButton}" Margin="10,0,0,0" Click="Delete_Click" AutomationProperties.Name="Delete snapshot"/>
             <Button Content="Close" Style="{StaticResource FlatButton}" Margin="10,0,0,0" Click="Close_Click" IsCancel="True" AutomationProperties.Name="Close snapshots dialog"/>
         </StackPanel>
     </Grid>
