@@ -43,6 +43,8 @@ public sealed partial class MigrateViewModel : ObservableObject
     [ObservableProperty] private bool _dryRunBlocked;
     [ObservableProperty] private string _validateText = "";
     [ObservableProperty] private bool _hasValidateResult;
+    [ObservableProperty] private string _pairingDoctorText = "";
+    [ObservableProperty] private bool _hasPairingDoctor;
 
     private CancellationTokenSource? _cts;
     private CancellationTokenSource? _refreshCts;
@@ -506,6 +508,94 @@ public sealed partial class MigrateViewModel : ObservableObject
             PairStatus = "Connect failed - " + r.Combined.Trim();
             _log.Error("adb connect: " + r.Combined.Trim());
         }
+    }
+
+    [RelayCommand]
+    private async Task RunPairingDoctorAsync()
+    {
+        if (IsBusy) return;
+        IsBusy = true;
+        StepText = "Running pairing diagnostics...";
+        try
+        {
+            var lines = new List<string>();
+            var ptVer = await _adb.PlatformToolsVersionAsync();
+            lines.Add($"platform-tools: {ptVer ?? "not found"}");
+
+            if (ptVer is not null)
+            {
+                var parts = ptVer.Split('.');
+                if (parts.Length >= 1 && int.TryParse(parts[0], out var major))
+                {
+                    lines.Add(major >= 34
+                        ? "ADB Wi-Fi 2.0: supported (platform-tools 34+)"
+                        : "ADB Wi-Fi 2.0: requires platform-tools 34+, update recommended");
+                }
+            }
+
+            try
+            {
+                var mdns = await _adb.RawAsync(new[] { "mdns", "check" });
+                lines.Add(mdns.Success
+                    ? $"mDNS: {mdns.StdOut.Trim()}"
+                    : $"mDNS: unavailable ({mdns.Combined.Trim()})");
+            }
+            catch
+            {
+                lines.Add("mDNS: check failed (older ADB version)");
+            }
+
+            try
+            {
+                var services = await _adb.RawAsync(new[] { "mdns", "services" });
+                var svcLines = services.StdOut.Split('\n', StringSplitOptions.RemoveEmptyEntries)
+                    .Where(l => l.Contains("_adb-tls", StringComparison.OrdinalIgnoreCase))
+                    .Take(5)
+                    .ToList();
+                if (svcLines.Count > 0)
+                {
+                    lines.Add($"TLS services discovered: {svcLines.Count}");
+                    foreach (var sl in svcLines) lines.Add($"  {sl.Trim()}");
+                }
+                else
+                {
+                    lines.Add("TLS services: none discovered (phone may not be advertising)");
+                }
+            }
+            catch
+            {
+                lines.Add("TLS service discovery: not available");
+            }
+
+            lines.Add("");
+            lines.Add("Guidance:");
+            lines.Add("1. On phone: Settings → Developer options → Wireless debugging → ON");
+            lines.Add("2. Tap 'Pair device with pairing code' and enter host:port + code above");
+            lines.Add("3. After pairing, copy the Connect host:port from the Wireless debugging screen");
+            lines.Add("4. If pairing fails, try 'adb kill-server' via the button below");
+
+            PairingDoctorText = string.Join("\n", lines);
+            HasPairingDoctor = true;
+        }
+        catch (Exception ex)
+        {
+            PairingDoctorText = "Diagnostics failed: " + ex.Message;
+            HasPairingDoctor = true;
+        }
+        finally
+        {
+            IsBusy = false;
+            StepText = "";
+        }
+    }
+
+    [RelayCommand]
+    private async Task RestartAdbServerAsync()
+    {
+        _log.Info("Restarting ADB server...");
+        await _adb.KillServerAsync();
+        _log.Success("ADB server restarted.");
+        PairStatus = "ADB server restarted. Try pairing again.";
     }
 
     partial void OnFilterChanged(string value) => NotifyPackageListStateChanged();

@@ -70,6 +70,19 @@
                                     Command="{Binding ConnectCommand}" AutomationProperties.Name="Connect to phone"/>
                         </Grid>
                         <TextBlock Text="{Binding PairStatus}" Foreground="{DynamicResource YellowBrush}" Margin="0,8,0,0" TextWrapping="Wrap" FontSize="12"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                            <Button Content="Pairing doctor" Style="{StaticResource FlatButton}" Command="{Binding RunPairingDoctorCommand}"
+                                    AutomationProperties.Name="Run pairing diagnostics"
+                                    ToolTip="Check platform-tools version, ADB Wi-Fi 2.0 readiness, and mDNS status"/>
+                            <Button Content="Restart ADB server" Style="{StaticResource FlatButton}" Margin="8,0,0,0"
+                                    Command="{Binding RestartAdbServerCommand}"
+                                    AutomationProperties.Name="Restart ADB server"/>
+                        </StackPanel>
+                        <Border Background="{DynamicResource CrustBrush}" CornerRadius="6" Padding="10,8" Margin="0,8,0,0"
+                                Visibility="{Binding HasPairingDoctor, Converter={x:Static views:BoolToVisibilityConverter.Instance}}">
+                            <TextBlock Text="{Binding PairingDoctorText}" FontFamily="Cascadia Mono, Consolas, monospace" FontSize="11"
+                                       Foreground="{DynamicResource SubtextBrush}" TextWrapping="Wrap"/>
+                        </Border>
                     </StackPanel>
                 </Expander>
             </StackPanel>
