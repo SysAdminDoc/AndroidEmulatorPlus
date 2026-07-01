@@ -177,6 +177,11 @@
                             Command="{Binding RetryFailedCommand}"
                             Visibility="{Binding HasFailedReceipt, Converter={x:Static views:BoolToVisibilityConverter.Instance}}"
                             AutomationProperties.Name="Retry failed packages"/>
+                    <Button Content="Validate restored" Style="{StaticResource FlatButton}" Margin="8,0,0,0"
+                            Command="{Binding ValidateRestoredCommand}"
+                            IsEnabled="{Binding IsBusy, Converter={x:Static views:NotBoolConverter.Instance}}"
+                            AutomationProperties.Name="Validate restored packages"
+                            ToolTip="Launch each migrated package on the emulator and check for crashes"/>
                 </StackPanel>
                 <ProgressBar Grid.Column="1" Margin="14,0" VerticalAlignment="Center"
                              Value="{Binding ProgressFraction}" Minimum="0" Maximum="1"
@@ -190,6 +195,9 @@
             <TextBlock Text="{Binding Summary}" Foreground="{DynamicResource GreenBrush}" Margin="0,6,0,0"/>
             <TextBlock Text="{Binding FailedReceiptText}" Foreground="{DynamicResource YellowBrush}" Margin="0,4,0,0"
                        Visibility="{Binding HasFailedReceipt, Converter={x:Static views:BoolToVisibilityConverter.Instance}}"/>
+            <TextBlock Text="{Binding ValidateText}" Foreground="{DynamicResource SubtextBrush}" Margin="0,4,0,0"
+                       TextWrapping="Wrap" FontSize="12" FontFamily="Cascadia Mono, Consolas, monospace"
+                       Visibility="{Binding HasValidateResult, Converter={x:Static views:BoolToVisibilityConverter.Instance}}"/>
 
             <Border Style="{StaticResource Card}" Margin="0,12,0,0">
                 <StackPanel>

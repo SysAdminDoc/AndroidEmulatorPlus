@@ -41,6 +41,8 @@ public sealed partial class MigrateViewModel : ObservableObject
     [ObservableProperty] private string _dryRunText = "";
     [ObservableProperty] private bool _hasDryRunResult;
     [ObservableProperty] private bool _dryRunBlocked;
+    [ObservableProperty] private string _validateText = "";
+    [ObservableProperty] private bool _hasValidateResult;
 
     private CancellationTokenSource? _cts;
     private CancellationTokenSource? _refreshCts;
@@ -214,6 +216,50 @@ public sealed partial class MigrateViewModel : ObservableObject
     private void SelectNone()
     {
         foreach (var p in Packages) p.IsSelected = false;
+    }
+
+    [RelayCommand]
+    private async Task ValidateRestoredAsync()
+    {
+        var receipt = MigrationService.ReadLatestReceipt();
+        if (receipt is null)
+        {
+            _log.Warning("No migration receipt found. Run a migration first.");
+            return;
+        }
+        var emu = _monitor.Current.FirstOrDefault(d => d.IsEmulator);
+        if (emu is null) { _log.Warning("No emulator running."); return; }
+
+        var packages = receipt.Packages.Where(p => p.Success).Select(p => p.Package).ToList();
+        if (packages.Count == 0) { _log.Info("No successful packages in last receipt to validate."); return; }
+
+        IsBusy = true;
+        StepText = "Validating restored packages...";
+        _cts = new CancellationTokenSource();
+        try
+        {
+            var results = await _mig.ValidateRestoredPackagesAsync(emu.Serial, packages, _cts.Token);
+            var okCount = results.Count(r => r.IsInstalled && r.LaunchedOk);
+            var failCount = results.Count - okCount;
+            HasValidateResult = true;
+            ValidateText = $"Validated {results.Count}: {okCount} ok, {failCount} issues." +
+                string.Join("", results.Where(r => !r.LaunchedOk)
+                    .Take(5).Select(r => $"\n  {r.Package}: {(r.IsInstalled ? "launch failed" : "not installed")}"));
+            _log.Success($"Post-restore validation: {okCount}/{results.Count} ok");
+        }
+        catch (OperationCanceledException) { }
+        catch (Exception ex)
+        {
+            ValidateText = "Validation failed: " + ex.Message;
+            HasValidateResult = true;
+        }
+        finally
+        {
+            IsBusy = false;
+            StepText = "";
+            _cts?.Dispose();
+            _cts = null;
+        }
     }
 
     [RelayCommand]

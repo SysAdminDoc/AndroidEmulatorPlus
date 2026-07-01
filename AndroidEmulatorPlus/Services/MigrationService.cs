@@ -457,6 +457,69 @@ public sealed class MigrationService
         return null;
     }
 
+    public sealed record PostRestoreCheck(
+        string Package,
+        bool IsInstalled,
+        long DataSizeBytes,
+        bool LaunchedOk,
+        string LogcatErrors);
+
+    public async Task<List<PostRestoreCheck>> ValidateRestoredPackagesAsync(
+        string emuSerial,
+        IReadOnlyList<string> packages,
+        CancellationToken ct)
+    {
+        var results = new List<PostRestoreCheck>();
+        foreach (var pkg in packages)
+        {
+            ct.ThrowIfCancellationRequested();
+            if (!AdbService.IsSafeAndroidPackageName(pkg)) continue;
+
+            var installed = false;
+            try
+            {
+                var paths = await _adb.PackagePathsAsync(emuSerial, pkg, ct);
+                installed = paths.Count > 0;
+            }
+            catch { }
+
+            long dataSize = 0;
+            try { dataSize = await _adb.DataSizeAsync(emuSerial, pkg, ct); } catch { }
+
+            bool launchedOk = false;
+            string logcatErrors = "";
+            try
+            {
+                await _adb.ShellAsync(emuSerial, $"am force-stop {Q(pkg)}", ct);
+                await Task.Delay(500, ct);
+                await _adb.ShellAsync(emuSerial, $"logcat -c", ct);
+
+                var launch = await _adb.ShellAsync(emuSerial,
+                    $"monkey -p {Q(pkg)} -c android.intent.category.LAUNCHER 1 2>&1", ct);
+                launchedOk = launch.Success && !launch.Combined.Contains("No activities found");
+
+                await Task.Delay(2000, ct);
+
+                var logcat = await _adb.ShellAsync(emuSerial,
+                    $"logcat -d -s AndroidRuntime:E ActivityManager:E -v brief | head -20", ct);
+                var errors = logcat.StdOut
+                    .Split('\n')
+                    .Where(l => l.Contains(pkg, StringComparison.OrdinalIgnoreCase)
+                             || l.Contains("FATAL", StringComparison.OrdinalIgnoreCase)
+                             || l.Contains("crash", StringComparison.OrdinalIgnoreCase))
+                    .Take(5);
+                logcatErrors = string.Join("\n", errors).Trim();
+            }
+            catch { }
+
+            results.Add(new PostRestoreCheck(pkg, installed, dataSize, launchedOk, logcatErrors));
+            var status = installed ? (launchedOk ? "ok" : "launch failed") : "not installed";
+            _log.Detail($"Post-restore: {pkg} — {status}, data {dataSize / 1024} KB" +
+                        (string.IsNullOrEmpty(logcatErrors) ? "" : $", errors: {logcatErrors[..Math.Min(80, logcatErrors.Length)]}"));
+        }
+        return results;
+    }
+
     public static MigrationReceipt BuildReceipt(
         string sourceSerial,
         string targetSerial,
