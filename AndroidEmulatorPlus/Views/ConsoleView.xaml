@@ -135,6 +135,39 @@
 
             <Border Style="{StaticResource Card}">
                 <StackPanel>
+                    <TextBlock Style="{StaticResource SectionHeader}" Text="Sensors"/>
+                    <Grid Margin="0,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="120"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Text="Accelerometer" Style="{StaticResource FieldLabel}" VerticalAlignment="Center"/>
+                        <TextBox Grid.Column="1" Text="{Binding AccelX}" Margin="0,0,4,0" AutomationProperties.Name="Accelerometer X"/>
+                        <TextBox Grid.Column="2" Text="{Binding AccelY}" Margin="0,0,4,0" AutomationProperties.Name="Accelerometer Y"/>
+                        <TextBox Grid.Column="3" Text="{Binding AccelZ}" Margin="0,0,4,0" AutomationProperties.Name="Accelerometer Z"/>
+                        <Button Grid.Column="4" Content="Set" Style="{StaticResource FlatButton}" Command="{Binding SetAccelerometerCommand}" AutomationProperties.Name="Set accelerometer"/>
+
+                        <TextBlock Grid.Row="1" Text="Gyroscope" Style="{StaticResource FieldLabel}" VerticalAlignment="Center" Margin="0,8,0,0"/>
+                        <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding GyroX}" Margin="0,8,4,0" AutomationProperties.Name="Gyroscope X"/>
+                        <TextBox Grid.Row="1" Grid.Column="2" Text="{Binding GyroY}" Margin="0,8,4,0" AutomationProperties.Name="Gyroscope Y"/>
+                        <TextBox Grid.Row="1" Grid.Column="3" Text="{Binding GyroZ}" Margin="0,8,4,0" AutomationProperties.Name="Gyroscope Z"/>
+                        <Button Grid.Row="1" Grid.Column="4" Content="Set" Style="{StaticResource FlatButton}" Margin="0,8,0,0" Command="{Binding SetGyroscopeCommand}" AutomationProperties.Name="Set gyroscope"/>
+                    </Grid>
+                    <TextBlock Foreground="{DynamicResource OverlayBrush}" FontSize="11" Margin="0,6,0,0" TextWrapping="Wrap">
+                        Format: X:Y:Z. Accelerometer default is 0:9.8:0 (device upright). Gyroscope default is 0:0:0 (no rotation).
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
                     <TextBlock Style="{StaticResource SectionHeader}" Text="Raw command"/>
                     <TextBlock Foreground="{DynamicResource OverlayBrush}" FontSize="11" TextWrapping="Wrap">
                         Sends arbitrary <Run FontFamily="Cascadia Mono">adb emu</Run> arguments. Examples: <Run FontFamily="Cascadia Mono">avd name</Run>, <Run FontFamily="Cascadia Mono">finger touch 1</Run>, <Run FontFamily="Cascadia Mono">rotate</Run>.

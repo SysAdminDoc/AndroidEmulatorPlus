@@ -28,6 +28,12 @@ public sealed partial class ConsoleViewModel : ObservableObject
     [ObservableProperty] private NetworkProfile? _selectedNetworkProfile;
     [ObservableProperty] private string _freeFormArgs = "";
     [ObservableProperty] private string _lastResult = "";
+    [ObservableProperty] private double _accelX;
+    [ObservableProperty] private double _accelY = 9.8;
+    [ObservableProperty] private double _accelZ;
+    [ObservableProperty] private double _gyroX;
+    [ObservableProperty] private double _gyroY;
+    [ObservableProperty] private double _gyroZ;
 
     public IReadOnlyList<string> PowerStates { get; } = new[] { "full", "charging", "discharging", "not-charging", "unknown" };
     public IReadOnlyList<string> Speeds { get; } = new[] { "full", "gsm", "edge", "umts", "hsdpa", "lte" };
@@ -98,6 +104,26 @@ public sealed partial class ConsoleViewModel : ObservableObject
         var r2 = await _console.NetworkDelayAsync(s, NetworkDelay);
         LastResult = (r1.Combined + "\n" + r2.Combined).Trim();
         if (r1.Success && r2.Success) _log.Info($"network speed {NetworkSpeed}, delay {NetworkDelay}");
+    }
+
+    [RelayCommand]
+    private async Task SetAccelerometerAsync()
+    {
+        if (ActiveSerial() is not { } s) { _log.Warning("No emulator attached."); return; }
+        var r = await _console.SendAsync(s, new[] { "sensor", "set", "acceleration",
+            $"{AccelX:F2}:{AccelY:F2}:{AccelZ:F2}" });
+        LastResult = r.Combined.Trim();
+        if (r.Success) _log.Info($"acceleration {AccelX:F2}:{AccelY:F2}:{AccelZ:F2}");
+    }
+
+    [RelayCommand]
+    private async Task SetGyroscopeAsync()
+    {
+        if (ActiveSerial() is not { } s) { _log.Warning("No emulator attached."); return; }
+        var r = await _console.SendAsync(s, new[] { "sensor", "set", "gyroscope",
+            $"{GyroX:F2}:{GyroY:F2}:{GyroZ:F2}" });
+        LastResult = r.Combined.Trim();
+        if (r.Success) _log.Info($"gyroscope {GyroX:F2}:{GyroY:F2}:{GyroZ:F2}");
     }
 
     [RelayCommand]
