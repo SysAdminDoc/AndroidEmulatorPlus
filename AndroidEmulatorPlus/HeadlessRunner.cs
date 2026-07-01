@@ -73,7 +73,7 @@ public sealed class HeadlessRunner
 
         var targetAvd = opts.CreateAvd ?? opts.TargetAvd;
 
-        if (targetAvd is not null && (opts.Root || opts.InstallApps.Count > 0))
+        if (targetAvd is not null && (opts.Root || opts.InstallApks.Count > 0))
         {
             log.Info($"Launching AVD '{targetAvd}'...");
             emuSvc.Launch(targetAvd, coldBoot: true);
@@ -177,7 +177,6 @@ public sealed class HeadlessRunner
         public string? TargetAvd;
         public bool Root;
         public List<string> InstallApks = [];
-        public List<string> InstallApps => InstallApks;
     }
 
     private static HeadlessOptions ParseArgs(string[] args)

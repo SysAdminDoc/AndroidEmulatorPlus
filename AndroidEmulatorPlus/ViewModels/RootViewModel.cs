@@ -319,6 +319,7 @@ public sealed partial class RootViewModel : ObservableObject
     [RelayCommand]
     private async Task DryRunAsync()
     {
+        if (IsBusy) return;
         IsBusy = true;
         Step = "Dry run…";
         try
@@ -334,6 +335,7 @@ public sealed partial class RootViewModel : ObservableObject
     [RelayCommand]
     private async Task VerifyAsync()
     {
+        if (IsBusy) return;
         var emu = _monitor.Current.FirstOrDefault(d => d.IsEmulator);
         if (emu is null) { _log.Warning("No emulator running."); return; }
         IsBusy = true;
@@ -412,7 +414,7 @@ public sealed partial class RootViewModel : ObservableObject
     [RelayCommand]
     private void UnRoot()
     {
-        if (SelectedAvd is null) return;
+        if (IsBusy || SelectedAvd is null) return;
         var ramdisk = _root.FindRamdiskFor(SelectedAvd.Name);
         if (ramdisk is null) { _log.Warning("Ramdisk not found."); return; }
         var backup = _root.FindBackupRamdisk(ramdisk);
