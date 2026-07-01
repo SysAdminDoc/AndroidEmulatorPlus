@@ -140,6 +140,21 @@
 
             <Border Style="{StaticResource Card}">
                 <StackPanel>
+                    <TextBlock Style="{StaticResource SectionHeader}" Text="Release preflight"/>
+                    <TextBlock Foreground="{DynamicResource SubtextBrush}" TextWrapping="Wrap" FontSize="12">
+                        Validates app version parity, Velopack feed assets, SHA-256 hashes, and Authenticode status for release artifacts.
+                    </TextBlock>
+                    <Button Content="Run release preflight" Style="{StaticResource FlatButton}" Margin="0,8,0,0"
+                            Command="{Binding RunReleasePreflightCommand}"
+                            IsEnabled="{Binding IsBusy, Converter={x:Static views:NotBoolConverter.Instance}}"/>
+                    <TextBlock Text="{Binding PreflightText}" Foreground="{DynamicResource LavenderBrush}" Margin="0,6,0,0"
+                               TextWrapping="Wrap" FontSize="12"
+                               Visibility="{Binding HasPreflightResult, Converter={x:Static views:BoolToVisibilityConverter.Instance}}"/>
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
                     <TextBlock Style="{StaticResource SectionHeader}" Text="If nothing is installed"/>
                     <TextBlock Foreground="{DynamicResource SubtextBrush}" TextWrapping="Wrap">
                         Option 1 — install just the command-line tools (~150 MB). Then use the AVDs tab to pull a system image and create an emulator.

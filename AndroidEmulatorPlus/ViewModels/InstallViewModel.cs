@@ -15,6 +15,7 @@ public sealed partial class InstallViewModel : ObservableObject
     private readonly EmulatorService _emu;
     private readonly HashVerificationService _hash;
     private readonly SdkmanagerService _sdkman;
+    private readonly ReleasePreflightService _preflight;
     private readonly LogService _log;
 
     [ObservableProperty] private string _statusText = "";
@@ -36,6 +37,8 @@ public sealed partial class InstallViewModel : ObservableObject
     [ObservableProperty] private string _downloadProgressText = "";
     [ObservableProperty] private string _sdkPackageUpdateText = "Not checked.";
     [ObservableProperty] private bool _hasSdkPackageUpdates;
+    [ObservableProperty] private string _preflightText = "";
+    [ObservableProperty] private bool _hasPreflightResult;
 
     public ObservableCollection<SdkPackageUpdate> SdkPackageUpdates { get; } = new();
 
@@ -50,13 +53,14 @@ public sealed partial class InstallViewModel : ObservableObject
     private static string CrashLogPath => Path.Combine(DiagnosticsRoot, "crash.log");
     private static string DailyLogPath => Path.Combine(DiagnosticsRoot, "logs", $"app-{DateTime.Now:yyyyMMdd}.log");
 
-    public InstallViewModel(SdkLocator sdk, DownloadService dl, EmulatorService emu, HashVerificationService hash, SdkmanagerService sdkman, LogService log)
+    public InstallViewModel(SdkLocator sdk, DownloadService dl, EmulatorService emu, HashVerificationService hash, SdkmanagerService sdkman, ReleasePreflightService preflight, LogService log)
     {
         _sdk = sdk;
         _dl = dl;
         _emu = emu;
         _hash = hash;
         _sdkman = sdkman;
+        _preflight = preflight;
         _log = log;
     }
 
@@ -349,6 +353,37 @@ public sealed partial class InstallViewModel : ObservableObject
             unit++;
         }
         return unit == 0 ? $"{bytes} B" : $"{value:0.0} {units[unit]}";
+    }
+
+    [RelayCommand]
+    private async Task RunReleasePreflightAsync()
+    {
+        IsBusy = true;
+        Step = "Running release preflight...";
+        try
+        {
+            var result = await _preflight.RunAsync();
+            try { _preflight.WriteReport(result); } catch { }
+            HasPreflightResult = true;
+            if (result.Ok)
+            {
+                PreflightText = $"Release preflight passed. v{result.AppVersion}, {result.Artifacts.Count} artifact(s).";
+            }
+            else
+            {
+                PreflightText = $"Release preflight found {result.Issues.Count} issue(s): {string.Join("; ", result.Issues)}";
+            }
+        }
+        catch (Exception ex)
+        {
+            HasPreflightResult = true;
+            PreflightText = $"Release preflight failed: {ex.Message}";
+        }
+        finally
+        {
+            IsBusy = false;
+            Step = "";
+        }
     }
 
     [RelayCommand]

@@ -57,6 +57,7 @@ public partial class App : Application
         sc.AddSingleton<ScreenRecordService>();
         sc.AddSingleton<CaCertService>();
         sc.AddSingleton<FridaService>();
+        sc.AddSingleton<ReleasePreflightService>();
         sc.AddSingleton<DeviceMonitor>();
 
         sc.AddSingleton<MainViewModel>();
