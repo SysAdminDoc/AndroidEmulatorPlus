@@ -38,7 +38,7 @@
             <CheckBox x:Name="ColdBootBox" Content="Cold boot" Grid.ColumnSpan="2" Margin="0,2" AutomationProperties.Name="Cold boot"/>
             <CheckBox x:Name="WipeBox" Grid.Row="1" Content="Wipe data on next launch" Grid.ColumnSpan="2" Margin="0,2" AutomationProperties.Name="Wipe data on next launch"/>
             <CheckBox x:Name="NoWindowBox" Grid.Row="2" Content="Headless (-no-window)" Grid.ColumnSpan="2" Margin="0,2" AutomationProperties.Name="Headless mode"/>
-            <CheckBox x:Name="NoAudioBox" Grid.Row="3" Content="No audio (-no-audio)" Grid.ColumnSpan="2" Margin="0,2"/>
+            <CheckBox x:Name="NoAudioBox" Grid.Row="3" Content="No audio (-no-audio)" Grid.ColumnSpan="2" Margin="0,2" AutomationProperties.Name="No audio"/>
             <CheckBox x:Name="MultiDisplayBox" Grid.Row="4" Content="Multi-display (-multi-display)" Grid.ColumnSpan="2" Margin="0,2"
                       ToolTip="Enables foldable/multi-screen testing" AutomationProperties.Name="Multi-display mode"/>
 
@@ -64,8 +64,8 @@
         </Grid>
 
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,14,0,0">
-            <Button Content="Cancel" Style="{StaticResource FlatButton}" Click="Cancel_Click" IsCancel="True"/>
-            <Button Content="Launch" Style="{StaticResource PrimaryButton}" Click="Launch_Click" Margin="10,0,0,0" IsDefault="True"/>
+            <Button Content="Cancel" Style="{StaticResource FlatButton}" Click="Cancel_Click" IsCancel="True" AutomationProperties.Name="Cancel launch"/>
+            <Button Content="Launch" Style="{StaticResource PrimaryButton}" Click="Launch_Click" Margin="10,0,0,0" IsDefault="True" AutomationProperties.Name="Launch emulator"/>
         </StackPanel>
     </StackPanel>
 </Window>

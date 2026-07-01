@@ -30,13 +30,13 @@
                     </Grid.ColumnDefinitions>
                     <TextBlock Style="{StaticResource SectionHeader}" Text="Curated catalog"/>
                     <StackPanel Grid.Column="1" Orientation="Horizontal">
-                        <Button Content="Open homepage" Style="{StaticResource FlatButton}" Click="OpenHomepage_Click" Padding="10,4" MinHeight="0"/>
-                        <Button Content="Install from ZIP..." Style="{StaticResource FlatButton}" Click="InstallFromZip_Click" Margin="8,0,0,0" Padding="10,4" MinHeight="0"/>
-                        <Button Content="Install selected" Style="{StaticResource PrimaryButton}" Click="InstallCatalog_Click" Margin="8,0,0,0" Padding="10,4" MinHeight="0"/>
+                        <Button Content="Open homepage" Style="{StaticResource FlatButton}" Click="OpenHomepage_Click" Padding="10,4" MinHeight="0" AutomationProperties.Name="Open module homepage"/>
+                        <Button Content="Install from ZIP..." Style="{StaticResource FlatButton}" Click="InstallFromZip_Click" Margin="8,0,0,0" Padding="10,4" MinHeight="0" AutomationProperties.Name="Install module from ZIP file"/>
+                        <Button Content="Install selected" Style="{StaticResource PrimaryButton}" Click="InstallCatalog_Click" Margin="8,0,0,0" Padding="10,4" MinHeight="0" AutomationProperties.Name="Install selected catalog module"/>
                     </StackPanel>
                 </Grid>
                 <Border Background="{DynamicResource CrustBrush}" CornerRadius="6" Padding="6" Margin="0,6,0,0">
-                    <ListBox x:Name="CatalogList" Background="Transparent" BorderThickness="0" SelectionChanged="CatalogList_SelectionChanged">
+                    <ListBox x:Name="CatalogList" Background="Transparent" BorderThickness="0" SelectionChanged="CatalogList_SelectionChanged" AutomationProperties.Name="Curated module catalog">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <StackPanel Margin="2,4">
@@ -59,13 +59,13 @@
                     </Grid.ColumnDefinitions>
                     <TextBlock Style="{StaticResource SectionHeader}" Text="Installed"/>
                     <StackPanel Grid.Column="1" Orientation="Horizontal">
-                        <Button Content="Refresh" Style="{StaticResource FlatButton}" Click="RefreshInstalled_Click" Padding="10,4" MinHeight="0"/>
-                        <Button Content="Toggle enabled" Style="{StaticResource FlatButton}" Click="Toggle_Click" Margin="8,0,0,0" Padding="10,4" MinHeight="0"/>
-                        <Button Content="Remove (on reboot)" Style="{StaticResource DangerButton}" Click="Remove_Click" Margin="8,0,0,0" Padding="10,4" MinHeight="0"/>
+                        <Button Content="Refresh" Style="{StaticResource FlatButton}" Click="RefreshInstalled_Click" Padding="10,4" MinHeight="0" AutomationProperties.Name="Refresh installed modules"/>
+                        <Button Content="Toggle enabled" Style="{StaticResource FlatButton}" Click="Toggle_Click" Margin="8,0,0,0" Padding="10,4" MinHeight="0" AutomationProperties.Name="Toggle module enabled"/>
+                        <Button Content="Remove (on reboot)" Style="{StaticResource DangerButton}" Click="Remove_Click" Margin="8,0,0,0" Padding="10,4" MinHeight="0" AutomationProperties.Name="Remove module on reboot"/>
                     </StackPanel>
                 </Grid>
                 <Border Background="{DynamicResource CrustBrush}" CornerRadius="6" Padding="6" Margin="0,6,0,0">
-                    <ListBox x:Name="InstalledList" Background="Transparent" BorderThickness="0">
+                    <ListBox x:Name="InstalledList" Background="Transparent" BorderThickness="0" AutomationProperties.Name="Installed modules list">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <TextBlock FontFamily="Cascadia Mono, Consolas" FontSize="12" Padding="4,2">
@@ -87,7 +87,7 @@
         <TextBlock Grid.Row="3" x:Name="StatusText" Foreground="{DynamicResource YellowBrush}" Margin="0,6,0,0" TextWrapping="Wrap"/>
 
         <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
-            <Button Content="Close" Style="{StaticResource FlatButton}" Click="Close_Click" IsCancel="True"/>
+            <Button Content="Close" Style="{StaticResource FlatButton}" Click="Close_Click" IsCancel="True" AutomationProperties.Name="Close Magisk modules dialog"/>
         </StackPanel>
     </Grid>
 </Window>

@@ -30,7 +30,7 @@
                             If you do not have the Android SDK yet, the Install tab can fetch the command-line tools. Then "Browse online..." on the AVDs tab installs a system image.
                         </TextBlock>
                         <TextBlock x:Name="SdkStatus" Foreground="{DynamicResource YellowBrush}" Margin="0,6,0,0" FontWeight="SemiBold"/>
-                        <Button Content="Go to Install / SDK" Style="{StaticResource FlatButton}" HorizontalAlignment="Left" Margin="0,10,0,0" Click="GoToInstall_Click"/>
+                        <Button Content="Go to Install / SDK" Style="{StaticResource FlatButton}" HorizontalAlignment="Left" Margin="0,10,0,0" Click="GoToInstall_Click" AutomationProperties.Name="Go to Install SDK tab"/>
                     </StackPanel>
                 </Border>
                 <Border x:Name="AvdCard" Style="{StaticResource Card}">
@@ -40,7 +40,7 @@
                             From the AVDs tab pick a device profile plus a system image. The "Browse online..." button installs new images through sdkmanager.
                         </TextBlock>
                         <TextBlock x:Name="AvdStatus" Foreground="{DynamicResource YellowBrush}" Margin="0,6,0,0" FontWeight="SemiBold"/>
-                        <Button Content="Go to AVDs" Style="{StaticResource FlatButton}" HorizontalAlignment="Left" Margin="0,10,0,0" Click="GoToAvd_Click"/>
+                        <Button Content="Go to AVDs" Style="{StaticResource FlatButton}" HorizontalAlignment="Left" Margin="0,10,0,0" Click="GoToAvd_Click" AutomationProperties.Name="Go to AVDs tab"/>
                     </StackPanel>
                 </Border>
                 <Border Style="{StaticResource Card}">
@@ -49,7 +49,7 @@
                         <TextBlock Foreground="{DynamicResource SubtextBrush}" TextWrapping="Wrap">
                             Launch the AVD, then click "Root with Latest Magisk" on the Root tab. The Verify + Persist Policy button persists Magisk's shell→allow policy so future `adb shell su` calls don't trigger the dialog. Skip this step if you just want a vanilla emulator.
                         </TextBlock>
-                        <Button Content="Go to Root" Style="{StaticResource FlatButton}" HorizontalAlignment="Left" Margin="0,10,0,0" Click="GoToRoot_Click"/>
+                        <Button Content="Go to Root" Style="{StaticResource FlatButton}" HorizontalAlignment="Left" Margin="0,10,0,0" Click="GoToRoot_Click" AutomationProperties.Name="Go to Root tab"/>
                     </StackPanel>
                 </Border>
                 <Border Style="{StaticResource Card}">
@@ -58,7 +58,7 @@
                         <TextBlock Foreground="{DynamicResource SubtextBrush}" TextWrapping="Wrap">
                             Connect a USB-debugging-enabled phone (or pair over Wi-Fi from the Migrate tab) and pick the packages to copy. Internal data copy requires root on BOTH ends.
                         </TextBlock>
-                        <Button Content="Go to Migrate" Style="{StaticResource FlatButton}" HorizontalAlignment="Left" Margin="0,10,0,0" Click="GoToMigrate_Click"/>
+                        <Button Content="Go to Migrate" Style="{StaticResource FlatButton}" HorizontalAlignment="Left" Margin="0,10,0,0" Click="GoToMigrate_Click" AutomationProperties.Name="Go to Migrate tab"/>
                     </StackPanel>
                 </Border>
             </StackPanel>
@@ -69,10 +69,10 @@
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <CheckBox x:Name="ShowAllBox" Content="Show completed steps" IsChecked="False" VerticalAlignment="Center" Checked="ShowAll_Toggled" Unchecked="ShowAll_Toggled"/>
+            <CheckBox x:Name="ShowAllBox" Content="Show completed steps" IsChecked="False" VerticalAlignment="Center" Checked="ShowAll_Toggled" Unchecked="ShowAll_Toggled" AutomationProperties.Name="Show completed steps"/>
             <StackPanel Grid.Column="1" Orientation="Horizontal">
-                <CheckBox x:Name="DontShowBox" Content="Don't show again" IsChecked="True" VerticalAlignment="Center" Margin="0,0,12,0"/>
-                <Button Content="Close" Style="{StaticResource PrimaryButton}" Click="Close_Click" IsDefault="True" IsCancel="True"/>
+                <CheckBox x:Name="DontShowBox" Content="Don't show again" IsChecked="True" VerticalAlignment="Center" Margin="0,0,12,0" AutomationProperties.Name="Do not show welcome again"/>
+                <Button Content="Close" Style="{StaticResource PrimaryButton}" Click="Close_Click" IsDefault="True" IsCancel="True" AutomationProperties.Name="Close welcome dialog"/>
             </StackPanel>
         </Grid>
     </Grid>

@@ -27,12 +27,12 @@
             <TextBlock Text="Filter" Style="{StaticResource FieldLabel}" VerticalAlignment="Center"/>
             <TextBox x:Name="FilterBox" Width="240" Margin="8,0,0,0" TextChanged="FilterBox_TextChanged"
                      AutomationProperties.Name="Filter system images"/>
-            <Button x:Name="RefreshButton" Content="Refresh" Style="{StaticResource FlatButton}" Margin="12,0,0,0" Click="Refresh_Click"/>
+            <Button x:Name="RefreshButton" Content="Refresh" Style="{StaticResource FlatButton}" Margin="12,0,0,0" Click="Refresh_Click" AutomationProperties.Name="Refresh system images"/>
             <TextBlock x:Name="StatusText" Foreground="{DynamicResource OverlayBrush}" Margin="14,0,0,0" VerticalAlignment="Center"/>
         </StackPanel>
 
         <Border Grid.Row="2" Background="{DynamicResource CrustBrush}" CornerRadius="6">
-            <ListBox x:Name="ImagesList" Background="Transparent" BorderThickness="0">
+            <ListBox x:Name="ImagesList" Background="Transparent" BorderThickness="0" AutomationProperties.Name="Available system images">
                 <ListBox.ItemTemplate>
                     <DataTemplate>
                         <TextBlock Text="{Binding}" FontFamily="Cascadia Mono, Consolas" FontSize="12" Padding="4,2"/>
@@ -43,14 +43,14 @@
 
         <StackPanel Grid.Row="3" Margin="0,8,0,0">
             <ProgressBar x:Name="InstallProgressBar" Minimum="0" Maximum="100" Height="6"
-                         Visibility="Collapsed"/>
+                         Visibility="Collapsed" AutomationProperties.Name="System image install progress"/>
             <TextBlock x:Name="ProgressText" Foreground="{DynamicResource YellowBrush}" Margin="0,4,0,0" TextWrapping="Wrap"/>
         </StackPanel>
 
         <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,14,0,0">
-            <Button x:Name="LicensesButton" Content="Accept all licenses" Style="{StaticResource FlatButton}" Click="Licenses_Click"/>
-            <Button Content="Cancel" Style="{StaticResource FlatButton}" Margin="10,0,0,0" Click="Cancel_Click" IsCancel="True"/>
-            <Button x:Name="InstallButton" Content="Install" Style="{StaticResource PrimaryButton}" Margin="10,0,0,0" Click="Install_Click" IsEnabled="False"/>
+            <Button x:Name="LicensesButton" Content="Accept all licenses" Style="{StaticResource FlatButton}" Click="Licenses_Click" AutomationProperties.Name="Accept all licenses"/>
+            <Button Content="Cancel" Style="{StaticResource FlatButton}" Margin="10,0,0,0" Click="Cancel_Click" IsCancel="True" AutomationProperties.Name="Cancel system image install"/>
+            <Button x:Name="InstallButton" Content="Install" Style="{StaticResource PrimaryButton}" Margin="10,0,0,0" Click="Install_Click" IsEnabled="False" AutomationProperties.Name="Install system image"/>
         </StackPanel>
     </Grid>
 </Window>

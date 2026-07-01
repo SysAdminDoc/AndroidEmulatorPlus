@@ -18,7 +18,7 @@
                    Foreground="{DynamicResource SubtextBrush}"
                    TextWrapping="Wrap"
                    Margin="0,0,0,10"/>
-        <TextBox x:Name="InputBox" KeyDown="InputBox_KeyDown"/>
+        <TextBox x:Name="InputBox" KeyDown="InputBox_KeyDown" AutomationProperties.Name="Prompt input"/>
         <TextBlock x:Name="ErrorText"
                    Foreground="{DynamicResource RedBrush}"
                    TextWrapping="Wrap"
@@ -26,9 +26,9 @@
                    Margin="0,6,0,0"
                    Visibility="Collapsed"/>
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,14,0,0">
-            <Button Content="Cancel" Style="{StaticResource FlatButton}" Click="CancelButton_Click" IsCancel="True"/>
+            <Button Content="Cancel" Style="{StaticResource FlatButton}" Click="CancelButton_Click" IsCancel="True" AutomationProperties.Name="Cancel prompt"/>
             <Button x:Name="OkButton" Content="OK" Style="{StaticResource PrimaryButton}"
-                    Click="OkButton_Click" Margin="10,0,0,0" IsDefault="True"/>
+                    Click="OkButton_Click" Margin="10,0,0,0" IsDefault="True" AutomationProperties.Name="Confirm prompt"/>
         </StackPanel>
     </StackPanel>
 </Window>

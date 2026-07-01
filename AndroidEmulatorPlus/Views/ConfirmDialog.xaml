@@ -63,7 +63,7 @@
 
         <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right">
             <Button x:Name="CancelButton" Content="Cancel" Style="{StaticResource FlatButton}"
-                    Click="CancelButton_Click" IsCancel="True"/>
+                    Click="CancelButton_Click" IsCancel="True" AutomationProperties.Name="Cancel confirmation"/>
             <Button x:Name="OkButton" Content="Confirm" Style="{StaticResource DangerButton}"
                     AutomationProperties.Name="Confirm destructive action"
                     Click="OkButton_Click" Margin="10,0,0,0"/>
