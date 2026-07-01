@@ -32,28 +32,31 @@
                 <RowDefinition/>
                 <RowDefinition/>
                 <RowDefinition/>
+                <RowDefinition/>
             </Grid.RowDefinitions>
 
-            <CheckBox x:Name="ColdBootBox" Content="Cold boot" Grid.ColumnSpan="2" Margin="0,2"/>
-            <CheckBox x:Name="WipeBox" Grid.Row="1" Content="Wipe data on next launch" Grid.ColumnSpan="2" Margin="0,2"/>
-            <CheckBox x:Name="NoWindowBox" Grid.Row="2" Content="Headless (-no-window)" Grid.ColumnSpan="2" Margin="0,2"/>
+            <CheckBox x:Name="ColdBootBox" Content="Cold boot" Grid.ColumnSpan="2" Margin="0,2" AutomationProperties.Name="Cold boot"/>
+            <CheckBox x:Name="WipeBox" Grid.Row="1" Content="Wipe data on next launch" Grid.ColumnSpan="2" Margin="0,2" AutomationProperties.Name="Wipe data on next launch"/>
+            <CheckBox x:Name="NoWindowBox" Grid.Row="2" Content="Headless (-no-window)" Grid.ColumnSpan="2" Margin="0,2" AutomationProperties.Name="Headless mode"/>
             <CheckBox x:Name="NoAudioBox" Grid.Row="3" Content="No audio (-no-audio)" Grid.ColumnSpan="2" Margin="0,2"/>
+            <CheckBox x:Name="MultiDisplayBox" Grid.Row="4" Content="Multi-display (-multi-display)" Grid.ColumnSpan="2" Margin="0,2"
+                      ToolTip="Enables foldable/multi-screen testing" AutomationProperties.Name="Multi-display mode"/>
 
-            <TextBlock Grid.Row="4" Text="HTTP proxy" Style="{StaticResource FieldLabel}" VerticalAlignment="Center" Margin="0,8,0,0"/>
-            <TextBox  Grid.Row="4" Grid.Column="1" x:Name="HttpProxyBox" Margin="0,8,0,0" AutomationProperties.Name="Launch HTTP proxy"/>
+            <TextBlock Grid.Row="5" Text="HTTP proxy" Style="{StaticResource FieldLabel}" VerticalAlignment="Center" Margin="0,8,0,0"/>
+            <TextBox  Grid.Row="5" Grid.Column="1" x:Name="HttpProxyBox" Margin="0,8,0,0" AutomationProperties.Name="Launch HTTP proxy"/>
 
-            <TextBlock Grid.Row="5" Text="DNS server" Style="{StaticResource FieldLabel}" VerticalAlignment="Center" Margin="0,8,0,0"/>
-            <TextBox  Grid.Row="5" Grid.Column="1" x:Name="DnsBox" Margin="0,8,0,0" AutomationProperties.Name="Launch DNS server"/>
+            <TextBlock Grid.Row="6" Text="DNS server" Style="{StaticResource FieldLabel}" VerticalAlignment="Center" Margin="0,8,0,0"/>
+            <TextBox  Grid.Row="6" Grid.Column="1" x:Name="DnsBox" Margin="0,8,0,0" AutomationProperties.Name="Launch DNS server"/>
 
-            <TextBlock Grid.Row="6" Text="Front camera" Style="{StaticResource FieldLabel}" VerticalAlignment="Center" Margin="0,8,0,0"/>
-            <ComboBox Grid.Row="6" Grid.Column="1" x:Name="FrontCameraBox" Margin="0,8,0,0" IsEditable="True" AutomationProperties.Name="Front camera">
+            <TextBlock Grid.Row="7" Text="Front camera" Style="{StaticResource FieldLabel}" VerticalAlignment="Center" Margin="0,8,0,0"/>
+            <ComboBox Grid.Row="7" Grid.Column="1" x:Name="FrontCameraBox" Margin="0,8,0,0" IsEditable="True" AutomationProperties.Name="Front camera">
                 <ComboBoxItem>none</ComboBoxItem>
                 <ComboBoxItem>emulated</ComboBoxItem>
                 <ComboBoxItem>webcam0</ComboBoxItem>
             </ComboBox>
 
-            <TextBlock Grid.Row="7" Text="Back camera" Style="{StaticResource FieldLabel}" VerticalAlignment="Center" Margin="0,8,0,0"/>
-            <ComboBox Grid.Row="7" Grid.Column="1" x:Name="BackCameraBox" Margin="0,8,0,0" IsEditable="True" AutomationProperties.Name="Back camera">
+            <TextBlock Grid.Row="8" Text="Back camera" Style="{StaticResource FieldLabel}" VerticalAlignment="Center" Margin="0,8,0,0"/>
+            <ComboBox Grid.Row="8" Grid.Column="1" x:Name="BackCameraBox" Margin="0,8,0,0" IsEditable="True" AutomationProperties.Name="Back camera">
                 <ComboBoxItem>none</ComboBoxItem>
                 <ComboBoxItem>emulated</ComboBoxItem>
                 <ComboBoxItem>webcam0</ComboBoxItem>
