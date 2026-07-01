@@ -162,10 +162,12 @@
                              FontFamily="Cascadia Mono, Consolas, monospace"
                              AutomationProperties.Name="Filter activity log"
                              TextChanged="LogFilter_TextChanged"/>
-                    <Button Grid.Column="2" Content="Clear log" Style="{StaticResource SmallButton}" Click="ClearLog_Click"/>
+                    <Button Grid.Column="2" Content="Clear log" Style="{StaticResource SmallButton}" Click="ClearLog_Click" AutomationProperties.Name="Clear activity log"/>
                 </Grid>
                 <Border Grid.Row="1" Background="{DynamicResource CrustBrush}" BorderBrush="{DynamicResource SurfaceBrush}" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,7,0,0">
-                    <ItemsControl ItemsSource="{Binding Log.Entries}" x:Name="LogList">
+                    <ItemsControl ItemsSource="{Binding Log.Entries}" x:Name="LogList"
+                                    AutomationProperties.Name="Activity log"
+                                    AutomationProperties.LiveSetting="Polite">
                         <ItemsControl.Template>
                             <ControlTemplate>
                                 <ScrollViewer x:Name="LogScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">

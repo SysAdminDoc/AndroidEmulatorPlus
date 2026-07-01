@@ -13,15 +13,18 @@
             <Border Style="{StaticResource Card}">
                 <StackPanel>
                     <TextBlock Style="{StaticResource SectionHeader}" Text="Target AVD"/>
-                    <ComboBox ItemsSource="{Binding Avds}" SelectedItem="{Binding SelectedAvd}" DisplayMemberPath="Name"/>
+                    <ComboBox ItemsSource="{Binding Avds}" SelectedItem="{Binding SelectedAvd}" DisplayMemberPath="Name"
+                             AutomationProperties.Name="Target AVD for rooting"/>
                     <ProgressBar IsIndeterminate="{Binding IsBusy}" Margin="0,12,0,0"
-                                 Visibility="{Binding IsBusy, Converter={x:Static views:BoolToVisibilityConverter.Instance}}"/>
+                                 Visibility="{Binding IsBusy, Converter={x:Static views:BoolToVisibilityConverter.Instance}}"
+                                 AutomationProperties.Name="Root operation progress"/>
                     <TextBlock Text="{Binding Status}" Margin="0,12,0,0" Foreground="{DynamicResource LavenderBrush}"/>
                     <TextBlock Text="{Binding Step}" Margin="0,4,0,0" Foreground="{DynamicResource OverlayBrush}"/>
                     <ProgressBar Minimum="0" Maximum="100" Value="{Binding DownloadProgress}"
                                  IsIndeterminate="{Binding IsDownloadProgressIndeterminate}"
                                  Margin="0,10,0,0"
-                                 Visibility="{Binding HasDownloadProgress, Converter={x:Static views:BoolToVisibilityConverter.Instance}}"/>
+                                 Visibility="{Binding HasDownloadProgress, Converter={x:Static views:BoolToVisibilityConverter.Instance}}"
+                                 AutomationProperties.Name="Download progress"/>
                     <TextBlock Text="{Binding DownloadProgressText}" Margin="0,4,0,0" FontSize="12"
                                Foreground="{DynamicResource SubtextBrush}"
                                Visibility="{Binding HasDownloadProgress, Converter={x:Static views:BoolToVisibilityConverter.Instance}}"/>
@@ -37,7 +40,8 @@
                     <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
                         <Button Content="Launch &amp; root" Style="{StaticResource PrimaryButton}"
                                 Command="{Binding LaunchAndRootCommand}"
-                                IsEnabled="{Binding IsBusy, Converter={x:Static views:NotBoolConverter.Instance}}"/>
+                                IsEnabled="{Binding IsBusy, Converter={x:Static views:NotBoolConverter.Instance}}"
+                                AutomationProperties.Name="Launch and root AVD"/>
                         <TextBlock Text="Launches the selected AVD, waits for boot, then runs the root flow."
                                    Foreground="{DynamicResource SubtextBrush}" Margin="12,0,0,0" VerticalAlignment="Center" TextWrapping="Wrap"/>
                     </StackPanel>
@@ -48,16 +52,17 @@
                 <StackPanel>
                     <TextBlock Style="{StaticResource SectionHeader}" Text="Actions"/>
                     <WrapPanel Margin="0,0,-8,-8">
-                        <Button Content="Root with latest Magisk" Style="{StaticResource PrimaryButton}" Margin="0,0,8,8" Command="{Binding RootCommand}" IsEnabled="{Binding IsBusy, Converter={x:Static views:NotBoolConverter.Instance}}"/>
+                        <Button Content="Root with latest Magisk" Style="{StaticResource PrimaryButton}" Margin="0,0,8,8" Command="{Binding RootCommand}" IsEnabled="{Binding IsBusy, Converter={x:Static views:NotBoolConverter.Instance}}" AutomationProperties.Name="Root with latest Magisk"/>
                         <Button Content="Cancel" Style="{StaticResource DangerButton}" Margin="0,0,8,8"
                                 Command="{Binding CancelCommand}"
-                                Visibility="{Binding IsBusy, Converter={x:Static views:BoolToVisibilityConverter.Instance}}"/>
-                        <Button Content="Verify and persist policy" Style="{StaticResource FlatButton}" Command="{Binding VerifyCommand}" Margin="0,0,8,8"/>
-                        <Button Content="Un-root and restore ramdisk" Style="{StaticResource DangerButton}" Command="{Binding UnRootCommand}" Margin="0,0,8,8"/>
+                                Visibility="{Binding IsBusy, Converter={x:Static views:BoolToVisibilityConverter.Instance}}"
+                                AutomationProperties.Name="Cancel root operation"/>
+                        <Button Content="Verify and persist policy" Style="{StaticResource FlatButton}" Command="{Binding VerifyCommand}" Margin="0,0,8,8" AutomationProperties.Name="Verify root and persist Magisk policy"/>
+                        <Button Content="Un-root and restore ramdisk" Style="{StaticResource DangerButton}" Command="{Binding UnRootCommand}" Margin="0,0,8,8" AutomationProperties.Name="Un-root and restore stock ramdisk"/>
                         <Button Content="Dry run (LISTONLY)" Style="{StaticResource FlatButton}" Command="{Binding DryRunCommand}" Margin="0,0,8,8"
-                                ToolTip="Runs rootAVD LISTONLY to preview which AVDs would be patched. No files are changed."/>
+                                ToolTip="Runs rootAVD LISTONLY to preview which AVDs would be patched. No files are changed." AutomationProperties.Name="Root dry run"/>
                         <Button Content="Modules..." Style="{StaticResource FlatButton}" Command="{Binding OpenModulesCommand}" Margin="0,0,8,8"
-                                ToolTip="Magisk module manager - install Shamiko, LSPosed, PlayIntegrityFork, etc. on the rooted emulator."/>
+                                ToolTip="Magisk module manager - install Shamiko, LSPosed, PlayIntegrityFork, etc. on the rooted emulator." AutomationProperties.Name="Open Magisk modules"/>
                     </WrapPanel>
                     <TextBlock Foreground="{DynamicResource SubtextBrush}" Margin="0,14,0,0" TextWrapping="Wrap">
                         Workflow: 1. Launch the AVD from the AVDs tab. 2. Press "Root with latest Magisk".
@@ -78,16 +83,20 @@
                     <WrapPanel Margin="0,12,-8,-8">
                         <Button Content="Install CA cert..." Style="{StaticResource FlatButton}" Margin="0,0,8,8"
                                 Command="{Binding InstallCaCertCommand}"
-                                IsEnabled="{Binding IsBusy, Converter={x:Static views:NotBoolConverter.Instance}}"/>
+                                IsEnabled="{Binding IsBusy, Converter={x:Static views:NotBoolConverter.Instance}}"
+                                AutomationProperties.Name="Install CA certificate"/>
                         <Button Content="Deploy Frida server" Style="{StaticResource PrimaryButton}" Margin="0,0,8,8"
                                 Command="{Binding DeployFridaCommand}"
-                                IsEnabled="{Binding IsBusy, Converter={x:Static views:NotBoolConverter.Instance}}"/>
+                                IsEnabled="{Binding IsBusy, Converter={x:Static views:NotBoolConverter.Instance}}"
+                                AutomationProperties.Name="Deploy Frida server"/>
                         <Button Content="Stop Frida" Style="{StaticResource FlatButton}" Margin="0,0,8,8"
                                 Command="{Binding StopFridaCommand}"
-                                IsEnabled="{Binding IsFridaRunning}"/>
+                                IsEnabled="{Binding IsFridaRunning}"
+                                AutomationProperties.Name="Stop Frida server"/>
                         <Button Content="Refresh Frida" Style="{StaticResource FlatButton}" Margin="0,0,8,8"
                                 Command="{Binding RefreshFridaStatusCommand}"
-                                IsEnabled="{Binding IsBusy, Converter={x:Static views:NotBoolConverter.Instance}}"/>
+                                IsEnabled="{Binding IsBusy, Converter={x:Static views:NotBoolConverter.Instance}}"
+                                AutomationProperties.Name="Refresh Frida status"/>
                     </WrapPanel>
                     <Grid Margin="0,10,0,0">
                         <Grid.RowDefinitions>

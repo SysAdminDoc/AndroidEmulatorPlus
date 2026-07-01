@@ -38,16 +38,21 @@
                     <Button Content="Start stream" Style="{StaticResource PrimaryButton}"
                             Margin="0,0,8,8"
                             Command="{Binding StartCommand}"
-                            IsEnabled="{Binding IsStreaming, Converter={x:Static views:NotBoolConverter.Instance}}"/>
+                            IsEnabled="{Binding IsStreaming, Converter={x:Static views:NotBoolConverter.Instance}}"
+                            AutomationProperties.Name="Start logcat stream"/>
                     <Button Content="Stop" Style="{StaticResource DangerButton}" Margin="0,0,8,8"
                             Command="{Binding StopCommand}"
-                            IsEnabled="{Binding IsStreaming}"/>
+                            IsEnabled="{Binding IsStreaming}"
+                            AutomationProperties.Name="Stop logcat stream"/>
                     <Button Content="Clear device buffer" Style="{StaticResource FlatButton}" Margin="0,0,8,8"
-                            Command="{Binding ClearBufferCommand}"/>
+                            Command="{Binding ClearBufferCommand}"
+                            AutomationProperties.Name="Clear device logcat buffer"/>
                     <Button Content="Clear view" Style="{StaticResource FlatButton}" Margin="0,0,8,8"
-                            Command="{Binding ClearViewCommand}"/>
+                            Command="{Binding ClearViewCommand}"
+                            AutomationProperties.Name="Clear log view"/>
                     <Button Content="Save log..." Style="{StaticResource FlatButton}" Margin="0,0,8,8"
-                            Command="{Binding SaveCommand}"/>
+                            Command="{Binding SaveCommand}"
+                            AutomationProperties.Name="Save log to file"/>
                     <TextBlock Text="{Binding Status}" Foreground="{DynamicResource OverlayBrush}" Margin="6,0,8,8" VerticalAlignment="Center"/>
                 </WrapPanel>
             </StackPanel>
@@ -63,6 +68,7 @@
                 </StackPanel>
                 <ListBox ItemsSource="{Binding Lines}" x:Name="LinesList"
                      Background="Transparent" BorderThickness="0"
+                     AutomationProperties.Name="Logcat output lines"
                      ScrollViewer.HorizontalScrollBarVisibility="Auto"
                      ScrollViewer.VerticalScrollBarVisibility="Auto"
                      VirtualizingPanel.IsVirtualizing="True"

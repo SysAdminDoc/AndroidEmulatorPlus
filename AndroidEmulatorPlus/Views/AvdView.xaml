@@ -13,7 +13,7 @@
             <TextBlock Style="{StaticResource HeaderText}" Text="AVDs"/>
             <TextBlock Style="{StaticResource SubheaderText}" Text="Launch, edit, or delete Android Virtual Devices. Create new ones from system images installed on this machine."/>
             <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-                <Button Content="Refresh" Style="{StaticResource FlatButton}" Command="{Binding RefreshCommand}"/>
+                <Button Content="Refresh" Style="{StaticResource FlatButton}" Command="{Binding RefreshCommand}" AutomationProperties.Name="Refresh AVDs list"/>
             </StackPanel>
         </StackPanel>
 
@@ -54,14 +54,17 @@
                                     <Button Content="Launch" Style="{StaticResource PrimaryButton}"
                                             Command="{Binding DataContext.LaunchCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                             CommandParameter="{Binding}"
-                                            Visibility="{Binding IsRunning, Converter={x:Static views:NotBoolToVisibilityConverter.Instance}}"/>
+                                            Visibility="{Binding IsRunning, Converter={x:Static views:NotBoolToVisibilityConverter.Instance}}"
+                                            AutomationProperties.Name="Launch AVD"/>
                                     <Button Content="Stop" Style="{StaticResource DangerButton}"
                                             Command="{Binding DataContext.StopCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                             CommandParameter="{Binding}"
-                                            Visibility="{Binding IsRunning, Converter={x:Static views:BoolToVisibilityConverter.Instance}}"/>
+                                            Visibility="{Binding IsRunning, Converter={x:Static views:BoolToVisibilityConverter.Instance}}"
+                                            AutomationProperties.Name="Stop running AVD"/>
                                     <Button Content="Cold Boot" Style="{StaticResource FlatButton}" Margin="8,0,0,0"
                                             Command="{Binding DataContext.LaunchColdCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                            CommandParameter="{Binding}"/>
+                                            CommandParameter="{Binding}"
+                                            AutomationProperties.Name="Cold boot AVD"/>
                                     <Button Style="{StaticResource SmallButton}" Margin="8,0,0,0" Padding="10,8"
                                             AutomationProperties.Name="Open AVD actions"
                                             ToolTip="Show actions for this AVD"
@@ -125,9 +128,11 @@
                     <WrapPanel Margin="0,12,-8,-8">
                         <Button Content="Browse online..." Style="{StaticResource FlatButton}" Margin="0,0,8,8"
                                 Command="{Binding BrowseSystemImagesCommand}"
-                                ToolTip="sdkmanager --list, then install a new system image"/>
+                                ToolTip="sdkmanager --list, then install a new system image"
+                                AutomationProperties.Name="Browse system images online"/>
                         <Button Content="Create" Style="{StaticResource PrimaryButton}" Margin="0,0,8,8"
-                                Command="{Binding CreateCommand}"/>
+                                Command="{Binding CreateCommand}"
+                                AutomationProperties.Name="Create new AVD"/>
                     </WrapPanel>
                 </StackPanel>
             </StackPanel>

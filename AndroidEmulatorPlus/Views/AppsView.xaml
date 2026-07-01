@@ -27,18 +27,26 @@
                         <TextBox Text="{Binding Filter, UpdateSourceTrigger=PropertyChanged}"
                                  AutomationProperties.Name="Filter installed packages"/>
                     </StackPanel>
-                    <CheckBox Content="Include system apps" IsChecked="{Binding IncludeSystem}" Margin="0,20,14,8" VerticalAlignment="Center"/>
-                    <CheckBox Content="Include disabled apps" IsChecked="{Binding IncludeDisabled}" Margin="0,20,14,8" VerticalAlignment="Center"/>
+                    <CheckBox Content="Include system apps" IsChecked="{Binding IncludeSystem}" Margin="0,20,14,8" VerticalAlignment="Center"
+                              AutomationProperties.Name="Include system apps"/>
+                    <CheckBox Content="Include disabled apps" IsChecked="{Binding IncludeDisabled}" Margin="0,20,14,8" VerticalAlignment="Center"
+                              AutomationProperties.Name="Include disabled apps"/>
                     <CheckBox Content="Verify signatures before install" IsChecked="{Binding VerifySignaturesBeforeInstall}" Margin="0,20,14,8" VerticalAlignment="Center"
-                              ToolTip="Runs apksigner verify --print-certs before each install."/>
+                              ToolTip="Runs apksigner verify --print-certs before each install."
+                              AutomationProperties.Name="Verify signatures before install"/>
                 </WrapPanel>
                 <WrapPanel Margin="0,10,-8,-8">
-                    <Button Content="Refresh" Style="{StaticResource FlatButton}" Command="{Binding RefreshCommand}" Margin="0,0,8,8"/>
+                    <Button Content="Refresh" Style="{StaticResource FlatButton}" Command="{Binding RefreshCommand}" Margin="0,0,8,8"
+                            AutomationProperties.Name="Refresh"/>
                     <Button Content="Compute sizes" Style="{StaticResource FlatButton}" Command="{Binding ComputeSizesCommand}" Margin="0,0,8,8"
-                            ToolTip="Root required: runs du -sb /data/data/&lt;pkg&gt; for every loaded row"/>
-                    <Button Content="Install APK..." Style="{StaticResource FlatButton}" Command="{Binding InstallApkCommand}" Margin="0,0,8,8"/>
-                    <Button Content="Select all" Style="{StaticResource FlatButton}" Command="{Binding SelectAllCommand}" Margin="0,0,8,8"/>
-                    <Button Content="Select none" Style="{StaticResource FlatButton}" Command="{Binding SelectNoneCommand}" Margin="0,0,8,8"/>
+                            ToolTip="Root required: runs du -sb /data/data/&lt;pkg&gt; for every loaded row"
+                            AutomationProperties.Name="Compute sizes"/>
+                    <Button Content="Install APK..." Style="{StaticResource FlatButton}" Command="{Binding InstallApkCommand}" Margin="0,0,8,8"
+                            AutomationProperties.Name="Install APK"/>
+                    <Button Content="Select all" Style="{StaticResource FlatButton}" Command="{Binding SelectAllCommand}" Margin="0,0,8,8"
+                            AutomationProperties.Name="Select all"/>
+                    <Button Content="Select none" Style="{StaticResource FlatButton}" Command="{Binding SelectNoneCommand}" Margin="0,0,8,8"
+                            AutomationProperties.Name="Select none"/>
                     <ItemsControl ItemsSource="{Binding BloatPresets}">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
@@ -51,7 +59,8 @@
                                         ToolTip="{Binding Description}"
                                         Style="{StaticResource FlatButton}" Margin="0,0,8,8"
                                         Command="{Binding DataContext.ApplyPresetCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                        CommandParameter="{Binding}"/>
+                                        CommandParameter="{Binding}"
+                                        AutomationProperties.Name="{Binding Name}"/>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
@@ -66,7 +75,8 @@
                     <TextBlock Text="No apps loaded" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextBrush}" HorizontalAlignment="Center"/>
                     <TextBlock Style="{StaticResource MicrocopyText}" TextAlignment="Center" Margin="0,6,0,0"
                                Text="Start an emulator, then refresh this tab to load installed packages."/>
-                    <Button Content="Refresh apps" Style="{StaticResource FlatButton}" Command="{Binding RefreshCommand}" HorizontalAlignment="Center" Margin="0,12,0,0"/>
+                    <Button Content="Refresh apps" Style="{StaticResource FlatButton}" Command="{Binding RefreshCommand}" HorizontalAlignment="Center" Margin="0,12,0,0"
+                            AutomationProperties.Name="Refresh apps"/>
                 </StackPanel>
                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="420"
                             Visibility="{Binding IsFilteredEmpty, Converter={x:Static views:BoolToVisibilityConverter.Instance}}">
@@ -87,7 +97,8 @@
                                         <ColumnDefinition Width="Auto"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <CheckBox IsChecked="{Binding IsSelected}" Content="{Binding Package}"/>
+                                    <CheckBox IsChecked="{Binding IsSelected}" Content="{Binding Package}"
+                                              AutomationProperties.Name="{Binding Package}"/>
                                     <Border Grid.Column="1" Style="{StaticResource StatusPill}" Margin="8,0,0,0">
                                         <TextBlock Text="{Binding SourceTag}" FontSize="11" Foreground="{DynamicResource MauveBrush}"/>
                                     </Border>
@@ -108,19 +119,25 @@
                     <TextBlock Text="Removal mode" Style="{StaticResource FieldLabel}" VerticalAlignment="Center" Margin="0,4,10,8"/>
                     <RadioButton GroupName="UninstallMode" Content="Uninstall with adb" Margin="0,2,14,8"
                                  IsChecked="{Binding UninstallMode, Converter={x:Static views:EqualsConverter.Instance}, ConverterParameter=user, Mode=OneWay}"
-                                 Command="{Binding SetUninstallModeUserCommand}" />
+                                 Command="{Binding SetUninstallModeUserCommand}"
+                                 AutomationProperties.Name="Uninstall with adb"/>
                     <RadioButton GroupName="UninstallMode" Content="Disable for user 0 (reversible)" Margin="0,2,14,8"
                                  IsChecked="{Binding UninstallMode, Converter={x:Static views:EqualsConverter.Instance}, ConverterParameter=user0, Mode=OneWay}"
-                                 Command="{Binding SetUninstallModeUser0Command}" />
+                                 Command="{Binding SetUninstallModeUser0Command}"
+                                 AutomationProperties.Name="Disable for user 0 (reversible)"/>
                 </WrapPanel>
                 <WrapPanel Margin="0,10,-8,-8">
-                    <Button Content="Uninstall selected" Style="{StaticResource DangerButton}" Command="{Binding UninstallSelectedCommand}" Margin="0,0,8,8"/>
+                    <Button Content="Uninstall selected" Style="{StaticResource DangerButton}" Command="{Binding UninstallSelectedCommand}" Margin="0,0,8,8"
+                            AutomationProperties.Name="Uninstall selected"/>
                     <Button Content="Re-enable selected" Style="{StaticResource FlatButton}" Command="{Binding ReinstallSelectedCommand}" Margin="0,0,8,8"
-                            ToolTip="Runs cmd package install-existing. Use for apps removed with Disable for user 0."/>
+                            ToolTip="Runs cmd package install-existing. Use for apps removed with Disable for user 0."
+                            AutomationProperties.Name="Re-enable selected"/>
                     <Button Content="Export data..." Style="{StaticResource FlatButton}" Command="{Binding ExportSelectedCommand}" Margin="0,0,8,8"
-                            ToolTip="Tar /data/data/&lt;pkg&gt; per selected app into a .zip. Root required."/>
+                            ToolTip="Tar /data/data/&lt;pkg&gt; per selected app into a .zip. Root required."
+                            AutomationProperties.Name="Export data"/>
                     <Button Content="Import ZIP..." Style="{StaticResource FlatButton}" Command="{Binding ImportZipCommand}" Margin="0,0,8,8"
-                            ToolTip="Restore a .zip produced by Export data. Root required and package must be installed."/>
+                            ToolTip="Restore a .zip produced by Export data. Root required and package must be installed."
+                            AutomationProperties.Name="Import ZIP"/>
                 </WrapPanel>
             </StackPanel>
         </Border>
