@@ -314,5 +314,66 @@ public sealed partial class AppsViewModel : ObservableObject
         finally { IsBusy = false; _cache.NotifyChanged(); }
     }
 
+    [RelayCommand]
+    private async Task PushFilesAsync()
+    {
+        if (IsBusy) return;
+        var emu = _monitor.Current.FirstOrDefault(d => d.IsEmulator);
+        if (emu is null) { _log.Warning("No emulator running."); return; }
+
+        var dlg = new OpenFileDialog { Title = "Push files to emulator", Multiselect = true };
+        if (dlg.ShowDialog() != true) return;
+
+        IsBusy = true;
+        int ok = 0, fail = 0;
+        try
+        {
+            foreach (var f in dlg.FileNames)
+            {
+                var name = System.IO.Path.GetFileName(f);
+                var remote = $"/sdcard/Download/{name}";
+                _log.Info($"Pushing {name} → {remote}…");
+                var r = await _adb.PushAsync(emu.Serial, f, remote);
+                if (r.Success) { ok++; _log.Success($"Pushed {name}"); }
+                else { fail++; _log.Warning($"Push failed: {r.Combined.Trim()}"); }
+            }
+            _log.Info($"Push complete: {ok} ok, {fail} fail.");
+        }
+        finally { IsBusy = false; }
+    }
+
+    [RelayCommand]
+    private async Task PullFileAsync()
+    {
+        if (IsBusy) return;
+        var emu = _monitor.Current.FirstOrDefault(d => d.IsEmulator);
+        if (emu is null) { _log.Warning("No emulator running."); return; }
+
+        var remotePath = Views.PromptDialog.Show(
+            owner: null,
+            header: "Pull file from emulator",
+            body: "Enter the full remote path to pull (e.g. /sdcard/Download/file.txt).",
+            initial: "/sdcard/Download/",
+            okText: "Pull",
+            validate: text => string.IsNullOrWhiteSpace(text) ? "Path cannot be empty." : null);
+        if (remotePath is null) return;
+
+        var dlg = new Microsoft.Win32.SaveFileDialog
+        {
+            Title = "Save pulled file",
+            FileName = System.IO.Path.GetFileName(remotePath.TrimEnd('/')),
+        };
+        if (dlg.ShowDialog() != true) return;
+
+        IsBusy = true;
+        try
+        {
+            var r = await _adb.PullAsync(emu.Serial, remotePath, dlg.FileName);
+            if (r.Success) _log.Success($"Pulled {remotePath} → {dlg.FileName}");
+            else _log.Warning($"Pull failed: {r.Combined.Trim()}");
+        }
+        finally { IsBusy = false; }
+    }
+
     partial void OnFilterChanged(string value) => NotifyListStateChanged();
 }

@@ -9,6 +9,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0">
@@ -139,6 +140,25 @@
                             ToolTip="Restore a .zip produced by Export data. Root required and package must be installed."
                             AutomationProperties.Name="Import ZIP"/>
                 </WrapPanel>
+            </StackPanel>
+        </Border>
+
+        <Border Grid.Row="4" Style="{StaticResource Card}" Margin="0,0,0,0">
+            <StackPanel>
+                <TextBlock Style="{StaticResource SectionHeader}" Text="File transfer"/>
+                <WrapPanel Margin="0,0,-8,-8">
+                    <Button Content="Push files..." Style="{StaticResource FlatButton}" Margin="0,0,8,8"
+                            Command="{Binding PushFilesCommand}"
+                            ToolTip="Push local files to /sdcard/Download/ on the emulator"
+                            AutomationProperties.Name="Push files to emulator"/>
+                    <Button Content="Pull file..." Style="{StaticResource FlatButton}" Margin="0,0,8,8"
+                            Command="{Binding PullFileCommand}"
+                            ToolTip="Pull a file from the emulator to your PC"
+                            AutomationProperties.Name="Pull file from emulator"/>
+                </WrapPanel>
+                <TextBlock Foreground="{DynamicResource OverlayBrush}" FontSize="11" Margin="0,8,0,0" TextWrapping="Wrap">
+                    Push sends files to <Run FontFamily="Cascadia Mono">/sdcard/Download/</Run> on the emulator. Pull lets you save any remote path locally.
+                </TextBlock>
             </StackPanel>
         </Border>
     </Grid>
