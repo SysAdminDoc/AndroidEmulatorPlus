@@ -114,20 +114,6 @@ Research evidence and rationale in `RESEARCH.md`.
 
 ### P1 - Reliability and Release Readiness
 
-- [ ] P1 - Validate Velopack release feed and artifact contract
-  Why: Auto-update exists, but releases need a local preflight proving `releases.win.json` and expected Velopack assets are present before users enable update checks.
-  Evidence: `AndroidEmulatorPlus/Services/UpdateService.cs`; Velopack UpdateManager/GitHub source docs; README release guidance.
-  Touches: `UpdateService`, `SettingsDialog`, release packaging script or local release checklist, update tests.
-  Acceptance: Settings update panel reports feed health, current channel/version, missing-assets diagnostics, and refuses restart/apply when the release feed is incomplete or mismatched.
-  Complexity: M
-
-- [ ] P1 - Add migration dry-run with storage and root feasibility estimates
-  Why: Large migrations can take minutes and consume GBs; users need a preflight showing APK count, internal/external/OBB size estimates, root requirements, `allowBackup=false`, and free-space risk.
-  Evidence: `AndroidEmulatorPlus/ViewModels/MigrateViewModel.cs`; `AndroidEmulatorPlus/Services/MigrationService.cs`; Universal Android Debloater warning-first UX.
-  Touches: `MigrationService`, `AdbService`, `MigrateViewModel`, `MigrateView.xaml`, migration tests.
-  Acceptance: Before Start Migration, a dry-run summary lists selected package scopes, estimated transfer size, source/target root status, no-backup rows, and blocks obvious no-space/no-root failures.
-  Complexity: L
-
 ### P2 - Workflow Breadth and Maintainability
 
 - [ ] P2 - Support Android Emulator peer-networking workflows
@@ -174,28 +160,6 @@ Research evidence and rationale in `RESEARCH.md`.
   Acceptance: Maintainer-published catalog updates are signature-verified, previewed, reversible, and stored separately from user overrides.
   Complexity: XL
 
-### P1 - Research Follow-up: Data Safety and Release Trust
-
-- [ ] P1 — Add migration integrity receipts and retryable transfer staging
-  Why: Migration currently validates tar safety and cleans temp files, but large `adb pull/push` legs have no durable manifest, hash receipt, or failed-leg retry target.
-  Evidence: `AndroidEmulatorPlus/Services/MigrationService.cs:116`; `AndroidEmulatorPlus/ViewModels/MigrateViewModel.cs:258`; Android `adb` docs; LDPlayer backup/restore baseline.
-  Touches: `MigrationService`, `MigrateViewModel`, `AdbService`, `CacheDiagnosticsService`, migration tests.
-  Acceptance: Each migration run writes a local receipt with source/target serials, selected scopes, per-leg byte counts, hashes where feasible, remote temp cleanup status, failed legs, and a UI action to retry only failed legs.
-  Complexity: L
-
-- [ ] P1 — Add SDK update transaction receipts and rollback guidance
-  Why: SDK package updates are now discoverable and installable, but users need before/after inventory and recovery instructions when emulator/platform-tools/system-image updates regress.
-  Evidence: `AndroidEmulatorPlus/Services/SdkmanagerService.cs:72`; `AndroidEmulatorPlus/ViewModels/InstallViewModel.cs:142`; Android SDK Manager docs.
-  Touches: `SdkmanagerService`, `InstallViewModel`, `InstallView.xaml`, `LogService`, SDK manager tests.
-  Acceptance: Updating SDK packages records pre/post package inventories, changed package versions, command output location, and a rollback/reinstall note visible from the Install tab and logs.
-  Complexity: M
-
-- [ ] P1 — Add Windows release provenance and signing preflight
-  Why: Existing Velopack feed validation covers update discovery, but install trust also needs a local check for artifact hashes, GitHub release attachment parity, and Authenticode/signing status.
-  Evidence: `AndroidEmulatorPlus/Services/UpdateService.cs:23`; README release guidance; Velopack distributing docs; Windows installer trust requirements.
-  Touches: release packaging script/checklist, README release section, `UpdateService` diagnostics, local release tests.
-  Acceptance: One local release check reports app version parity, Velopack assets/feed parity, SHA-256 hashes, Authenticode status for EXE/MSI artifacts when a cert is configured, and blocks publication on mismatches.
-  Complexity: M
 
 ### P2 - Research Follow-up: Device Diagnostics and Operator Workflows
 

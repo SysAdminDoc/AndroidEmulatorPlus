@@ -130,6 +130,103 @@ public sealed class SdkmanagerService
         }
     }
 
+    public async Task<bool> InstallWithProgressAsync(
+        IEnumerable<string> packages,
+        IProgress<(int percent, string status)>? progress,
+        CancellationToken ct = default)
+    {
+        if (_sdk.SdkManagerBat is null)
+        {
+            _log.Error("sdkmanager.bat not found. Install cmdline-tools first.");
+            return false;
+        }
+        var pkgs = packages.ToList();
+        if (pkgs.Count == 0) return true;
+
+        try
+        {
+            var psi = new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = "cmd.exe",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                RedirectStandardInput = true,
+                StandardOutputEncoding = System.Text.Encoding.UTF8,
+                StandardErrorEncoding = System.Text.Encoding.UTF8,
+            };
+            psi.ArgumentList.Add("/c");
+            psi.ArgumentList.Add(_sdk.SdkManagerBat);
+            foreach (var pkg in pkgs) psi.ArgumentList.Add(pkg);
+            foreach (var kv in NoPathConv) psi.Environment[kv.Key] = kv.Value;
+
+            using var proc = new System.Diagnostics.Process { StartInfo = psi, EnableRaisingEvents = true };
+            proc.Start();
+
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    for (int i = 0; i < 30; i++)
+                    {
+                        if (proc.HasExited) break;
+                        await proc.StandardInput.WriteLineAsync("y");
+                    }
+                    proc.StandardInput.Close();
+                }
+                catch { }
+            });
+
+            _ = Task.Run(async () =>
+            {
+                try { await proc.StandardError.ReadToEndAsync(ct); } catch { }
+            });
+
+            var reader = proc.StandardOutput;
+            while (!reader.EndOfStream)
+            {
+                ct.ThrowIfCancellationRequested();
+                var line = await reader.ReadLineAsync(ct);
+                if (line is null) break;
+                var parsed = ParseSdkManagerProgress(line);
+                if (parsed.HasValue)
+                    progress?.Report(parsed.Value);
+            }
+
+            using var linked = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            linked.CancelAfter(TimeSpan.FromMinutes(15));
+            await proc.WaitForExitAsync(linked.Token);
+            proc.WaitForExit();
+            return proc.ExitCode == 0;
+        }
+        catch (TimeoutException)
+        {
+            _log.Error($"sdkmanager install timed out ({string.Join(", ", pkgs)}).");
+            return false;
+        }
+        catch (OperationCanceledException)
+        {
+            _log.Error($"sdkmanager install cancelled ({string.Join(", ", pkgs)}).");
+            return false;
+        }
+    }
+
+    public static (int percent, string status)? ParseSdkManagerProgress(string line)
+    {
+        var match = System.Text.RegularExpressions.Regex.Match(
+            line, @"\]\s*(\d{1,3})%\s*(.*)");
+        if (match.Success && int.TryParse(match.Groups[1].Value, out var pct))
+            return (Math.Clamp(pct, 0, 100), match.Groups[2].Value.Trim());
+
+        var simpleMatch = System.Text.RegularExpressions.Regex.Match(
+            line, @"^\s*(\d{1,3})%\s*(.*)");
+        if (simpleMatch.Success && int.TryParse(simpleMatch.Groups[1].Value, out var pct2))
+            return (Math.Clamp(pct2, 0, 100), simpleMatch.Groups[2].Value.Trim());
+
+        return null;
+    }
+
     /// <summary>
     /// Returns the list of "Available Packages" reported by <c>sdkmanager --list --no_https</c>
     /// (system-images and emulator targets). Items are full package paths like

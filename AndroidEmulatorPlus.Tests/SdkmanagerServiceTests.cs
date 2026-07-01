@@ -89,6 +89,27 @@ public class SdkmanagerServiceTests
         Assert.Empty(receipt.RollbackCommands);
     }
 
+    [Theory]
+    [InlineData("[============                             ] 30% Downloading...", 30, "Downloading...")]
+    [InlineData("[=========================================] 100% Unzipping... system-images/", 100, "Unzipping... system-images/")]
+    [InlineData("[                                         ] 0% Computing updates...", 0, "Computing updates...")]
+    public void ParseSdkManagerProgress_extracts_percent_and_status(string line, int expectedPct, string expectedStatus)
+    {
+        var result = SdkmanagerService.ParseSdkManagerProgress(line);
+        Assert.NotNull(result);
+        Assert.Equal(expectedPct, result.Value.percent);
+        Assert.Equal(expectedStatus, result.Value.status);
+    }
+
+    [Theory]
+    [InlineData("Installed packages:")]
+    [InlineData("  emulator                                    | 36.0.0  | Android Emulator")]
+    [InlineData("")]
+    public void ParseSdkManagerProgress_returns_null_for_non_progress_lines(string line)
+    {
+        Assert.Null(SdkmanagerService.ParseSdkManagerProgress(line));
+    }
+
     [Fact]
     public void BuildReceipt_handles_newly_installed_package()
     {

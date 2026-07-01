@@ -41,7 +41,11 @@
             </ListBox>
         </Border>
 
-        <TextBlock Grid.Row="3" x:Name="ProgressText" Foreground="{DynamicResource YellowBrush}" Margin="0,8,0,0" TextWrapping="Wrap"/>
+        <StackPanel Grid.Row="3" Margin="0,8,0,0">
+            <ProgressBar x:Name="InstallProgressBar" Minimum="0" Maximum="100" Height="6"
+                         Visibility="Collapsed"/>
+            <TextBlock x:Name="ProgressText" Foreground="{DynamicResource YellowBrush}" Margin="0,4,0,0" TextWrapping="Wrap"/>
+        </StackPanel>
 
         <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,14,0,0">
             <Button x:Name="LicensesButton" Content="Accept all licenses" Style="{StaticResource FlatButton}" Click="Licenses_Click"/>

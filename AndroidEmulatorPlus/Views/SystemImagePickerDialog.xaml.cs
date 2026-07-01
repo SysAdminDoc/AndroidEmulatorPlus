@@ -70,8 +70,18 @@ public partial class SystemImagePickerDialog : Window
         if (ImagesList.SelectedItem is not string pkg) return;
         InstallButton.IsEnabled = false;
         LicensesButton.IsEnabled = false;
+        InstallProgressBar.Visibility = Visibility.Visible;
+        InstallProgressBar.IsIndeterminate = true;
         ProgressText.Text = $"Installing {pkg}… (this can take several minutes)";
-        var ok = await _sdkman.InstallAsync(new[] { pkg }, new System.Progress<string>(s => ProgressText.Text = s));
+
+        var progress = new System.Progress<(int percent, string status)>(update =>
+        {
+            InstallProgressBar.IsIndeterminate = false;
+            InstallProgressBar.Value = update.percent;
+            ProgressText.Text = $"Installing {pkg}… {update.percent}%  {update.status}";
+        });
+
+        var ok = await _sdkman.InstallWithProgressAsync(new[] { pkg }, progress);
         if (ok)
         {
             InstalledPackage = pkg;
@@ -81,6 +91,7 @@ public partial class SystemImagePickerDialog : Window
         else
         {
             ProgressText.Text = $"Install failed for {pkg}. Check the log panel.";
+            InstallProgressBar.Visibility = Visibility.Collapsed;
             InstallButton.IsEnabled = true;
             LicensesButton.IsEnabled = true;
         }
