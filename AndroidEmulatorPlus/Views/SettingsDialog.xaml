@@ -49,11 +49,11 @@
                     </Grid.RowDefinitions>
                     <TextBlock Text="SDK root override" Style="{StaticResource FieldLabel}" VerticalAlignment="Center"/>
                     <TextBox Grid.Column="1" x:Name="SdkRootBox" Margin="0,0,4,0" AutomationProperties.Name="SDK root override"/>
-                    <Button Grid.Column="2" Content="Browse..." Style="{StaticResource FlatButton}" Click="BrowseSdk_Click" MinWidth="0" Padding="10,4"/>
+                    <Button Grid.Column="2" Content="Browse..." Style="{StaticResource FlatButton}" Click="BrowseSdk_Click" MinWidth="0" Padding="10,4" AutomationProperties.Name="Browse for SDK root"/>
 
                     <TextBlock Grid.Row="1" Text="Media directory" Style="{StaticResource FieldLabel}" VerticalAlignment="Center" Margin="0,8,0,0"/>
                     <TextBox Grid.Row="1" Grid.Column="1" x:Name="MediaDirBox" Margin="0,8,4,0" AutomationProperties.Name="Media output directory"/>
-                    <Button Grid.Row="1" Grid.Column="2" Content="Browse..." Style="{StaticResource FlatButton}" Click="BrowseMedia_Click" MinWidth="0" Padding="10,4" Margin="0,8,0,0"/>
+                    <Button Grid.Row="1" Grid.Column="2" Content="Browse..." Style="{StaticResource FlatButton}" Click="BrowseMedia_Click" MinWidth="0" Padding="10,4" Margin="0,8,0,0" AutomationProperties.Name="Browse for media directory"/>
                 </Grid>
                 <TextBlock Foreground="{DynamicResource OverlayBrush}" FontSize="11" Margin="0,8,0,0" TextWrapping="Wrap">
                     Leave SDK root empty to autodetect via <Run FontFamily="Cascadia Mono">$ANDROID_HOME</Run> → <Run FontFamily="Cascadia Mono">%LOCALAPPDATA%\Android\Sdk</Run> → fallbacks.
@@ -81,7 +81,7 @@
         <Border Style="{StaticResource Card}">
             <StackPanel>
                 <TextBlock Style="{StaticResource SectionHeader}" Text="Behavior"/>
-                <CheckBox x:Name="AutoScrcpyBox" Content="Auto-launch scrcpy after AVD boots" />
+                <CheckBox x:Name="AutoScrcpyBox" Content="Auto-launch scrcpy after AVD boots" AutomationProperties.Name="Auto-launch scrcpy after AVD boots"/>
                 <TextBlock Foreground="{DynamicResource OverlayBrush}" FontSize="11" Margin="0,4,0,0" TextWrapping="Wrap">
                     Watches the device monitor for newly-attached emulators and runs scrcpy.exe with their serial. Requires scrcpy on PATH or in <Run FontFamily="Cascadia Mono">%LOCALAPPDATA%\AndroidEmulatorPlus\scrcpy\</Run>.
                 </TextBlock>
@@ -91,11 +91,11 @@
         <Border Style="{StaticResource Card}">
             <StackPanel>
                 <TextBlock Style="{StaticResource SectionHeader}" Text="Updates"/>
-                <CheckBox x:Name="AutoUpdatesBox" Content="Check for app updates on startup" />
+                <CheckBox x:Name="AutoUpdatesBox" Content="Check for app updates on startup" AutomationProperties.Name="Check for app updates on startup"/>
                 <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                    <Button x:Name="CheckUpdatesButton" Content="Check for updates" Style="{StaticResource FlatButton}" Click="CheckUpdates_Click"/>
-                    <Button x:Name="RestartForUpdateButton" Content="Download and restart" Style="{StaticResource PrimaryButton}" Margin="10,0,0,0" Click="RestartForUpdate_Click"/>
-                    <Button x:Name="FeedHealthButton" Content="Check feed health" Style="{StaticResource FlatButton}" Margin="10,0,0,0" Click="FeedHealth_Click"/>
+                    <Button x:Name="CheckUpdatesButton" Content="Check for updates" Style="{StaticResource FlatButton}" Click="CheckUpdates_Click" AutomationProperties.Name="Check for updates"/>
+                    <Button x:Name="RestartForUpdateButton" Content="Download and restart" Style="{StaticResource PrimaryButton}" Margin="10,0,0,0" Click="RestartForUpdate_Click" AutomationProperties.Name="Download and restart for update"/>
+                    <Button x:Name="FeedHealthButton" Content="Check feed health" Style="{StaticResource FlatButton}" Margin="10,0,0,0" Click="FeedHealth_Click" AutomationProperties.Name="Check feed health"/>
                 </StackPanel>
                 <TextBlock x:Name="UpdateStatusText" Foreground="{DynamicResource OverlayBrush}" FontSize="11" Margin="0,6,0,0" TextWrapping="Wrap">
                     Installed copies use GitHub Releases for Velopack update packages.
@@ -108,7 +108,7 @@
             <StackPanel>
                 <TextBlock Style="{StaticResource SectionHeader}" Text="Help"/>
                 <StackPanel Orientation="Horizontal">
-                    <Button Content="Show welcome wizard..." Style="{StaticResource FlatButton}" Click="ShowWizard_Click"/>
+                    <Button Content="Show welcome wizard..." Style="{StaticResource FlatButton}" Click="ShowWizard_Click" AutomationProperties.Name="Show welcome wizard"/>
                 </StackPanel>
                 <TextBlock Foreground="{DynamicResource OverlayBrush}" FontSize="11" Margin="0,6,0,0" TextWrapping="Wrap">
                     Re-opens the four-step onboarding wizard. Closes Settings first; reopen from here any time.
@@ -124,9 +124,9 @@
         </Border>
 
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
-            <Button Content="Open settings.json" Style="{StaticResource FlatButton}" Click="OpenJson_Click"/>
-            <Button Content="Cancel" Style="{StaticResource FlatButton}" Margin="10,0,0,0" Click="Cancel_Click" IsCancel="True"/>
-            <Button Content="Save" Style="{StaticResource PrimaryButton}" Margin="10,0,0,0" Click="Save_Click" IsDefault="True"/>
+            <Button Content="Open settings.json" Style="{StaticResource FlatButton}" Click="OpenJson_Click" AutomationProperties.Name="Open settings JSON file"/>
+            <Button Content="Cancel" Style="{StaticResource FlatButton}" Margin="10,0,0,0" Click="Cancel_Click" IsCancel="True" AutomationProperties.Name="Cancel settings"/>
+            <Button Content="Save" Style="{StaticResource PrimaryButton}" Margin="10,0,0,0" Click="Save_Click" IsDefault="True" AutomationProperties.Name="Save settings"/>
         </StackPanel>
     </StackPanel>
     </ScrollViewer>

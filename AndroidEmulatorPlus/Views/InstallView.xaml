@@ -34,11 +34,12 @@
                         <TextBlock Text="{Binding StatusText}" Grid.Row="4" Grid.Column="1" Margin="0,6,0,0" Foreground="{DynamicResource LavenderBrush}"/>
                     </Grid>
                     <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
-                        <Button Content="Refresh" Style="{StaticResource FlatButton}" Command="{Binding RefreshCommand}"/>
-                        <Button Content="Open SDK Folder" Style="{StaticResource FlatButton}" Command="{Binding OpenSdkFolderCommand}" Margin="8,0,0,0"/>
+                        <Button Content="Refresh" Style="{StaticResource FlatButton}" Command="{Binding RefreshCommand}" AutomationProperties.Name="Refresh SDK state"/>
+                        <Button Content="Open SDK Folder" Style="{StaticResource FlatButton}" Command="{Binding OpenSdkFolderCommand}" Margin="8,0,0,0" AutomationProperties.Name="Open SDK folder"/>
                         <Button Content="Accept all SDK licenses" Style="{StaticResource FlatButton}" Command="{Binding AcceptLicensesCommand}" Margin="8,0,0,0"
                                 IsEnabled="{Binding HasCmdlineTools}"
-                                ToolTip="Pipes y\n into sdkmanager --licenses so future installs run unattended"/>
+                                ToolTip="Pipes y\n into sdkmanager --licenses so future installs run unattended"
+                                AutomationProperties.Name="Accept all SDK licenses"/>
                     </StackPanel>
                 </StackPanel>
             </Border>
@@ -50,10 +51,12 @@
                     <WrapPanel Margin="0,10,-8,0">
                         <Button Content="Check updates" Style="{StaticResource FlatButton}" Margin="0,0,8,8"
                                 Command="{Binding RefreshSdkPackagesCommand}"
-                                IsEnabled="{Binding HasCmdlineTools}"/>
+                                IsEnabled="{Binding HasCmdlineTools}"
+                                AutomationProperties.Name="Check SDK package updates"/>
                         <Button Content="Update listed packages" Style="{StaticResource PrimaryButton}" Margin="0,0,8,8"
                                 Command="{Binding UpdateSdkPackagesCommand}"
-                                IsEnabled="{Binding HasSdkPackageUpdates}"/>
+                                IsEnabled="{Binding HasSdkPackageUpdates}"
+                                AutomationProperties.Name="Update listed SDK packages"/>
                     </WrapPanel>
                     <ItemsControl ItemsSource="{Binding SdkPackageUpdates}"
                                   Visibility="{Binding HasSdkPackageUpdates, Converter={x:Static views:BoolToVisibilityConverter.Instance}}">
@@ -95,7 +98,7 @@
                         Runs <Run FontFamily="Cascadia Mono, Consolas">emulator -accel-check</Run> to verify that Windows Hypervisor Platform / Hyper-V is enabled so the emulator can use hardware virtualization.
                     </TextBlock>
                     <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                        <Button Content="Run accel-check" Style="{StaticResource FlatButton}" Command="{Binding CheckAccelCommand}"/>
+                        <Button Content="Run accel-check" Style="{StaticResource FlatButton}" Command="{Binding CheckAccelCommand}" AutomationProperties.Name="Run hardware acceleration check"/>
                         <TextBlock Text="{Binding AccelText}" Margin="14,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource LavenderBrush}"/>
                     </StackPanel>
                     <Border Background="{DynamicResource CrustBrush}" CornerRadius="6" Padding="10,8" Margin="0,10,0,0"
@@ -107,11 +110,13 @@
                             </TextBlock>
                             <WrapPanel Margin="0,8,-8,-8">
                                 <Button Content="Windows Hypervisor Platform docs" Style="{StaticResource FlatButton}" Margin="0,0,8,8"
-                                        Command="{Binding OpenUrlCommand}" CommandParameter="https://learn.microsoft.com/en-us/virtualization/api/hypervisor-platform/hypervisor-platform"/>
+                                        Command="{Binding OpenUrlCommand}" CommandParameter="https://learn.microsoft.com/en-us/virtualization/api/hypervisor-platform/hypervisor-platform"
+                                        AutomationProperties.Name="Open Windows Hypervisor Platform docs"/>
                                 <Button Content="Open 'Turn Windows features on/off'" Style="{StaticResource FlatButton}" Margin="0,0,8,8"
-                                        Command="{Binding OpenFeaturesCommand}"/>
+                                        Command="{Binding OpenFeaturesCommand}" AutomationProperties.Name="Open Windows features dialog"/>
                                 <Button Content="Android Studio emulator-accel docs" Style="{StaticResource FlatButton}" Margin="0,0,8,8"
-                                        Command="{Binding OpenUrlCommand}" CommandParameter="https://developer.android.com/studio/run/emulator-acceleration"/>
+                                        Command="{Binding OpenUrlCommand}" CommandParameter="https://developer.android.com/studio/run/emulator-acceleration"
+                                        AutomationProperties.Name="Open Android Studio emulator acceleration docs"/>
                             </WrapPanel>
                         </StackPanel>
                     </Border>
@@ -127,8 +132,8 @@
                         </Grid.ColumnDefinitions>
                         <TextBlock Style="{StaticResource SectionHeader}" Text="Diagnostics"/>
                         <StackPanel Grid.Column="1" Orientation="Horizontal">
-                            <Button Content="Open logs folder" Style="{StaticResource FlatButton}" Command="{Binding OpenLogsFolderCommand}"/>
-                            <Button Content="Clear crash.log" Style="{StaticResource DangerButton}" Command="{Binding ClearCrashLogCommand}" Margin="8,0,0,0"/>
+                            <Button Content="Open logs folder" Style="{StaticResource FlatButton}" Command="{Binding OpenLogsFolderCommand}" AutomationProperties.Name="Open logs folder"/>
+                            <Button Content="Clear crash.log" Style="{StaticResource DangerButton}" Command="{Binding ClearCrashLogCommand}" Margin="8,0,0,0" AutomationProperties.Name="Clear crash log"/>
                         </StackPanel>
                     </Grid>
                     <Border Background="{DynamicResource CrustBrush}" CornerRadius="6" Padding="10,8" Margin="0,6,0,0">
@@ -146,7 +151,8 @@
                     </TextBlock>
                     <Button Content="Run release preflight" Style="{StaticResource FlatButton}" Margin="0,8,0,0"
                             Command="{Binding RunReleasePreflightCommand}"
-                            IsEnabled="{Binding IsBusy, Converter={x:Static views:NotBoolConverter.Instance}}"/>
+                            IsEnabled="{Binding IsBusy, Converter={x:Static views:NotBoolConverter.Instance}}"
+                            AutomationProperties.Name="Run release preflight"/>
                     <TextBlock Text="{Binding PreflightText}" Foreground="{DynamicResource LavenderBrush}" Margin="0,6,0,0"
                                TextWrapping="Wrap" FontSize="12"
                                Visibility="{Binding HasPreflightResult, Converter={x:Static views:BoolToVisibilityConverter.Instance}}"/>
@@ -160,16 +166,18 @@
                         Option 1 — install just the command-line tools (~150 MB). Then use the AVDs tab to pull a system image and create an emulator.
                     </TextBlock>
                     <WrapPanel Margin="0,10,-8,-8">
-                        <Button Content="Download command-line tools" Style="{StaticResource PrimaryButton}" Margin="0,0,8,8" Command="{Binding DownloadCmdlineToolsCommand}" IsEnabled="{Binding IsBusy, Converter={x:Static views:NotBoolConverter.Instance}}"/>
+                        <Button Content="Download command-line tools" Style="{StaticResource PrimaryButton}" Margin="0,0,8,8" Command="{Binding DownloadCmdlineToolsCommand}" IsEnabled="{Binding IsBusy, Converter={x:Static views:NotBoolConverter.Instance}}" AutomationProperties.Name="Download command-line tools"/>
                         <Button Content="Cancel" Style="{StaticResource DangerButton}" Margin="0,0,8,8"
                                 Command="{Binding CancelCommand}"
-                                Visibility="{Binding IsBusy, Converter={x:Static views:BoolToVisibilityConverter.Instance}}"/>
+                                Visibility="{Binding IsBusy, Converter={x:Static views:BoolToVisibilityConverter.Instance}}"
+                                AutomationProperties.Name="Cancel download"/>
                         <TextBlock Text="{Binding Step}" Foreground="{DynamicResource OverlayBrush}" Margin="4,0,8,8" VerticalAlignment="Center"/>
                     </WrapPanel>
                     <ProgressBar Minimum="0" Maximum="100" Value="{Binding DownloadProgress}"
                                  IsIndeterminate="{Binding IsDownloadProgressIndeterminate}"
                                  Margin="0,6,0,0"
-                                 Visibility="{Binding IsBusy, Converter={x:Static views:BoolToVisibilityConverter.Instance}}"/>
+                                 Visibility="{Binding IsBusy, Converter={x:Static views:BoolToVisibilityConverter.Instance}}"
+                                 AutomationProperties.Name="Download progress"/>
                     <TextBlock Text="{Binding DownloadProgressText}" Foreground="{DynamicResource SubtextBrush}"
                                Margin="0,6,0,0" FontSize="12"
                                Visibility="{Binding HasDownloadProgress, Converter={x:Static views:BoolToVisibilityConverter.Instance}}"/>
@@ -178,7 +186,7 @@
                     <TextBlock Foreground="{DynamicResource SubtextBrush}" Margin="0,18,0,0" TextWrapping="Wrap">
                         Option 2 — install Android Studio (~1.2 GB). Includes the Device Manager UI plus all SDK components.
                     </TextBlock>
-                    <Button Content="Open developer.android.com/studio" Style="{StaticResource FlatButton}" Command="{Binding OpenStudioDownloadPageCommand}" Margin="0,10,0,0" HorizontalAlignment="Left"/>
+                    <Button Content="Open developer.android.com/studio" Style="{StaticResource FlatButton}" Command="{Binding OpenStudioDownloadPageCommand}" Margin="0,10,0,0" HorizontalAlignment="Left" AutomationProperties.Name="Open Android Studio download page"/>
                 </StackPanel>
             </Border>
         </StackPanel>
