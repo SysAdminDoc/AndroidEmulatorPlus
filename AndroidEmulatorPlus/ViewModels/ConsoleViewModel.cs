@@ -28,6 +28,8 @@ public sealed partial class ConsoleViewModel : ObservableObject
     [ObservableProperty] private NetworkProfile? _selectedNetworkProfile;
     [ObservableProperty] private string _freeFormArgs = "";
     [ObservableProperty] private string _lastResult = "";
+    [ObservableProperty] private string _networkInfoText = "";
+    [ObservableProperty] private bool _hasNetworkInfo;
     [ObservableProperty] private double _accelX;
     [ObservableProperty] private double _accelY = 9.8;
     [ObservableProperty] private double _accelZ;
@@ -124,6 +126,34 @@ public sealed partial class ConsoleViewModel : ObservableObject
             $"{GyroX:F2}:{GyroY:F2}:{GyroZ:F2}" });
         LastResult = r.Combined.Trim();
         if (r.Success) _log.Info($"gyroscope {GyroX:F2}:{GyroY:F2}:{GyroZ:F2}");
+    }
+
+    [RelayCommand]
+    private async Task ShowNetworkInfoAsync()
+    {
+        if (ActiveSerial() is not { } s) { _log.Warning("No emulator attached."); return; }
+        var r = await _adb.ShellAsync(s, "ip -4 addr show | grep inet");
+        var lines = new List<string>();
+        lines.Add($"Serial: {s}");
+        foreach (var line in r.StdOut.Split('\n'))
+        {
+            var trimmed = line.Trim();
+            if (!string.IsNullOrEmpty(trimmed)) lines.Add(trimmed);
+        }
+
+        var devices = _monitor.Current.Where(d => d.IsEmulator && d.IsOnline).ToList();
+        if (devices.Count > 1)
+        {
+            lines.Add("");
+            lines.Add($"Peer AVDs: {devices.Count} emulators running");
+            foreach (var d in devices)
+                lines.Add($"  {d.Serial} ({d.Model})");
+            lines.Add("");
+            lines.Add("Peer connectivity test:");
+            lines.Add($"  adb -s {s} shell ping -c 3 10.0.2.15");
+        }
+        NetworkInfoText = string.Join("\n", lines);
+        HasNetworkInfo = true;
     }
 
     [RelayCommand]

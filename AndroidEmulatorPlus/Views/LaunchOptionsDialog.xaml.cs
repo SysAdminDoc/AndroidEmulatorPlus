@@ -34,6 +34,7 @@ public partial class LaunchOptionsDialog : Window
             NoWindow: NoWindowBox.IsChecked == true,
             NoAudio: NoAudioBox.IsChecked == true,
             MultiDisplay: MultiDisplayBox.IsChecked == true,
+            PeerNetworking: PeerNetworkBox.IsChecked == true,
             HttpProxy: string.IsNullOrWhiteSpace(HttpProxyBox.Text) ? null : HttpProxyBox.Text.Trim(),
             DnsServer: string.IsNullOrWhiteSpace(DnsBox.Text) ? null : DnsBox.Text.Trim(),
             FrontCamera: NormalizeCombo(FrontCameraBox),

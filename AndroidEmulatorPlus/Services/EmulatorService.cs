@@ -29,6 +29,7 @@ public sealed class EmulatorService
         bool NoWindow = false,
         bool NoAudio = false,
         bool MultiDisplay = false,
+        bool PeerNetworking = false,
         string? HttpProxy = null,
         string? DnsServer = null,
         string? FrontCamera = null,
@@ -48,6 +49,7 @@ public sealed class EmulatorService
         if (opt.NoWindow) args.Add("-no-window");
         if (opt.NoAudio) args.Add("-no-audio");
         if (opt.MultiDisplay) args.Add("-multi-display");
+        if (opt.PeerNetworking) { args.Add("-network-backend"); args.Add("slirp-peer"); }
         if (!string.IsNullOrWhiteSpace(opt.HttpProxy)) { args.Add("-http-proxy"); args.Add(opt.HttpProxy!); }
         if (!string.IsNullOrWhiteSpace(opt.DnsServer)) { args.Add("-dns-server"); args.Add(opt.DnsServer!); }
         if (!string.IsNullOrWhiteSpace(opt.FrontCamera)) { args.Add("-camera-front"); args.Add(opt.FrontCamera!); }
