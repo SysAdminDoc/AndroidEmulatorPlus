@@ -173,3 +173,65 @@ Research evidence and rationale in `RESEARCH.md`.
   Touches: `PresetService`, `NetworkProfileService`, `MagiskService`, `HashVerificationService`, Settings update UI.
   Acceptance: Maintainer-published catalog updates are signature-verified, previewed, reversible, and stored separately from user overrides.
   Complexity: XL
+
+### P1 - Research Follow-up: Data Safety and Release Trust
+
+- [ ] P1 — Add migration integrity receipts and retryable transfer staging
+  Why: Migration currently validates tar safety and cleans temp files, but large `adb pull/push` legs have no durable manifest, hash receipt, or failed-leg retry target.
+  Evidence: `AndroidEmulatorPlus/Services/MigrationService.cs:116`; `AndroidEmulatorPlus/ViewModels/MigrateViewModel.cs:258`; Android `adb` docs; LDPlayer backup/restore baseline.
+  Touches: `MigrationService`, `MigrateViewModel`, `AdbService`, `CacheDiagnosticsService`, migration tests.
+  Acceptance: Each migration run writes a local receipt with source/target serials, selected scopes, per-leg byte counts, hashes where feasible, remote temp cleanup status, failed legs, and a UI action to retry only failed legs.
+  Complexity: L
+
+- [ ] P1 — Add SDK update transaction receipts and rollback guidance
+  Why: SDK package updates are now discoverable and installable, but users need before/after inventory and recovery instructions when emulator/platform-tools/system-image updates regress.
+  Evidence: `AndroidEmulatorPlus/Services/SdkmanagerService.cs:72`; `AndroidEmulatorPlus/ViewModels/InstallViewModel.cs:142`; Android SDK Manager docs.
+  Touches: `SdkmanagerService`, `InstallViewModel`, `InstallView.xaml`, `LogService`, SDK manager tests.
+  Acceptance: Updating SDK packages records pre/post package inventories, changed package versions, command output location, and a rollback/reinstall note visible from the Install tab and logs.
+  Complexity: M
+
+- [ ] P1 — Add Windows release provenance and signing preflight
+  Why: Existing Velopack feed validation covers update discovery, but install trust also needs a local check for artifact hashes, GitHub release attachment parity, and Authenticode/signing status.
+  Evidence: `AndroidEmulatorPlus/Services/UpdateService.cs:23`; README release guidance; Velopack distributing docs; Windows installer trust requirements.
+  Touches: release packaging script/checklist, README release section, `UpdateService` diagnostics, local release tests.
+  Acceptance: One local release check reports app version parity, Velopack assets/feed parity, SHA-256 hashes, Authenticode status for EXE/MSI artifacts when a cert is configured, and blocks publication on mismatches.
+  Complexity: M
+
+### P2 - Research Follow-up: Device Diagnostics and Operator Workflows
+
+- [ ] P2 — Add ADB Wi-Fi 2.0, mDNS, and QR pairing diagnostics
+  Why: Pairing-code support exists, but current Android docs add QR pairing, ADB Wi-Fi 2.0, `adb server-status`, and mDNS checks that explain most wireless-debugging failures.
+  Evidence: `AndroidEmulatorPlus/Services/AdbService.cs:277`; `AndroidEmulatorPlus/ViewModels/MigrateViewModel.cs:310`; Android ADB wireless-debugging docs; Stack Overflow adb-pair failure reports.
+  Touches: `AdbService`, `MigrateViewModel`, `MigrateView.xaml`, `InstallViewModel`, ADB parser tests.
+  Acceptance: The Migrate tab exposes a pairing doctor that shows platform-tools version, ADB Wi-Fi 2.0 readiness, mDNS status, detected TLS services, QR/pairing-code guidance, and safe restart-server actions.
+  Complexity: M
+
+- [ ] P2 — Add explicit multi-device session selector
+  Why: The shell currently picks the first phone and first emulator, which is ambiguous once users connect multiple phones, wireless transports, or several AVDs.
+  Evidence: `AndroidEmulatorPlus/ViewModels/MainViewModel.cs:108`; Appium Device Farm session model; STF remote-device inventory; Android Emulator peer-networking docs.
+  Touches: `DeviceMonitor`, `MainViewModel`, `MigrateViewModel`, `AppsViewModel`, `LogcatViewModel`, `ConsoleViewModel`, main window UI.
+  Acceptance: Users can choose active phone/source and emulator/target from all `adb devices -l` entries, see transport/API/security-patch status for each, and every tab uses the selected session consistently.
+  Complexity: L
+
+- [ ] P2 — Add redacted diagnostics support bundle export
+  Why: Logs and crash details are local, but issue reports need a single redacted bundle containing versions, SDK/tool paths, device trust summaries, settings, cache size, and recent command output.
+  Evidence: `AndroidEmulatorPlus/Services/LogService.cs:26`; `AndroidEmulatorPlus/ViewModels/InstallViewModel.cs:174`; Genymotion troubleshooting pages; MobSF/Appium diagnostic-heavy workflows.
+  Touches: new `SupportBundleService`, `InstallViewModel`, `InstallView.xaml`, `SettingsService`, redaction tests.
+  Acceptance: The Install tab exports a ZIP bundle with logs, crash.log, app/version info, SDK and package inventory, device diagnostics, and redacted host paths/IPs/pairing codes; tests cover redaction.
+  Complexity: M
+
+- [ ] P2 — Add post-restore validation report for migrated packages
+  Why: A transfer can report success while the restored app still rejects data, lacks permissions, or fails on launch; users need a validation pass after restore.
+  Evidence: `AndroidEmulatorPlus/Services/MigrationService.cs:116`; `AndroidEmulatorPlus/ViewModels/MigrateViewModel.cs:258`; Android backup/allowBackup behavior; MobSF dynamic-analysis smoke workflows.
+  Touches: `MigrationService`, `AdbService`, `MigrateViewModel`, `LogcatService`, migration tests.
+  Acceptance: After migration, AEP can optionally force-stop/launch each restored package, capture install/data size/signature/permission status and filtered logcat errors, then attach that report to the migration receipt.
+  Complexity: L
+
+### P3 - Research Follow-up: External Tool Handoffs
+
+- [ ] P3 — Add Appium/Maestro environment handoff export
+  Why: The app already prepares AVDs, apps, root, network, and files; exporting a descriptor lets automation tools reuse that local environment without AEP becoming a test runner.
+  Evidence: Maestro YAML flow model; Appium Device Farm device/session docs; `AndroidEmulatorPlus/Services/AdbService.cs`; `AndroidEmulatorPlus/ViewModels/AvdViewModel.cs`.
+  Touches: `AvdService`, `AdbService`, `SettingsService`, export dialog/view-model, README automation notes.
+  Acceptance: Users can export selected emulator/device metadata, ADB serial, installed package list, app path hints, proxy/network profile, and sample Maestro/Appium command snippets as a local JSON/YAML handoff.
+  Complexity: M
