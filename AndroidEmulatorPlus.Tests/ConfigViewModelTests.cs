@@ -30,4 +30,14 @@ public class ConfigViewModelTests
     {
         Assert.Equal(expected, ParseSizeGb(input));
     }
+
+    [Theory]
+    [InlineData("512M", 1)]
+    [InlineData("256M", 1)]
+    [InlineData("536870912", 1)]    // 512 MB raw bytes — must clamp to 1
+    [InlineData("1024K", 1)]
+    public void ParseSizeGb_clamps_sub_gb_to_1(string input, int expected)
+    {
+        Assert.Equal(expected, ParseSizeGb(input));
+    }
 }
