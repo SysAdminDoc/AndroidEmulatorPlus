@@ -58,6 +58,7 @@ public partial class App : Application
         sc.AddSingleton<CaCertService>();
         sc.AddSingleton<FridaService>();
         sc.AddSingleton<ReleasePreflightService>();
+        sc.AddSingleton<AvdTemplateService>();
         sc.AddSingleton<SupportBundleService>();
         sc.AddSingleton<ToastService>();
         sc.AddSingleton<DeviceMonitor>();

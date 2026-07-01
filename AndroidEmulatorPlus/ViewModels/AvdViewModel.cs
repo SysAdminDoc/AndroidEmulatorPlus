@@ -18,6 +18,7 @@ public sealed partial class AvdViewModel : ObservableObject
     private readonly SdkLocator _sdk;
     private readonly SdkmanagerService _sdkman;
     private readonly SnapshotService _snapshots;
+    private readonly AvdTemplateService _templates;
 
     public ObservableCollection<Avd> Avds { get; } = new();
     [ObservableProperty] private Avd? _selected;
@@ -50,7 +51,7 @@ public sealed partial class AvdViewModel : ObservableObject
     };
 
     public AvdViewModel(AvdService avds, EmulatorService emu, AdbService adb,
-        DeviceMonitor monitor, LogService log, SdkLocator sdk, SdkmanagerService sdkman, SnapshotService snapshots)
+        DeviceMonitor monitor, LogService log, SdkLocator sdk, SdkmanagerService sdkman, SnapshotService snapshots, AvdTemplateService templates)
     {
         _avds = avds;
         _emu = emu;
@@ -60,6 +61,7 @@ public sealed partial class AvdViewModel : ObservableObject
         _sdk = sdk;
         _sdkman = sdkman;
         _snapshots = snapshots;
+        _templates = templates;
         _monitor.Changed += _devices => _ = RefreshRunningStateAsync();
     }
 
@@ -348,6 +350,65 @@ public sealed partial class AvdViewModel : ObservableObject
             var r = await _avds.CreateAsync(NewName.Trim(), NewImage!, NewDevice);
             if (r.Success) _log.Success($"Created AVD '{NewName}'.");
             else _log.Error("avdmanager: " + r.Combined.Trim());
+            await RefreshAsync();
+        }
+        finally { IsBusy = false; }
+    }
+
+    [RelayCommand]
+    private void ExportTemplate(Avd? avd)
+    {
+        if (avd is null) return;
+        var name = Views.PromptDialog.Show(
+            owner: null,
+            header: $"Save template from '{avd.Name}'",
+            body: "Pick a template name. The AVD's hardware config and system image will be saved.",
+            initial: avd.Name,
+            okText: "Save",
+            validate: text => string.IsNullOrWhiteSpace(text) ? "Name cannot be empty." : null);
+        if (name is null) return;
+        var template = _templates.ExportTemplate(avd, name.Trim());
+        _templates.SaveTemplate(template);
+    }
+
+    [RelayCommand]
+    private async Task CreateFromTemplateAsync()
+    {
+        if (IsBusy) return;
+        var templates = _templates.ListTemplates();
+        if (templates.Count == 0) { _log.Warning("No saved templates found."); return; }
+
+        var names = templates.Select(t => t.Name).ToList();
+        var pick = Views.PromptDialog.Show(
+            owner: null,
+            header: "Create AVD from template",
+            body: $"Available templates: {string.Join(", ", names)}\n\nEnter the template name to use:",
+            initial: names[0],
+            okText: "Next",
+            validate: text => templates.Any(t => t.Name.Equals(text?.Trim(), StringComparison.OrdinalIgnoreCase))
+                ? null : "No template with that name.");
+        if (pick is null) return;
+
+        var template = templates.First(t => t.Name.Equals(pick.Trim(), StringComparison.OrdinalIgnoreCase));
+        var avdName = Views.PromptDialog.Show(
+            owner: null,
+            header: $"Name for new AVD from '{template.Name}'",
+            body: "Pick a name for the new AVD.",
+            initial: $"{template.Name}-new",
+            okText: "Create",
+            validate: text =>
+            {
+                var t = text?.Trim() ?? "";
+                if (string.IsNullOrEmpty(t)) return "Name cannot be empty.";
+                if (!AvdService.IsSafeAvdName(t)) return "Only letters, digits, '.', '_' and '-' are allowed.";
+                return null;
+            });
+        if (avdName is null) return;
+
+        IsBusy = true;
+        try
+        {
+            await _templates.ApplyTemplateAsync(avdName.Trim(), template);
             await RefreshAsync();
         }
         finally { IsBusy = false; }
