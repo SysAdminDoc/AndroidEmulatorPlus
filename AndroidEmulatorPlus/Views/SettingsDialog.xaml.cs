@@ -105,6 +105,26 @@ public partial class SettingsDialog : Window
         }
     }
 
+    private async void FeedHealth_Click(object sender, RoutedEventArgs e)
+    {
+        FeedHealthButton.IsEnabled = false;
+        FeedHealthText.Visibility = Visibility.Visible;
+        FeedHealthText.Text = "Checking release feed...";
+        try
+        {
+            var appVer = typeof(UpdateService).Assembly.GetName().Version?.ToString(3) ?? "0.0.0";
+            var health = await _updates.ValidateFeedAsync(appVer);
+            FeedHealthText.Foreground = health.Ok
+                ? FindResource("GreenBrush") as System.Windows.Media.Brush ?? Foreground
+                : FindResource("RedBrush") as System.Windows.Media.Brush ?? Foreground;
+            FeedHealthText.Text = health.Summary;
+        }
+        finally
+        {
+            FeedHealthButton.IsEnabled = true;
+        }
+    }
+
     /// <summary>C-10: reopen the first-launch wizard from Settings.</summary>
     private void ShowWizard_Click(object sender, RoutedEventArgs e)
     {

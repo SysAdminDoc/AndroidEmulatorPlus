@@ -95,10 +95,12 @@
                 <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
                     <Button x:Name="CheckUpdatesButton" Content="Check for updates" Style="{StaticResource FlatButton}" Click="CheckUpdates_Click"/>
                     <Button x:Name="RestartForUpdateButton" Content="Download and restart" Style="{StaticResource PrimaryButton}" Margin="10,0,0,0" Click="RestartForUpdate_Click"/>
+                    <Button x:Name="FeedHealthButton" Content="Check feed health" Style="{StaticResource FlatButton}" Margin="10,0,0,0" Click="FeedHealth_Click"/>
                 </StackPanel>
                 <TextBlock x:Name="UpdateStatusText" Foreground="{DynamicResource OverlayBrush}" FontSize="11" Margin="0,6,0,0" TextWrapping="Wrap">
                     Installed copies use GitHub Releases for Velopack update packages.
                 </TextBlock>
+                <TextBlock x:Name="FeedHealthText" Foreground="{DynamicResource SubtextBrush}" FontSize="11" Margin="0,4,0,0" TextWrapping="Wrap" Visibility="Collapsed"/>
             </StackPanel>
         </Border>
 
