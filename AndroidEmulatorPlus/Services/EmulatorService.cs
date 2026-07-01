@@ -58,8 +58,18 @@ public sealed class EmulatorService
         _log.Info($"Launching emulator '{avdName}' {flagSummary}".TrimEnd());
         var proc = ProcessRunner.StartDetached(_sdk.EmulatorRequired, args,
             workingDir: System.IO.Path.GetDirectoryName(_sdk.EmulatorRequired));
+        if (_children.TryRemove(avdName, out var old))
+        {
+            try { old.Dispose(); } catch { }
+        }
         _children[avdName] = proc;
-        proc.Exited += (_, _) => { try { _children.TryRemove(avdName, out _); } catch { } };
+        proc.Exited += (_, _) =>
+        {
+            if (_children.TryRemove(avdName, out var exited))
+            {
+                try { exited.Dispose(); } catch { }
+            }
+        };
         return proc;
     }
 
@@ -73,17 +83,17 @@ public sealed class EmulatorService
                 if (!kv.Value.HasExited) kv.Value.Kill(entireProcessTree: true);
             }
             catch { }
+            try { kv.Value.Dispose(); } catch { }
             _children.TryRemove(kv.Key, out _);
         }
     }
 
-    /// <summary>Kills the emulator child for a single AVD, if we launched one.</summary>
     public void TryKill(string avdName)
     {
-        if (_children.TryGetValue(avdName, out var p))
+        if (_children.TryRemove(avdName, out var p))
         {
             try { if (!p.HasExited) p.Kill(entireProcessTree: true); } catch { }
-            _children.TryRemove(avdName, out _);
+            try { p.Dispose(); } catch { }
         }
     }
 

@@ -50,7 +50,9 @@ public sealed class ScrcpyService
         {
             var args = new List<string> { "-s", serial };
             if (extraArgs is not null) args.AddRange(extraArgs);
-            ProcessRunner.StartDetached(exe, args);
+            var proc = ProcessRunner.StartDetached(exe, args);
+            proc.EnableRaisingEvents = true;
+            proc.Exited += (_, _) => { try { proc.Dispose(); } catch { } };
             _log.Info($"scrcpy launched against {serial} with args: {string.Join(" ", args)}.");
             return true;
         }

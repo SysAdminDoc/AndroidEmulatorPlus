@@ -152,15 +152,19 @@ public sealed class ReleasePreflightService
     {
         try
         {
+            var script = $"(Get-AuthenticodeSignature -LiteralPath $args[0]).Status";
+            var encoded = Convert.ToBase64String(System.Text.Encoding.Unicode.GetBytes(script));
             var psi = new ProcessStartInfo
             {
                 FileName = "powershell.exe",
-                ArgumentList = { "-NoProfile", "-Command",
-                    $"(Get-AuthenticodeSignature '{filePath.Replace("'", "''")}').Status" },
                 UseShellExecute = false,
                 CreateNoWindow = true,
                 RedirectStandardOutput = true,
             };
+            psi.ArgumentList.Add("-NoProfile");
+            psi.ArgumentList.Add("-EncodedCommand");
+            psi.ArgumentList.Add(encoded);
+            psi.ArgumentList.Add(filePath);
             using var proc = Process.Start(psi);
             if (proc is null) return "Unknown";
             var output = proc.StandardOutput.ReadToEnd().Trim();
