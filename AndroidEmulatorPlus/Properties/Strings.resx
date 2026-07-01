@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" msdata:Ordinal="0" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <!-- App chrome -->
+  <data name="AppTitle" xml:space="preserve"><value>AndroidEmulatorPlus</value></data>
+  <data name="SidebarWorkflow" xml:space="preserve"><value>WORKFLOW</value></data>
+
+  <!-- Sidebar tabs -->
+  <data name="TabInstall" xml:space="preserve"><value>Install / SDK</value></data>
+  <data name="TabAvds" xml:space="preserve"><value>AVDs</value></data>
+  <data name="TabRoot" xml:space="preserve"><value>Root</value></data>
+  <data name="TabMigrate" xml:space="preserve"><value>Migrate from Phone</value></data>
+  <data name="TabApps" xml:space="preserve"><value>Apps / Debloat</value></data>
+  <data name="TabConfigure" xml:space="preserve"><value>Configure</value></data>
+  <data name="TabLogcat" xml:space="preserve"><value>Logcat</value></data>
+  <data name="TabConsole" xml:space="preserve"><value>Console</value></data>
+
+  <!-- Top bar -->
+  <data name="TopBarPhone" xml:space="preserve"><value>Phone</value></data>
+  <data name="TopBarEmulator" xml:space="preserve"><value>Emulator</value></data>
+  <data name="BtnScreenshot" xml:space="preserve"><value>Screenshot</value></data>
+  <data name="BtnRecord" xml:space="preserve"><value>Record</value></data>
+  <data name="BtnStopRecording" xml:space="preserve"><value>Stop recording</value></data>
+  <data name="BtnMirror" xml:space="preserve"><value>Mirror</value></data>
+  <data name="BtnSettings" xml:space="preserve"><value>Settings</value></data>
+
+  <!-- Install view -->
+  <data name="InstallHeader" xml:space="preserve"><value>Install / SDK</value></data>
+  <data name="InstallSubheader" xml:space="preserve"><value>Detect Android SDK + emulator, or install the command-line tools if you're starting fresh.</value></data>
+  <data name="InstallCurrentState" xml:space="preserve"><value>Current state</value></data>
+  <data name="InstallSdkRoot" xml:space="preserve"><value>SDK Root</value></data>
+  <data name="InstallPlatformTools" xml:space="preserve"><value>platform-tools</value></data>
+  <data name="InstallEmulator" xml:space="preserve"><value>emulator</value></data>
+  <data name="InstallCmdlineTools" xml:space="preserve"><value>cmdline-tools</value></data>
+  <data name="InstallStatus" xml:space="preserve"><value>Status</value></data>
+  <data name="BtnRefresh" xml:space="preserve"><value>Refresh</value></data>
+  <data name="BtnOpenSdkFolder" xml:space="preserve"><value>Open SDK Folder</value></data>
+  <data name="BtnAcceptLicenses" xml:space="preserve"><value>Accept all SDK licenses</value></data>
+  <data name="BtnCheckUpdates" xml:space="preserve"><value>Check updates</value></data>
+  <data name="BtnUpdatePackages" xml:space="preserve"><value>Update listed packages</value></data>
+  <data name="BtnDownloadCmdlineTools" xml:space="preserve"><value>Download command-line tools</value></data>
+  <data name="BtnCancel" xml:space="preserve"><value>Cancel</value></data>
+
+  <!-- AVD view -->
+  <data name="AvdHeader" xml:space="preserve"><value>AVDs</value></data>
+  <data name="AvdSubheader" xml:space="preserve"><value>Launch, edit, or delete Android Virtual Devices. Create new ones from system images installed on this machine.</value></data>
+  <data name="BtnLaunch" xml:space="preserve"><value>Launch</value></data>
+  <data name="BtnStop" xml:space="preserve"><value>Stop</value></data>
+  <data name="BtnColdBoot" xml:space="preserve"><value>Cold Boot</value></data>
+  <data name="BtnCreate" xml:space="preserve"><value>Create</value></data>
+  <data name="BtnBrowseOnline" xml:space="preserve"><value>Browse online...</value></data>
+  <data name="AvdCreateHeader" xml:space="preserve"><value>Create new AVD</value></data>
+  <data name="AvdName" xml:space="preserve"><value>Name</value></data>
+  <data name="AvdDeviceProfile" xml:space="preserve"><value>Device profile</value></data>
+  <data name="AvdSystemImage" xml:space="preserve"><value>System image</value></data>
+
+  <!-- Root view -->
+  <data name="RootHeader" xml:space="preserve"><value>Root via Magisk</value></data>
+  <data name="BtnRootWithMagisk" xml:space="preserve"><value>Root with latest Magisk</value></data>
+  <data name="BtnVerifyPolicy" xml:space="preserve"><value>Verify and persist policy</value></data>
+  <data name="BtnUnroot" xml:space="preserve"><value>Un-root and restore ramdisk</value></data>
+  <data name="BtnDryRun" xml:space="preserve"><value>Dry run (LISTONLY)</value></data>
+  <data name="BtnModules" xml:space="preserve"><value>Modules...</value></data>
+
+  <!-- Migrate view -->
+  <data name="MigrateHeader" xml:space="preserve"><value>Migrate from Phone</value></data>
+  <data name="MigrateSourcePhone" xml:space="preserve"><value>Source (phone)</value></data>
+  <data name="MigrateTargetEmulator" xml:space="preserve"><value>Target (emulator)</value></data>
+  <data name="BtnPair" xml:space="preserve"><value>Pair</value></data>
+  <data name="BtnConnect" xml:space="preserve"><value>Connect</value></data>
+  <data name="BtnStartMigration" xml:space="preserve"><value>Start Migration</value></data>
+  <data name="MigrateScope" xml:space="preserve"><value>Scope</value></data>
+
+  <!-- Apps view -->
+  <data name="AppsHeader" xml:space="preserve"><value>Apps / Debloat</value></data>
+  <data name="BtnInstallApk" xml:space="preserve"><value>Install APK...</value></data>
+  <data name="BtnUninstall" xml:space="preserve"><value>Uninstall selected</value></data>
+  <data name="BtnSelectAll" xml:space="preserve"><value>Select all</value></data>
+  <data name="BtnSelectNone" xml:space="preserve"><value>Select none</value></data>
+
+  <!-- Configure view -->
+  <data name="ConfigHeader" xml:space="preserve"><value>Configure</value></data>
+  <data name="ConfigHardware" xml:space="preserve"><value>Hardware</value></data>
+  <data name="ConfigRam" xml:space="preserve"><value>RAM (MB)</value></data>
+  <data name="ConfigCpuCores" xml:space="preserve"><value>CPU cores</value></data>
+  <data name="ConfigDisk" xml:space="preserve"><value>Disk (GB)</value></data>
+  <data name="BtnSaveConfig" xml:space="preserve"><value>Save config</value></data>
+  <data name="BtnResizeDisk" xml:space="preserve"><value>Resize disk file</value></data>
+  <data name="BtnResizeAndWipe" xml:space="preserve"><value>Resize and wipe data</value></data>
+
+  <!-- Logcat view -->
+  <data name="LogcatHeader" xml:space="preserve"><value>Logcat</value></data>
+  <data name="BtnStartStream" xml:space="preserve"><value>Start stream</value></data>
+  <data name="BtnStopStream" xml:space="preserve"><value>Stop</value></data>
+  <data name="BtnClearBuffer" xml:space="preserve"><value>Clear device buffer</value></data>
+  <data name="BtnClearView" xml:space="preserve"><value>Clear view</value></data>
+  <data name="BtnSaveLog" xml:space="preserve"><value>Save log...</value></data>
+
+  <!-- Console view -->
+  <data name="ConsoleHeader" xml:space="preserve"><value>Console</value></data>
+  <data name="ConsoleSectionGps" xml:space="preserve"><value>GPS</value></data>
+  <data name="ConsoleSectionBattery" xml:space="preserve"><value>Battery</value></data>
+  <data name="ConsoleSectionTelephony" xml:space="preserve"><value>Telephony</value></data>
+  <data name="ConsoleSectionNetwork" xml:space="preserve"><value>Network conditions</value></data>
+  <data name="ConsoleSectionClipboard" xml:space="preserve"><value>Clipboard</value></data>
+  <data name="ConsoleSectionSensors" xml:space="preserve"><value>Sensors</value></data>
+  <data name="ConsoleSectionRawCommand" xml:space="preserve"><value>Raw command</value></data>
+  <data name="BtnSetLocation" xml:space="preserve"><value>Set location</value></data>
+  <data name="BtnApplyBattery" xml:space="preserve"><value>Apply battery state</value></data>
+  <data name="BtnSend" xml:space="preserve"><value>Send</value></data>
+
+  <!-- Settings dialog -->
+  <data name="SettingsTitle" xml:space="preserve"><value>Settings</value></data>
+  <data name="SettingsAppearance" xml:space="preserve"><value>Appearance</value></data>
+  <data name="SettingsTheme" xml:space="preserve"><value>Theme</value></data>
+  <data name="SettingsPaths" xml:space="preserve"><value>Paths</value></data>
+  <data name="SettingsNetwork" xml:space="preserve"><value>Network</value></data>
+  <data name="SettingsBehavior" xml:space="preserve"><value>Behavior</value></data>
+  <data name="SettingsUpdates" xml:space="preserve"><value>Updates</value></data>
+  <data name="SettingsTelemetry" xml:space="preserve"><value>Telemetry</value></data>
+  <data name="BtnSave" xml:space="preserve"><value>Save</value></data>
+
+  <!-- Common -->
+  <data name="NoPhoneConnected" xml:space="preserve"><value>No phone connected.</value></data>
+  <data name="NoEmulatorConnected" xml:space="preserve"><value>No emulator connected.</value></data>
+  <data name="BtnClose" xml:space="preserve"><value>Close</value></data>
+  <data name="BtnOk" xml:space="preserve"><value>OK</value></data>
+  <data name="Running" xml:space="preserve"><value>Running</value></data>
+</root>
