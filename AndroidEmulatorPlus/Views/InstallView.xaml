@@ -132,7 +132,8 @@
                         </Grid.ColumnDefinitions>
                         <TextBlock Style="{StaticResource SectionHeader}" Text="Diagnostics"/>
                         <StackPanel Grid.Column="1" Orientation="Horizontal">
-                            <Button Content="Open logs folder" Style="{StaticResource FlatButton}" Command="{Binding OpenLogsFolderCommand}" AutomationProperties.Name="Open logs folder"/>
+                            <Button Content="Export support bundle" Style="{StaticResource FlatButton}" Command="{Binding ExportSupportBundleCommand}" AutomationProperties.Name="Export support bundle"/>
+                            <Button Content="Open logs folder" Style="{StaticResource FlatButton}" Command="{Binding OpenLogsFolderCommand}" Margin="8,0,0,0" AutomationProperties.Name="Open logs folder"/>
                             <Button Content="Clear crash.log" Style="{StaticResource DangerButton}" Command="{Binding ClearCrashLogCommand}" Margin="8,0,0,0" AutomationProperties.Name="Clear crash log"/>
                         </StackPanel>
                     </Grid>

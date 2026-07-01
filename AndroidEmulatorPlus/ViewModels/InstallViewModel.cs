@@ -16,6 +16,7 @@ public sealed partial class InstallViewModel : ObservableObject
     private readonly HashVerificationService _hash;
     private readonly SdkmanagerService _sdkman;
     private readonly ReleasePreflightService _preflight;
+    private readonly SupportBundleService _bundle;
     private readonly LogService _log;
 
     [ObservableProperty] private string _statusText = "";
@@ -53,7 +54,7 @@ public sealed partial class InstallViewModel : ObservableObject
     private static string CrashLogPath => Path.Combine(DiagnosticsRoot, "crash.log");
     private static string DailyLogPath => Path.Combine(DiagnosticsRoot, "logs", $"app-{DateTime.Now:yyyyMMdd}.log");
 
-    public InstallViewModel(SdkLocator sdk, DownloadService dl, EmulatorService emu, HashVerificationService hash, SdkmanagerService sdkman, ReleasePreflightService preflight, LogService log)
+    public InstallViewModel(SdkLocator sdk, DownloadService dl, EmulatorService emu, HashVerificationService hash, SdkmanagerService sdkman, ReleasePreflightService preflight, SupportBundleService bundle, LogService log)
     {
         _sdk = sdk;
         _dl = dl;
@@ -61,6 +62,7 @@ public sealed partial class InstallViewModel : ObservableObject
         _hash = hash;
         _sdkman = sdkman;
         _preflight = preflight;
+        _bundle = bundle;
         _log = log;
     }
 
@@ -353,6 +355,26 @@ public sealed partial class InstallViewModel : ObservableObject
             unit++;
         }
         return unit == 0 ? $"{bytes} B" : $"{value:0.0} {units[unit]}";
+    }
+
+    [RelayCommand]
+    private async Task ExportSupportBundleAsync()
+    {
+        IsBusy = true;
+        Step = "Exporting support bundle...";
+        try
+        {
+            var path = await _bundle.ExportAsync();
+            _log.Success($"Support bundle: {path}");
+            try
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(
+                    System.IO.Path.GetDirectoryName(path)!) { UseShellExecute = true });
+            }
+            catch { }
+        }
+        catch (Exception ex) { _log.Error("Support bundle export failed: " + ex.Message); }
+        finally { IsBusy = false; Step = ""; }
     }
 
     [RelayCommand]
