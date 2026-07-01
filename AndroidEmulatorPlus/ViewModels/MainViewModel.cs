@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using AndroidEmulatorPlus.Models;
@@ -30,6 +31,12 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty] private bool _hasEmulatorAttached;
     [ObservableProperty] private bool _isRecording;
     [ObservableProperty] private string _recordButtonText = "Record";
+    [ObservableProperty] private bool _hasMultiplePhones;
+    [ObservableProperty] private bool _hasMultipleEmulators;
+    public ObservableCollection<Device> AvailablePhones { get; } = new();
+    public ObservableCollection<Device> AvailableEmulators { get; } = new();
+    [ObservableProperty] private Device? _selectedPhone;
+    [ObservableProperty] private Device? _selectedEmulator;
 
     private readonly SdkLocator _sdk;
     private readonly DeviceMonitor _devices;
@@ -98,8 +105,24 @@ public sealed partial class MainViewModel : ObservableObject
 
     private void OnDevicesChanged(IReadOnlyList<Device> devs)
     {
-        var emu = devs.FirstOrDefault(d => d.IsEmulator);
-        var phone = devs.FirstOrDefault(d => !d.IsEmulator);
+        var phones = devs.Where(d => !d.IsEmulator).ToList();
+        var emus = devs.Where(d => d.IsEmulator).ToList();
+
+        AvailablePhones.Clear();
+        foreach (var p in phones) AvailablePhones.Add(p);
+        AvailableEmulators.Clear();
+        foreach (var e in emus) AvailableEmulators.Add(e);
+
+        HasMultiplePhones = phones.Count > 1;
+        HasMultipleEmulators = emus.Count > 1;
+
+        if (SelectedPhone is null || !phones.Any(p => p.Serial == SelectedPhone.Serial))
+            SelectedPhone = phones.FirstOrDefault();
+        if (SelectedEmulator is null || !emus.Any(e => e.Serial == SelectedEmulator.Serial))
+            SelectedEmulator = emus.FirstOrDefault();
+
+        var phone = SelectedPhone;
+        var emu = SelectedEmulator;
         EmulatorStatusText = emu is null ? "no emulator" : $"{emu.Serial}";
         PhoneStatusText = phone is null ? "no phone" : phone.Display;
         PhoneDetailText = phone is null ? "No phone connected." : "Checking device trust details...";

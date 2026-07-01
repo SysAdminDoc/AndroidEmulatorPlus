@@ -55,6 +55,10 @@
                                        MaxWidth="220" TextTrimming="CharacterEllipsis"/>
                         </StackPanel>
                     </Border>
+                    <ComboBox ItemsSource="{Binding AvailablePhones}" SelectedItem="{Binding SelectedPhone}"
+                              DisplayMemberPath="Display" Margin="4" MinWidth="80" MaxWidth="200"
+                              Visibility="{Binding HasMultiplePhones, Converter={x:Static views:BoolToVisibilityConverter.Instance}}"
+                              AutomationProperties.Name="Select active phone"/>
                     <Border Style="{StaticResource StatusPill}" Margin="4" Background="{DynamicResource SurfaceBrush}" ToolTip="{Binding EmulatorDetailText}">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="Emulator" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource OverlayBrush}" VerticalAlignment="Center"/>
@@ -62,6 +66,10 @@
                                        MaxWidth="220" TextTrimming="CharacterEllipsis"/>
                         </StackPanel>
                     </Border>
+                    <ComboBox ItemsSource="{Binding AvailableEmulators}" SelectedItem="{Binding SelectedEmulator}"
+                              DisplayMemberPath="Serial" Margin="4" MinWidth="80" MaxWidth="200"
+                              Visibility="{Binding HasMultipleEmulators, Converter={x:Static views:BoolToVisibilityConverter.Instance}}"
+                              AutomationProperties.Name="Select active emulator"/>
                     <Button Style="{StaticResource SmallButton}" Margin="10,8,0,8"
                             Content="Screenshot"
                             AutomationProperties.Name="Capture emulator screenshot"
