@@ -157,6 +157,9 @@
                     <Button Content="Cancel" Style="{StaticResource DangerButton}" Margin="8,0,0,0"
                             Command="{Binding CancelCommand}"
                             Visibility="{Binding IsBusy, Converter={x:Static views:BoolToVisibilityConverter.Instance}}"/>
+                    <Button Content="Retry failed" Style="{StaticResource FlatButton}" Margin="8,0,0,0"
+                            Command="{Binding RetryFailedCommand}"
+                            Visibility="{Binding HasFailedReceipt, Converter={x:Static views:BoolToVisibilityConverter.Instance}}"/>
                 </StackPanel>
                 <ProgressBar Grid.Column="1" Margin="14,0" VerticalAlignment="Center"
                              Value="{Binding ProgressFraction}" Minimum="0" Maximum="1"/>
@@ -164,6 +167,8 @@
                            MaxWidth="280" TextTrimming="CharacterEllipsis"/>
             </Grid>
             <TextBlock Text="{Binding Summary}" Foreground="{DynamicResource GreenBrush}" Margin="0,6,0,0"/>
+            <TextBlock Text="{Binding FailedReceiptText}" Foreground="{DynamicResource YellowBrush}" Margin="0,4,0,0"
+                       Visibility="{Binding HasFailedReceipt, Converter={x:Static views:BoolToVisibilityConverter.Instance}}"/>
 
             <Border Style="{StaticResource Card}" Margin="0,12,0,0">
                 <StackPanel>

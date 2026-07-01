@@ -1,9 +1,44 @@
 using System.IO;
+using System.Security.Cryptography;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using AndroidEmulatorPlus.Helpers;
 
 namespace AndroidEmulatorPlus.Services;
 
 public sealed record TransferResult(string Package, bool Success, long SizeBytes, string Detail);
+
+public sealed class MigrationLegReceipt
+{
+    [JsonPropertyName("leg")] public string Leg { get; init; } = "";
+    [JsonPropertyName("success")] public bool Success { get; init; }
+    [JsonPropertyName("sizeBytes")] public long SizeBytes { get; init; }
+    [JsonPropertyName("detail")] public string Detail { get; init; } = "";
+}
+
+public sealed class MigrationPackageReceipt
+{
+    [JsonPropertyName("package")] public string Package { get; init; } = "";
+    [JsonPropertyName("success")] public bool Success { get; init; }
+    [JsonPropertyName("legs")] public List<MigrationLegReceipt> Legs { get; init; } = [];
+}
+
+public sealed class MigrationReceipt
+{
+    [JsonPropertyName("timestamp")] public string Timestamp { get; init; } = "";
+    [JsonPropertyName("sourceSerial")] public string SourceSerial { get; init; } = "";
+    [JsonPropertyName("targetSerial")] public string TargetSerial { get; init; } = "";
+    [JsonPropertyName("scopes")] public List<string> Scopes { get; init; } = [];
+    [JsonPropertyName("packages")] public List<MigrationPackageReceipt> Packages { get; init; } = [];
+    [JsonPropertyName("totalBytes")] public long TotalBytes { get; init; }
+    [JsonPropertyName("successCount")] public int SuccessCount { get; init; }
+    [JsonPropertyName("failCount")] public int FailCount { get; init; }
+    [JsonPropertyName("cancelled")] public bool Cancelled { get; init; }
+
+    [JsonIgnore]
+    public IReadOnlyList<string> FailedPackages =>
+        Packages.Where(p => !p.Success).Select(p => p.Package).ToList();
+}
 
 /// <summary>Port of the bash transfer pipeline: APK install-multiple + tar /data/data + optional ext storage.</summary>
 public sealed class MigrationService
@@ -294,6 +329,60 @@ public sealed class MigrationService
         {
             _log.Warning($"Remote cleanup failed for {serial}:{remotePath}: {ex.Message}");
         }
+    }
+
+    public static string ReceiptDirectory => Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "AndroidEmulatorPlus", "logs");
+
+    public string WriteReceipt(MigrationReceipt receipt)
+    {
+        Directory.CreateDirectory(ReceiptDirectory);
+        var name = $"migration-{DateTime.Now:yyyyMMdd-HHmmss}.json";
+        var path = Path.Combine(ReceiptDirectory, name);
+        var json = JsonSerializer.Serialize(receipt, new JsonSerializerOptions { WriteIndented = true });
+        File.WriteAllText(path, json);
+        _log.Info($"Migration receipt: {path}");
+        return path;
+    }
+
+    public static MigrationReceipt? ReadLatestReceipt()
+    {
+        if (!Directory.Exists(ReceiptDirectory)) return null;
+        var latest = Directory.EnumerateFiles(ReceiptDirectory, "migration-*.json")
+            .OrderByDescending(f => f)
+            .FirstOrDefault();
+        if (latest is null) return null;
+        try
+        {
+            var json = File.ReadAllText(latest);
+            return JsonSerializer.Deserialize<MigrationReceipt>(json);
+        }
+        catch { return null; }
+    }
+
+    public static MigrationReceipt BuildReceipt(
+        string sourceSerial,
+        string targetSerial,
+        IReadOnlyList<string> scopes,
+        IReadOnlyList<MigrationPackageReceipt> packages,
+        bool cancelled)
+    {
+        var totalBytes = packages.SelectMany(p => p.Legs).Sum(l => l.SizeBytes);
+        var successCount = packages.Count(p => p.Success);
+        var failCount = packages.Count(p => !p.Success);
+        return new MigrationReceipt
+        {
+            Timestamp = DateTime.UtcNow.ToString("O"),
+            SourceSerial = sourceSerial,
+            TargetSerial = targetSerial,
+            Scopes = scopes.ToList(),
+            Packages = packages.ToList(),
+            TotalBytes = totalBytes,
+            SuccessCount = successCount,
+            FailCount = failCount,
+            Cancelled = cancelled,
+        };
     }
 
     private static string ParseFailReason(string output)

@@ -35,6 +35,8 @@ public sealed partial class MigrateViewModel : ObservableObject
     [ObservableProperty] private string _pairCode = "";
     [ObservableProperty] private string _connectHost = "";
     [ObservableProperty] private string _pairStatus = "";
+    [ObservableProperty] private bool _hasFailedReceipt;
+    [ObservableProperty] private string _failedReceiptText = "";
 
     private CancellationTokenSource? _cts;
     private CancellationTokenSource? _refreshCts;
@@ -219,65 +221,127 @@ public sealed partial class MigrateViewModel : ObservableObject
         var sel = Packages.Where(p => p.IsSelected).ToList();
         if (sel.Count == 0) { _log.Warning("Select at least one package."); return; }
 
+        await RunMigrationAsync(phone.Serial, emu.Serial, sel);
+    }
+
+    [RelayCommand]
+    private async Task RetryFailedAsync()
+    {
+        var receipt = MigrationService.ReadLatestReceipt();
+        if (receipt is null || receipt.FailedPackages.Count == 0)
+        {
+            _log.Info("No failed packages to retry.");
+            return;
+        }
+
+        var phone = _monitor.Current.FirstOrDefault(d => !d.IsEmulator);
+        var emu = _monitor.Current.FirstOrDefault(d => d.IsEmulator);
+        if (phone is null || emu is null) { _log.Warning("Need both a phone and an emulator connected."); return; }
+
+        var failedSet = new HashSet<string>(receipt.FailedPackages, StringComparer.Ordinal);
+        var toRetry = Packages.Where(p => failedSet.Contains(p.Package)).ToList();
+        if (toRetry.Count == 0)
+        {
+            _log.Warning("Failed packages from last receipt not found in current package list.");
+            return;
+        }
+
+        _log.Info($"Retrying {toRetry.Count} failed package(s) from last migration.");
+        await RunMigrationAsync(phone.Serial, emu.Serial, toRetry);
+    }
+
+    private async Task RunMigrationAsync(string phoneSerial, string emuSerial, IReadOnlyList<AndroidApp> sel)
+    {
         IsBusy = true;
         _refreshCts?.Cancel();
         _cts = new CancellationTokenSource();
         var ct = _cts.Token;
         int ok = 0, fail = 0; long totalBytes = 0;
         _mig.ForceStopOnPhone = ForceStopOnPhone;
+        var packageReceipts = new List<MigrationPackageReceipt>();
+        var scopes = new List<string>();
+        if (DoApk) scopes.Add("apk");
+        if (DoInternal) scopes.Add("internal");
+        if (DoExternal) scopes.Add("external");
+        if (DoObb) scopes.Add("obb");
+        bool cancelled = false;
         try
         {
             int idx = 0;
             foreach (var p in sel)
             {
-                if (ct.IsCancellationRequested) break;
+                if (ct.IsCancellationRequested) { cancelled = true; break; }
                 idx++;
                 StepText = $"{idx}/{sel.Count}  {p.Package}";
                 ProgressFraction = (double)idx / sel.Count;
 
+                var legs = new List<MigrationLegReceipt>();
+                bool pkgOk = true;
+
                 if (DoApk)
                 {
-                    var r = await _mig.TransferApkAsync(phone.Serial, emu.Serial, p.Package, ct);
+                    var r = await _mig.TransferApkAsync(phoneSerial, emuSerial, p.Package, ct);
+                    legs.Add(new MigrationLegReceipt { Leg = "apk", Success = r.Success, SizeBytes = r.SizeBytes, Detail = r.Detail });
                     if (r.Success) _log.Info($"APK ok {p.Package} ({r.Detail})");
-                    else { _log.Warning($"APK fail {p.Package}: {r.Detail}"); fail++; continue; }
+                    else { _log.Warning($"APK fail {p.Package}: {r.Detail}"); fail++; pkgOk = false; }
                 }
 
-                if (DoInternal)
+                if (pkgOk && DoInternal)
                 {
                     if (p.AllowBackup && !ForceDataForNoBackup)
-                    {
-                        p.AllowBackup = await _mig.AllowsBackupAsync(phone.Serial, p.Package, ct);
-                    }
+                        p.AllowBackup = await _mig.AllowsBackupAsync(phoneSerial, p.Package, ct);
 
                     if (!p.AllowBackup && !ForceDataForNoBackup)
                     {
                         _log.Warning($"data skip {p.Package}: allowBackup=false (toggle 'Force-migrate no-backup apps' to override)");
+                        legs.Add(new MigrationLegReceipt { Leg = "internal", Success = true, SizeBytes = 0, Detail = "skipped: allowBackup=false" });
                     }
                     else
                     {
-                        var r = await _mig.TransferInternalDataAsync(phone.Serial, emu.Serial, p.Package, ct);
+                        var r = await _mig.TransferInternalDataAsync(phoneSerial, emuSerial, p.Package, ct);
                         totalBytes += r.SizeBytes;
+                        legs.Add(new MigrationLegReceipt { Leg = "internal", Success = r.Success, SizeBytes = r.SizeBytes, Detail = r.Detail });
                         if (r.Success) _log.Info($"data ok {p.Package} ({r.SizeBytes / 1024 / 1024} MB, {r.Detail})");
-                        else _log.Warning($"data fail {p.Package}: {r.Detail}");
+                        else { _log.Warning($"data fail {p.Package}: {r.Detail}"); pkgOk = false; }
                     }
                 }
 
                 if (DoExternal)
                 {
-                    var r = await _mig.TransferExternalDataAsync(phone.Serial, emu.Serial, p.Package, ct);
+                    var r = await _mig.TransferExternalDataAsync(phoneSerial, emuSerial, p.Package, ct);
                     totalBytes += r.SizeBytes;
+                    legs.Add(new MigrationLegReceipt { Leg = "external", Success = r.Success, SizeBytes = r.SizeBytes, Detail = r.Detail });
                     if (r.Success && r.SizeBytes > 0) _log.Info($"ext ok {p.Package} ({r.SizeBytes / 1024 / 1024} MB)");
                 }
                 if (DoObb)
                 {
-                    var r = await _mig.TransferObbAsync(phone.Serial, emu.Serial, p.Package, ct);
+                    var r = await _mig.TransferObbAsync(phoneSerial, emuSerial, p.Package, ct);
                     totalBytes += r.SizeBytes;
+                    legs.Add(new MigrationLegReceipt { Leg = "obb", Success = r.Success, SizeBytes = r.SizeBytes, Detail = r.Detail });
                     if (r.Success && r.SizeBytes > 0) _log.Info($"obb ok {p.Package} ({r.SizeBytes / 1024 / 1024} MB)");
                 }
-                ok++;
+
+                packageReceipts.Add(new MigrationPackageReceipt
+                {
+                    Package = p.Package,
+                    Success = pkgOk && legs.All(l => l.Success),
+                    Legs = legs,
+                });
+                if (pkgOk) ok++;
             }
-            Summary = $"{ok} ok, {fail} fail, {totalBytes / 1024 / 1024} MB data" + (ct.IsCancellationRequested ? "  (cancelled)" : "");
-            _log.Success("Migration " + (ct.IsCancellationRequested ? "cancelled. " : "finished. ") + Summary);
+
+            cancelled = cancelled || ct.IsCancellationRequested;
+            Summary = $"{ok} ok, {fail} fail, {totalBytes / 1024 / 1024} MB data" + (cancelled ? "  (cancelled)" : "");
+            _log.Success("Migration " + (cancelled ? "cancelled. " : "finished. ") + Summary);
+
+            var receipt = MigrationService.BuildReceipt(phoneSerial, emuSerial, scopes, packageReceipts, cancelled);
+            try { _mig.WriteReceipt(receipt); }
+            catch (Exception ex) { _log.Warning("Failed to write migration receipt: " + ex.Message); }
+
+            HasFailedReceipt = receipt.FailCount > 0;
+            FailedReceiptText = HasFailedReceipt
+                ? $"{receipt.FailCount} package(s) failed. Use 'Retry failed' to re-run."
+                : "";
         }
         catch (OperationCanceledException)
         {

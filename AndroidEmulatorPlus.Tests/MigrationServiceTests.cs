@@ -67,6 +67,51 @@ public class MigrationServiceTests
         Assert.Contains(("emu", "/sdcard/com.example.app.tar", true), adb.Cleanup);
     }
 
+    [Fact]
+    public void BuildReceipt_tracks_per_package_legs_and_failures()
+    {
+        var packages = new List<MigrationPackageReceipt>
+        {
+            new()
+            {
+                Package = "com.example.ok",
+                Success = true,
+                Legs = [
+                    new() { Leg = "apk", Success = true, SizeBytes = 1000, Detail = "1 apk" },
+                    new() { Leg = "internal", Success = true, SizeBytes = 5000, Detail = "uid 10001" },
+                ],
+            },
+            new()
+            {
+                Package = "com.example.fail",
+                Success = false,
+                Legs = [
+                    new() { Leg = "apk", Success = true, SizeBytes = 2000, Detail = "1 apk" },
+                    new() { Leg = "internal", Success = false, SizeBytes = 0, Detail = "tar failed" },
+                ],
+            },
+        };
+
+        var receipt = MigrationService.BuildReceipt("phone1", "emu1", ["apk", "internal"], packages, cancelled: false);
+
+        Assert.Equal("phone1", receipt.SourceSerial);
+        Assert.Equal("emu1", receipt.TargetSerial);
+        Assert.Equal(2, receipt.Packages.Count);
+        Assert.Equal(1, receipt.SuccessCount);
+        Assert.Equal(1, receipt.FailCount);
+        Assert.Equal(8000, receipt.TotalBytes);
+        Assert.False(receipt.Cancelled);
+        Assert.Single(receipt.FailedPackages);
+        Assert.Equal("com.example.fail", receipt.FailedPackages[0]);
+    }
+
+    [Fact]
+    public void BuildReceipt_cancelled_flag()
+    {
+        var receipt = MigrationService.BuildReceipt("p", "e", ["apk"], [], cancelled: true);
+        Assert.True(receipt.Cancelled);
+    }
+
     private sealed class FakeAdb : AdbService
     {
         public FakeAdb() : base(new SdkLocator(), new LogService()) { }
