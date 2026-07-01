@@ -19,6 +19,7 @@ public sealed partial class AvdViewModel : ObservableObject
     private readonly SdkmanagerService _sdkman;
     private readonly SnapshotService _snapshots;
     private readonly AvdTemplateService _templates;
+    private readonly HandoffExportService _handoff;
 
     public ObservableCollection<Avd> Avds { get; } = new();
     [ObservableProperty] private Avd? _selected;
@@ -51,7 +52,7 @@ public sealed partial class AvdViewModel : ObservableObject
     };
 
     public AvdViewModel(AvdService avds, EmulatorService emu, AdbService adb,
-        DeviceMonitor monitor, LogService log, SdkLocator sdk, SdkmanagerService sdkman, SnapshotService snapshots, AvdTemplateService templates)
+        DeviceMonitor monitor, LogService log, SdkLocator sdk, SdkmanagerService sdkman, SnapshotService snapshots, AvdTemplateService templates, HandoffExportService handoff)
     {
         _avds = avds;
         _emu = emu;
@@ -62,6 +63,7 @@ public sealed partial class AvdViewModel : ObservableObject
         _sdkman = sdkman;
         _snapshots = snapshots;
         _templates = templates;
+        _handoff = handoff;
         _monitor.Changed += _devices => _ = RefreshRunningStateAsync();
     }
 
@@ -411,6 +413,30 @@ public sealed partial class AvdViewModel : ObservableObject
             await _templates.ApplyTemplateAsync(avdName.Trim(), template);
             await RefreshAsync();
         }
+        finally { IsBusy = false; }
+    }
+
+    [RelayCommand]
+    private async Task ExportHandoffAsync(Avd? avd)
+    {
+        if (IsBusy || avd is null) return;
+        if (avd.RunningSerial is null) { _log.Warning("Launch this AVD first to export its environment."); return; }
+
+        var dlg = new Microsoft.Win32.SaveFileDialog
+        {
+            Title = "Export environment handoff",
+            Filter = "JSON (*.json)|*.json|All files|*.*",
+            FileName = $"{avd.Name}-handoff.json",
+        };
+        if (dlg.ShowDialog() != true) return;
+
+        IsBusy = true;
+        try
+        {
+            var descriptor = await _handoff.BuildDescriptorAsync(avd.RunningSerial);
+            _handoff.ExportJson(descriptor, dlg.FileName);
+        }
+        catch (System.Exception ex) { _log.Error("Handoff export failed: " + ex.Message); }
         finally { IsBusy = false; }
     }
 }

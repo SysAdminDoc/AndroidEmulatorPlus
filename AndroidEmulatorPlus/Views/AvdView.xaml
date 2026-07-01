@@ -93,6 +93,9 @@
                                                 <MenuItem Header="Save as template..."
                                                           Command="{Binding DataContext.ExportTemplateCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                           CommandParameter="{Binding}"/>
+                                                <MenuItem Header="Export handoff (Appium/Maestro)..."
+                                                          Command="{Binding DataContext.ExportHandoffCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                          CommandParameter="{Binding}"/>
                                                 <Separator/>
                                                 <MenuItem Header="Delete AVD..."
                                                           Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
