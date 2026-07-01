@@ -152,7 +152,11 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0" Orientation="Horizontal">
-                    <Button Content="Start Migration" Style="{StaticResource PrimaryButton}" Command="{Binding MigrateCommand}"
+                    <Button Content="Dry run" Style="{StaticResource FlatButton}" Command="{Binding DryRunCommand}"
+                            IsEnabled="{Binding IsBusy, Converter={x:Static views:NotBoolConverter.Instance}}"
+                            ToolTip="Estimate transfer size, check root status, and validate feasibility without moving any data."/>
+                    <Button Content="Start Migration" Style="{StaticResource PrimaryButton}" Margin="8,0,0,0"
+                            Command="{Binding MigrateCommand}"
                             IsEnabled="{Binding IsBusy, Converter={x:Static views:NotBoolConverter.Instance}}"/>
                     <Button Content="Cancel" Style="{StaticResource DangerButton}" Margin="8,0,0,0"
                             Command="{Binding CancelCommand}"
@@ -166,6 +170,9 @@
                 <TextBlock Grid.Column="2" Text="{Binding StepText}" Foreground="{DynamicResource OverlayBrush}" VerticalAlignment="Center"
                            MaxWidth="280" TextTrimming="CharacterEllipsis"/>
             </Grid>
+            <TextBlock Text="{Binding DryRunText}" Foreground="{DynamicResource SubtextBrush}" Margin="0,6,0,0"
+                       TextWrapping="Wrap" FontSize="12"
+                       Visibility="{Binding HasDryRunResult, Converter={x:Static views:BoolToVisibilityConverter.Instance}}"/>
             <TextBlock Text="{Binding Summary}" Foreground="{DynamicResource GreenBrush}" Margin="0,6,0,0"/>
             <TextBlock Text="{Binding FailedReceiptText}" Foreground="{DynamicResource YellowBrush}" Margin="0,4,0,0"
                        Visibility="{Binding HasFailedReceipt, Converter={x:Static views:BoolToVisibilityConverter.Instance}}"/>

@@ -112,11 +112,41 @@ public class MigrationServiceTests
         Assert.True(receipt.Cancelled);
     }
 
+    [Fact]
+    public async Task DryRun_blocks_when_phone_not_rooted_and_internal_selected()
+    {
+        var adb = new FakeAdb { PhoneRooted = false, EmuRooted = true };
+        var svc = new MigrationService(adb, new LogService());
+
+        var result = await svc.DryRunAsync("phone", "emu", ["com.example.app"],
+            doApk: true, doInternal: true, doExternal: false, doObb: false,
+            forceDataForNoBackup: false, CancellationToken.None);
+
+        Assert.False(result.CanProceed);
+        Assert.Contains(result.Blockers, b => b.Contains("Phone is not rooted"));
+    }
+
+    [Fact]
+    public async Task DryRun_passes_when_apk_only()
+    {
+        var adb = new FakeAdb { PhoneRooted = false, EmuRooted = false };
+        var svc = new MigrationService(adb, new LogService());
+
+        var result = await svc.DryRunAsync("phone", "emu", ["com.example.app"],
+            doApk: true, doInternal: false, doExternal: false, doObb: false,
+            forceDataForNoBackup: false, CancellationToken.None);
+
+        Assert.True(result.CanProceed);
+        Assert.Equal(1, result.TotalPackages);
+    }
+
     private sealed class FakeAdb : AdbService
     {
         public FakeAdb() : base(new SdkLocator(), new LogService()) { }
 
         public string Failure { get; set; } = "";
+        public bool PhoneRooted { get; set; } = true;
+        public bool EmuRooted { get; set; } = true;
         public List<(string serial, string remote, bool root)> Cleanup { get; } = new();
 
         public override Task<ProcessResult> ShellAsync(string serial, string command, CancellationToken ct = default)
@@ -129,6 +159,9 @@ public class MigrationServiceTests
             if (command.Contains("tar --help", StringComparison.Ordinal)) return Task.FromResult(new ProcessResult(0, "exclude\n", ""));
             if (command.Contains("stat -c %s", StringComparison.Ordinal)) return Task.FromResult(new ProcessResult(0, "2048\n", ""));
             if (command.Contains("am force-stop", StringComparison.Ordinal)) return Ok();
+            if (command.Contains("pm path", StringComparison.Ordinal)) return Task.FromResult(new ProcessResult(0, "package:/data/app/com.example.app/base.apk\n", ""));
+            if (command.Contains("pm dump", StringComparison.Ordinal)) return Task.FromResult(new ProcessResult(0, "flags=[ ALLOW_BACKUP ]\n", ""));
+            if (command.Contains("df /data", StringComparison.Ordinal)) return Task.FromResult(new ProcessResult(0, "1048576\n", ""));
             return Ok();
         }
 
@@ -139,6 +172,15 @@ public class MigrationServiceTests
                 Cleanup.Add((serial, ExtractQuotedRemote(command), true));
                 return Ok();
             }
+            if (command.Contains("id", StringComparison.Ordinal) && !command.Contains("tar") && !command.Contains("stat"))
+            {
+                var rooted = serial == "phone" ? PhoneRooted : EmuRooted;
+                return Task.FromResult(rooted
+                    ? new ProcessResult(0, "uid=0(root)\n", "")
+                    : new ProcessResult(1, "", "Permission denied"));
+            }
+            if (command.Contains("du -sb", StringComparison.Ordinal))
+                return Task.FromResult(new ProcessResult(0, "4096\n", ""));
             if (command.Contains("tar --exclude", StringComparison.Ordinal)) return Ok();
             if (command.Contains("stat -c %u", StringComparison.Ordinal))
                 return Task.FromResult(Failure == "uid"

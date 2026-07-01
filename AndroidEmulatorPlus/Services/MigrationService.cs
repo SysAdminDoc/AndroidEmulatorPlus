@@ -361,6 +361,102 @@ public sealed class MigrationService
         catch { return null; }
     }
 
+    public sealed record DryRunResult(
+        int TotalPackages,
+        int NoBackupCount,
+        long EstimatedSizeBytes,
+        bool PhoneRooted,
+        bool EmulatorRooted,
+        IReadOnlyList<string> Scopes,
+        IReadOnlyList<string> Blockers,
+        string Summary)
+    {
+        public bool CanProceed => Blockers.Count == 0;
+    }
+
+    public async Task<DryRunResult> DryRunAsync(
+        string phoneSerial,
+        string emuSerial,
+        IReadOnlyList<string> packages,
+        bool doApk,
+        bool doInternal,
+        bool doExternal,
+        bool doObb,
+        bool forceDataForNoBackup,
+        CancellationToken ct)
+    {
+        var blockers = new List<string>();
+        var scopes = new List<string>();
+        if (doApk) scopes.Add("apk");
+        if (doInternal) scopes.Add("internal");
+        if (doExternal) scopes.Add("external");
+        if (doObb) scopes.Add("obb");
+
+        var phoneRooted = await _adb.IsRootedAsync(phoneSerial, ct);
+        var emuRooted = await _adb.IsRootedAsync(emuSerial, ct);
+
+        if (doInternal && !phoneRooted)
+            blockers.Add("Phone is not rooted — internal data copy requires root on the source.");
+        if (doInternal && !emuRooted)
+            blockers.Add("Emulator is not rooted — internal data restore requires root on the target.");
+
+        int noBackupCount = 0;
+        long estimatedSize = 0;
+
+        foreach (var pkg in packages)
+        {
+            ct.ThrowIfCancellationRequested();
+            if (doApk)
+            {
+                var paths = await _adb.PackagePathsAsync(phoneSerial, pkg, ct);
+                foreach (var path in paths)
+                {
+                    var stat = await _adb.ShellAsync(phoneSerial, $"stat -c %s {Q(path)}", ct);
+                    if (long.TryParse(stat.StdOut.Trim(), out var apkSize))
+                        estimatedSize += apkSize;
+                }
+            }
+
+            if (doInternal && phoneRooted)
+            {
+                var dataSize = await _adb.DataSizeAsync(phoneSerial, pkg, ct);
+                estimatedSize += dataSize;
+            }
+
+            if (!await AllowsBackupAsync(phoneSerial, pkg, ct))
+                noBackupCount++;
+        }
+
+        if (doInternal && noBackupCount > 0 && !forceDataForNoBackup)
+            _log.Detail($"{noBackupCount} package(s) have allowBackup=false; their internal data will be skipped.");
+
+        var emuFree = await GetDeviceFreeSpaceAsync(emuSerial, ct);
+        if (emuFree.HasValue && estimatedSize > emuFree.Value)
+            blockers.Add($"Estimated transfer ({estimatedSize / 1024 / 1024} MB) exceeds emulator free space ({emuFree.Value / 1024 / 1024} MB).");
+
+        var summary = $"{packages.Count} package(s), scopes: [{string.Join(", ", scopes)}], " +
+                       $"est. {estimatedSize / 1024 / 1024} MB, " +
+                       $"phone root: {(phoneRooted ? "yes" : "no")}, " +
+                       $"emu root: {(emuRooted ? "yes" : "no")}, " +
+                       $"{noBackupCount} no-backup" +
+                       (blockers.Count > 0 ? $", BLOCKED: {string.Join("; ", blockers)}" : "");
+
+        return new DryRunResult(packages.Count, noBackupCount, estimatedSize,
+            phoneRooted, emuRooted, scopes, blockers, summary);
+    }
+
+    private async Task<long?> GetDeviceFreeSpaceAsync(string serial, CancellationToken ct)
+    {
+        try
+        {
+            var r = await _adb.ShellAsync(serial, "df /data | tail -1 | awk '{print $4}'", ct);
+            if (long.TryParse(r.StdOut.Trim(), out var kb))
+                return kb * 1024;
+        }
+        catch { }
+        return null;
+    }
+
     public static MigrationReceipt BuildReceipt(
         string sourceSerial,
         string targetSerial,

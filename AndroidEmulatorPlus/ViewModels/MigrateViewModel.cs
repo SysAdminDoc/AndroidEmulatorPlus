@@ -37,6 +37,9 @@ public sealed partial class MigrateViewModel : ObservableObject
     [ObservableProperty] private string _pairStatus = "";
     [ObservableProperty] private bool _hasFailedReceipt;
     [ObservableProperty] private string _failedReceiptText = "";
+    [ObservableProperty] private string _dryRunText = "";
+    [ObservableProperty] private bool _hasDryRunResult;
+    [ObservableProperty] private bool _dryRunBlocked;
 
     private CancellationTokenSource? _cts;
     private CancellationTokenSource? _refreshCts;
@@ -209,6 +212,43 @@ public sealed partial class MigrateViewModel : ObservableObject
     private void SelectNone()
     {
         foreach (var p in Packages) p.IsSelected = false;
+    }
+
+    [RelayCommand]
+    private async Task DryRunAsync()
+    {
+        var phone = _monitor.Current.FirstOrDefault(d => !d.IsEmulator);
+        var emu = _monitor.Current.FirstOrDefault(d => d.IsEmulator);
+        if (phone is null || emu is null) { _log.Warning("Need both a phone and an emulator connected."); return; }
+        var sel = Packages.Where(p => p.IsSelected).Select(p => p.Package).ToList();
+        if (sel.Count == 0) { _log.Warning("Select at least one package."); return; }
+
+        IsBusy = true;
+        StepText = "Running dry-run preflight...";
+        _cts = new CancellationTokenSource();
+        try
+        {
+            var result = await _mig.DryRunAsync(phone.Serial, emu.Serial, sel,
+                DoApk, DoInternal, DoExternal, DoObb, ForceDataForNoBackup, _cts.Token);
+            HasDryRunResult = true;
+            DryRunBlocked = !result.CanProceed;
+            DryRunText = result.Summary;
+            _log.Info("Dry-run: " + result.Summary);
+        }
+        catch (OperationCanceledException) { }
+        catch (Exception ex)
+        {
+            DryRunText = "Dry-run failed: " + ex.Message;
+            HasDryRunResult = true;
+            DryRunBlocked = false;
+        }
+        finally
+        {
+            IsBusy = false;
+            StepText = "";
+            _cts?.Dispose();
+            _cts = null;
+        }
     }
 
     [RelayCommand]
