@@ -10,6 +10,8 @@ public sealed partial class ConfigViewModel : ObservableObject
 {
     private readonly AvdService _avds;
     private readonly ConfigService _cfg;
+    private readonly AdbService _adb;
+    private readonly DeviceMonitor _monitor;
     private readonly LogService _log;
 
     public ObservableCollection<Avd> Avds { get; } = new();
@@ -25,6 +27,8 @@ public sealed partial class ConfigViewModel : ObservableObject
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private string _gpuMode = "host";
     [ObservableProperty] private ScreenPreset? _screenPreset;
+    [ObservableProperty] private string _perfText = "";
+    [ObservableProperty] private bool _hasPerfData;
 
     /// <summary>Choices for the GPU mode picker (A-22).</summary>
     public IReadOnlyList<string> GpuModes { get; } = new[]
@@ -35,10 +39,12 @@ public sealed partial class ConfigViewModel : ObservableObject
     /// <summary>Choices for the screen preset picker (A-21).</summary>
     public IReadOnlyList<ScreenPreset> ScreenPresets { get; } = ScreenPreset.All;
 
-    public ConfigViewModel(AvdService avds, ConfigService cfg, LogService log)
+    public ConfigViewModel(AvdService avds, ConfigService cfg, AdbService adb, DeviceMonitor monitor, LogService log)
     {
         _avds = avds;
         _cfg = cfg;
+        _adb = adb;
+        _monitor = monitor;
         _log = log;
     }
 
@@ -127,6 +133,47 @@ public sealed partial class ConfigViewModel : ObservableObject
         };
         _cfg.UpdateConfig(Selected, updates);
         _log.Success($"Applied config to '{Selected.Name}'. Some changes need a relaunch.");
+    }
+
+    [RelayCommand]
+    private async Task RefreshPerfAsync()
+    {
+        var emu = _monitor.Current.FirstOrDefault(d => d.IsEmulator && d.IsOnline);
+        if (emu is null) { PerfText = "No emulator attached."; HasPerfData = true; return; }
+        try
+        {
+            var memR = await _adb.ShellAsync(emu.Serial, "cat /proc/meminfo | head -3");
+            var cpuR = await _adb.ShellAsync(emu.Serial, "top -bn1 | head -5");
+            var uptimeR = await _adb.ShellAsync(emu.Serial, "uptime");
+
+            var lines = new List<string>();
+            if (uptimeR.Success)
+                lines.Add("Uptime: " + uptimeR.StdOut.Trim());
+
+            foreach (var l in memR.StdOut.Split('\n'))
+            {
+                var trimmed = l.Trim();
+                if (!string.IsNullOrEmpty(trimmed))
+                    lines.Add(trimmed);
+            }
+
+            foreach (var l in cpuR.StdOut.Split('\n'))
+            {
+                var trimmed = l.Trim();
+                if (trimmed.Contains("cpu", StringComparison.OrdinalIgnoreCase)
+                    || trimmed.Contains("mem", StringComparison.OrdinalIgnoreCase)
+                    || trimmed.Contains("%idle", StringComparison.OrdinalIgnoreCase))
+                    lines.Add(trimmed);
+            }
+
+            PerfText = string.Join("\n", lines);
+            HasPerfData = true;
+        }
+        catch (Exception ex)
+        {
+            PerfText = "Failed: " + ex.Message;
+            HasPerfData = true;
+        }
     }
 
     [RelayCommand]
