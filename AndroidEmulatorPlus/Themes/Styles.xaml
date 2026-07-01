@@ -562,6 +562,8 @@
                 <ControlTemplate TargetType="{x:Type Expander}">
                     <StackPanel>
                         <ToggleButton x:Name="HeaderToggle"
+                                      Content="{TemplateBinding Header}"
+                                      ContentTemplate="{TemplateBinding HeaderTemplate}"
                                       IsChecked="{Binding IsExpanded, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
                                       Background="Transparent"
                                       BorderThickness="0"

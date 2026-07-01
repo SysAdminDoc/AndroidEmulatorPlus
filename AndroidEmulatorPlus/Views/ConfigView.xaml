@@ -119,8 +119,10 @@
                         <Button Content="Save config" Style="{StaticResource PrimaryButton}" Command="{Binding ApplyCommand}" Margin="0,0,8,8"
                                 AutomationProperties.Name="Save configuration"/>
                         <Button Content="Resize disk file" Style="{StaticResource FlatButton}" Command="{Binding ResizeDiskCommand}" CommandParameter="resize" Margin="0,0,8,8"
+                                IsEnabled="{Binding IsBusy, Converter={x:Static views:NotBoolConverter.Instance}}"
                                 AutomationProperties.Name="Resize disk file"/>
                         <Button Content="Resize and wipe data" Style="{StaticResource DangerButton}" Command="{Binding ResizeDiskCommand}" CommandParameter="wipe" Margin="0,0,8,8"
+                                IsEnabled="{Binding IsBusy, Converter={x:Static views:NotBoolConverter.Instance}}"
                                 AutomationProperties.Name="Resize disk and wipe data"/>
                     </WrapPanel>
                     <TextBlock Foreground="{DynamicResource OverlayBrush}" FontSize="12" Margin="0,8,0,0" TextWrapping="Wrap">

@@ -47,8 +47,8 @@
                                             <TextBlock Text="Running" FontSize="11" Foreground="{DynamicResource CrustBrush}" FontWeight="SemiBold"/>
                                         </Border>
                                     </StackPanel>
-                                    <TextBlock Text="{Binding Subtitle}" Foreground="{DynamicResource SubtextBrush}" Margin="0,4,0,0"/>
-                                    <TextBlock Text="{Binding SystemImage}" FontFamily="Cascadia Mono, Consolas" FontSize="11" Foreground="{DynamicResource OverlayBrush}" Margin="0,4,0,0"/>
+                                    <TextBlock Text="{Binding Subtitle}" Foreground="{DynamicResource SubtextBrush}" Margin="0,4,0,0" TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Text="{Binding SystemImage}" FontFamily="Cascadia Mono, Consolas" FontSize="11" Foreground="{DynamicResource OverlayBrush}" Margin="0,4,0,0" TextTrimming="CharacterEllipsis"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                                     <Button Content="Launch" Style="{StaticResource PrimaryButton}"

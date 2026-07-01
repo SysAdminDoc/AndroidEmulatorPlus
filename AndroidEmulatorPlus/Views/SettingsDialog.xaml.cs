@@ -119,6 +119,11 @@ public partial class SettingsDialog : Window
                 : FindResource("RedBrush") as System.Windows.Media.Brush ?? Foreground;
             FeedHealthText.Text = health.Summary;
         }
+        catch (Exception ex)
+        {
+            FeedHealthText.Foreground = FindResource("RedBrush") as System.Windows.Media.Brush ?? Foreground;
+            FeedHealthText.Text = $"Feed check failed: {ex.Message}";
+        }
         finally
         {
             FeedHealthButton.IsEnabled = true;
