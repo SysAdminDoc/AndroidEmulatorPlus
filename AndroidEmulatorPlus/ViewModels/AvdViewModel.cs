@@ -26,6 +26,7 @@ public sealed partial class AvdViewModel : ObservableObject
     [ObservableProperty] private Avd? _selected;
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private bool _hasAvds;
+    private int _runningStateGeneration;
 
     // Create form
     [ObservableProperty] private string _newName = "MyEmulator";
@@ -142,18 +143,20 @@ public sealed partial class AvdViewModel : ObservableObject
         return (api, rank, img);
     }
 
-    /// <summary>For each currently-attached emulator, resolve which AVD it is and tag the row.</summary>
     private async Task RefreshRunningStateAsync()
     {
+        var gen = Interlocked.Increment(ref _runningStateGeneration);
         try
         {
             var emus = _monitor.Current.Where(d => d.IsEmulator && d.IsOnline).ToList();
             var serialByAvd = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             foreach (var d in emus)
             {
+                if (gen != _runningStateGeneration) return;
                 var name = await _adb.AvdNameForSerialAsync(d.Serial);
                 if (!string.IsNullOrEmpty(name)) serialByAvd[name] = d.Serial;
             }
+            if (gen != _runningStateGeneration) return;
             foreach (var a in Avds)
                 a.RunningSerial = serialByAvd.TryGetValue(a.Name, out var s) ? s : null;
         }

@@ -49,6 +49,7 @@ public sealed partial class MigrateViewModel : ObservableObject
     private CancellationTokenSource? _cts;
     private CancellationTokenSource? _refreshCts;
     private int _refreshGeneration;
+    private DateTime _lastDeviceRefresh;
 
     public MigrateViewModel(AdbService adb, MigrationService mig, DeviceMonitor monitor, LogService log, CacheDiagnosticsService cache, ToastService toast)
     {
@@ -58,7 +59,13 @@ public sealed partial class MigrateViewModel : ObservableObject
         _log = log;
         _cache = cache;
         _toast = toast;
-        _monitor.Changed += devs => { _ = RefreshAsync(); };
+        _monitor.Changed += devs =>
+        {
+            var now = DateTime.UtcNow;
+            if ((now - _lastDeviceRefresh).TotalSeconds < 2) return;
+            _lastDeviceRefresh = now;
+            _ = RefreshAsync();
+        };
         // C-11: re-measure when other tabs (Apps Export/Import) touch the cache.
         _cache.Changed += () =>
         {

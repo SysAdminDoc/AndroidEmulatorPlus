@@ -37,20 +37,19 @@ public sealed class LogService
         var entry = new LogEntry { Level = level, Text = text };
         AppendToFile(entry);
         if (Application.Current?.Dispatcher is { } d && !d.CheckAccess())
-            d.BeginInvoke(() => { Entries.Add(entry); EntryAdded?.Invoke(entry); });
+        {
+            _ = d.BeginInvoke(() =>
+            {
+                Entries.Add(entry);
+                EntryAdded?.Invoke(entry);
+                while (Entries.Count > 2000) Entries.RemoveAt(0);
+            });
+        }
         else
         {
             Entries.Add(entry);
             EntryAdded?.Invoke(entry);
-        }
-
-        // Keep last 2000 in memory
-        if (Entries.Count > 2000)
-        {
-            if (Application.Current?.Dispatcher is { } d2 && !d2.CheckAccess())
-                d2.BeginInvoke(() => { while (Entries.Count > 2000) Entries.RemoveAt(0); });
-            else
-                while (Entries.Count > 2000) Entries.RemoveAt(0);
+            while (Entries.Count > 2000) Entries.RemoveAt(0);
         }
     }
 
