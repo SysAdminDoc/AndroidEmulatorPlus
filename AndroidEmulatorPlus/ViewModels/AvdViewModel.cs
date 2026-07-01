@@ -20,6 +20,7 @@ public sealed partial class AvdViewModel : ObservableObject
     private readonly SnapshotService _snapshots;
     private readonly AvdTemplateService _templates;
     private readonly HandoffExportService _handoff;
+    private readonly RecipeService _recipes;
 
     public ObservableCollection<Avd> Avds { get; } = new();
     [ObservableProperty] private Avd? _selected;
@@ -52,7 +53,7 @@ public sealed partial class AvdViewModel : ObservableObject
     };
 
     public AvdViewModel(AvdService avds, EmulatorService emu, AdbService adb,
-        DeviceMonitor monitor, LogService log, SdkLocator sdk, SdkmanagerService sdkman, SnapshotService snapshots, AvdTemplateService templates, HandoffExportService handoff)
+        DeviceMonitor monitor, LogService log, SdkLocator sdk, SdkmanagerService sdkman, SnapshotService snapshots, AvdTemplateService templates, HandoffExportService handoff, RecipeService recipes)
     {
         _avds = avds;
         _emu = emu;
@@ -64,6 +65,7 @@ public sealed partial class AvdViewModel : ObservableObject
         _snapshots = snapshots;
         _templates = templates;
         _handoff = handoff;
+        _recipes = recipes;
         _monitor.Changed += _devices => _ = RefreshRunningStateAsync();
     }
 
@@ -437,6 +439,39 @@ public sealed partial class AvdViewModel : ObservableObject
             _handoff.ExportJson(descriptor, dlg.FileName);
         }
         catch (System.Exception ex) { _log.Error("Handoff export failed: " + ex.Message); }
+        finally { IsBusy = false; }
+    }
+
+    [RelayCommand]
+    private async Task RunRecipeAsync()
+    {
+        if (IsBusy) return;
+        var recipes = _recipes.List();
+        if (recipes.Count == 0) { _log.Warning("No saved recipes. Save one from Settings or create a JSON in %LOCALAPPDATA%\\AndroidEmulatorPlus\\recipes\\."); return; }
+
+        var emu = _monitor.Current.FirstOrDefault(d => d.IsEmulator && d.IsOnline);
+        if (emu is null) { _log.Warning("No emulator running. Launch one first."); return; }
+
+        var names = recipes.Select(r => r.Name).ToList();
+        var pick = Views.PromptDialog.Show(
+            owner: null,
+            header: "Run recipe",
+            body: $"Available: {string.Join(", ", names)}\n\nEnter recipe name:",
+            initial: names[0],
+            okText: "Run",
+            validate: text => recipes.Any(r => r.Name.Equals(text?.Trim(), System.StringComparison.OrdinalIgnoreCase))
+                ? null : "No recipe with that name.");
+        if (pick is null) return;
+
+        var recipe = recipes.First(r => r.Name.Equals(pick.Trim(), System.StringComparison.OrdinalIgnoreCase));
+        IsBusy = true;
+        try
+        {
+            var result = await _recipes.RunAsync(recipe, emu.Serial, new Progress<string>(s => _log.Info(s)));
+            _log.Success($"Recipe '{recipe.Name}': {result.Completed} ok, {result.Failed} fail.");
+        }
+        catch (OperationCanceledException) { _log.Warning("Recipe cancelled."); }
+        catch (System.Exception ex) { _log.Error("Recipe failed: " + ex.Message); }
         finally { IsBusy = false; }
     }
 }

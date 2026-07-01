@@ -143,6 +143,10 @@
                                 Command="{Binding CreateFromTemplateCommand}"
                                 AutomationProperties.Name="Create AVD from template"
                                 ToolTip="Create an AVD with hardware config from a saved template"/>
+                        <Button Content="Run recipe..." Style="{StaticResource FlatButton}" Margin="0,0,8,8"
+                                Command="{Binding RunRecipeCommand}"
+                                AutomationProperties.Name="Run saved recipe"
+                                ToolTip="Execute a saved sequence of setup actions against the running emulator"/>
                     </WrapPanel>
                 </StackPanel>
             </StackPanel>

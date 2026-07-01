@@ -60,6 +60,7 @@ public partial class App : Application
         sc.AddSingleton<ReleasePreflightService>();
         sc.AddSingleton<AvdTemplateService>();
         sc.AddSingleton<HandoffExportService>();
+        sc.AddSingleton<RecipeService>();
         sc.AddSingleton<SupportBundleService>();
         sc.AddSingleton<ToastService>();
         sc.AddSingleton<DeviceMonitor>();
