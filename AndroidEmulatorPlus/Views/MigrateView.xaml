@@ -185,7 +185,8 @@
                 </StackPanel>
                 <ProgressBar Grid.Column="1" Margin="14,0" VerticalAlignment="Center"
                              Value="{Binding ProgressFraction}" Minimum="0" Maximum="1"
-                             AutomationProperties.Name="Migration progress"/>
+                             AutomationProperties.Name="Migration progress"
+                             Visibility="{Binding IsBusy, Converter={x:Static views:BoolToVisibilityConverter.Instance}}"/>
                 <TextBlock Grid.Column="2" Text="{Binding StepText}" Foreground="{DynamicResource OverlayBrush}" VerticalAlignment="Center"
                            MaxWidth="280" TextTrimming="CharacterEllipsis"/>
             </Grid>

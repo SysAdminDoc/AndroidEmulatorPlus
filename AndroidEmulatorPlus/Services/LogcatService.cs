@@ -95,7 +95,9 @@ public sealed class LogcatService : IDisposable
             if (_proc is { HasExited: false }) _proc.Kill(entireProcessTree: true);
         }
         catch { }
+        try { _proc?.Dispose(); } catch { }
         _proc = null;
+        try { _cts?.Dispose(); } catch { }
         _cts = null;
     }
 

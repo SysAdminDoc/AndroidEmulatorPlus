@@ -57,11 +57,15 @@
                                 Command="{Binding CancelCommand}"
                                 Visibility="{Binding IsBusy, Converter={x:Static views:BoolToVisibilityConverter.Instance}}"
                                 AutomationProperties.Name="Cancel root operation"/>
-                        <Button Content="Verify and persist policy" Style="{StaticResource FlatButton}" Command="{Binding VerifyCommand}" Margin="0,0,8,8" AutomationProperties.Name="Verify root and persist Magisk policy"/>
-                        <Button Content="Un-root and restore ramdisk" Style="{StaticResource DangerButton}" Command="{Binding UnRootCommand}" Margin="0,0,8,8" AutomationProperties.Name="Un-root and restore stock ramdisk"/>
+                        <Button Content="Verify and persist policy" Style="{StaticResource FlatButton}" Command="{Binding VerifyCommand}" Margin="0,0,8,8"
+                                IsEnabled="{Binding IsBusy, Converter={x:Static views:NotBoolConverter.Instance}}" AutomationProperties.Name="Verify root and persist Magisk policy"/>
+                        <Button Content="Un-root and restore ramdisk" Style="{StaticResource DangerButton}" Command="{Binding UnRootCommand}" Margin="0,0,8,8"
+                                IsEnabled="{Binding IsBusy, Converter={x:Static views:NotBoolConverter.Instance}}" AutomationProperties.Name="Un-root and restore stock ramdisk"/>
                         <Button Content="Dry run (LISTONLY)" Style="{StaticResource FlatButton}" Command="{Binding DryRunCommand}" Margin="0,0,8,8"
+                                IsEnabled="{Binding IsBusy, Converter={x:Static views:NotBoolConverter.Instance}}"
                                 ToolTip="Runs rootAVD LISTONLY to preview which AVDs would be patched. No files are changed." AutomationProperties.Name="Root dry run"/>
                         <Button Content="Modules..." Style="{StaticResource FlatButton}" Command="{Binding OpenModulesCommand}" Margin="0,0,8,8"
+                                IsEnabled="{Binding IsBusy, Converter={x:Static views:NotBoolConverter.Instance}}"
                                 ToolTip="Magisk module manager - install Shamiko, LSPosed, PlayIntegrityFork, etc. on the rooted emulator." AutomationProperties.Name="Open Magisk modules"/>
                     </WrapPanel>
                     <TextBlock Foreground="{DynamicResource SubtextBrush}" Margin="0,14,0,0" TextWrapping="Wrap">

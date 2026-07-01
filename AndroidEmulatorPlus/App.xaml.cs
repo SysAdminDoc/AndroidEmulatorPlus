@@ -79,7 +79,6 @@ public partial class App : Application
         DispatcherUnhandledException += OnUnhandledException;
 
         var window = Services.GetRequiredService<MainWindow>();
-        window.DataContext = Services.GetRequiredService<MainViewModel>();
         window.Show();
 
         Services.GetRequiredService<DeviceMonitor>().Start();
