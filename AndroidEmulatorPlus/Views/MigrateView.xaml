@@ -48,14 +48,14 @@
                             </Grid.ColumnDefinitions>
                             <StackPanel Margin="0,0,6,0">
                                 <TextBlock Text="Pair host:port" Foreground="{DynamicResource SubtextBrush}" Margin="0,0,0,4" FontSize="11"/>
-                                <TextBox Text="{Binding PairHost, UpdateSourceTrigger=PropertyChanged}" FontFamily="Cascadia Mono"/>
+                                <TextBox Text="{Binding PairHost, UpdateSourceTrigger=PropertyChanged}" FontFamily="Cascadia Mono" AutomationProperties.Name="Pair host and port"/>
                             </StackPanel>
                             <StackPanel Grid.Column="1" Margin="6,0">
                                 <TextBlock Text="6-digit code" Foreground="{DynamicResource SubtextBrush}" Margin="0,0,0,4" FontSize="11"/>
-                                <TextBox Text="{Binding PairCode, UpdateSourceTrigger=PropertyChanged}" FontFamily="Cascadia Mono"/>
+                                <TextBox Text="{Binding PairCode, UpdateSourceTrigger=PropertyChanged}" FontFamily="Cascadia Mono" AutomationProperties.Name="Six digit pairing code"/>
                             </StackPanel>
                             <Button Grid.Column="2" Content="Pair" Style="{StaticResource FlatButton}" Margin="6,18,0,0" VerticalAlignment="Bottom"
-                                    Command="{Binding PairCommand}"/>
+                                    Command="{Binding PairCommand}" AutomationProperties.Name="Pair with phone"/>
                         </Grid>
                         <Grid Margin="0,10,0,0">
                             <Grid.ColumnDefinitions>
@@ -64,10 +64,10 @@
                             </Grid.ColumnDefinitions>
                             <StackPanel Margin="0,0,6,0">
                                 <TextBlock Text="Connect host:port" Foreground="{DynamicResource SubtextBrush}" Margin="0,0,0,4" FontSize="11"/>
-                                <TextBox Text="{Binding ConnectHost, UpdateSourceTrigger=PropertyChanged}" FontFamily="Cascadia Mono"/>
+                                <TextBox Text="{Binding ConnectHost, UpdateSourceTrigger=PropertyChanged}" FontFamily="Cascadia Mono" AutomationProperties.Name="Connect host and port"/>
                             </StackPanel>
                             <Button Grid.Column="1" Content="Connect" Style="{StaticResource PrimaryButton}" Margin="6,18,0,0" VerticalAlignment="Bottom"
-                                    Command="{Binding ConnectCommand}"/>
+                                    Command="{Binding ConnectCommand}" AutomationProperties.Name="Connect to phone"/>
                         </Grid>
                         <TextBlock Text="{Binding PairStatus}" Foreground="{DynamicResource YellowBrush}" Margin="0,8,0,0" TextWrapping="Wrap" FontSize="12"/>
                     </StackPanel>
@@ -79,24 +79,26 @@
             <StackPanel>
                 <TextBlock Style="{StaticResource SectionHeader}" Text="Scope"/>
                 <WrapPanel Margin="0,0,-18,-6">
-                    <CheckBox Content="APKs" IsChecked="{Binding DoApk}" Margin="0,0,18,6"/>
-                    <CheckBox Content="Internal data (/data/data)" IsChecked="{Binding DoInternal}" Margin="0,0,18,6"/>
-                    <CheckBox Content="External data (/sdcard/Android/data)" IsChecked="{Binding DoExternal}" Margin="0,0,18,6"/>
-                    <CheckBox Content="OBB game data" IsChecked="{Binding DoObb}" Margin="0,0,18,6" ToolTip="Copies /sdcard/Android/obb/&lt;pkg&gt;. Opt in because game OBBs are often multi-GB."/>
+                    <CheckBox Content="APKs" IsChecked="{Binding DoApk}" Margin="0,0,18,6" AutomationProperties.Name="Migrate APKs"/>
+                    <CheckBox Content="Internal data (/data/data)" IsChecked="{Binding DoInternal}" Margin="0,0,18,6" AutomationProperties.Name="Migrate internal data"/>
+                    <CheckBox Content="External data (/sdcard/Android/data)" IsChecked="{Binding DoExternal}" Margin="0,0,18,6" AutomationProperties.Name="Migrate external data"/>
+                    <CheckBox Content="OBB game data" IsChecked="{Binding DoObb}" Margin="0,0,18,6" ToolTip="Copies /sdcard/Android/obb/&lt;pkg&gt;. Opt in because game OBBs are often multi-GB." AutomationProperties.Name="Migrate OBB game data"/>
                 </WrapPanel>
                 <CheckBox Content="Force-stop source phone before tar" IsChecked="{Binding ForceStopOnPhone}" Margin="0,8,0,0"
-                          ToolTip="Closes the app on the phone before tarring /data/data so SQLite databases are not captured mid-write. The target emulator app is also stopped before restore."/>
+                          ToolTip="Closes the app on the phone before tarring /data/data so SQLite databases are not captured mid-write. The target emulator app is also stopped before restore."
+                          AutomationProperties.Name="Force-stop source phone before tar"/>
                 <CheckBox Content="Force-migrate no-backup apps (override allowBackup=false skip)" IsChecked="{Binding ForceDataForNoBackup}" Margin="0,4,0,0"
-                          ToolTip="By default the data leg is skipped for packages with android:allowBackup=&quot;false&quot; because the restored data is usually rejected. Enable to push it anyway."/>
+                          ToolTip="By default the data leg is skipped for packages with android:allowBackup=&quot;false&quot; because the restored data is usually rejected. Enable to push it anyway."
+                          AutomationProperties.Name="Force-migrate no-backup apps"/>
                 <WrapPanel Margin="0,14,-8,-8">
                     <StackPanel Width="260" Margin="0,0,12,8">
                         <TextBlock Text="Filter packages" Style="{StaticResource FieldLabel}"/>
                         <TextBox Text="{Binding Filter, UpdateSourceTrigger=PropertyChanged}"
                                  AutomationProperties.Name="Filter phone packages"/>
                     </StackPanel>
-                    <Button Content="Select all" Style="{StaticResource FlatButton}" Command="{Binding SelectAllCommand}" Margin="0,20,8,8"/>
-                    <Button Content="Select none" Style="{StaticResource FlatButton}" Command="{Binding SelectNoneCommand}" Margin="0,20,8,8"/>
-                    <Button Content="Refresh packages" Style="{StaticResource FlatButton}" Command="{Binding RefreshCommand}" Margin="0,20,8,8"/>
+                    <Button Content="Select all" Style="{StaticResource FlatButton}" Command="{Binding SelectAllCommand}" Margin="0,20,8,8" AutomationProperties.Name="Select all packages"/>
+                    <Button Content="Select none" Style="{StaticResource FlatButton}" Command="{Binding SelectNoneCommand}" Margin="0,20,8,8" AutomationProperties.Name="Select no packages"/>
+                    <Button Content="Refresh packages" Style="{StaticResource FlatButton}" Command="{Binding RefreshCommand}" Margin="0,20,8,8" AutomationProperties.Name="Refresh packages"/>
                 </WrapPanel>
             </StackPanel>
         </Border>
@@ -108,7 +110,7 @@
                     <TextBlock Text="No phone packages loaded" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource TextBrush}" HorizontalAlignment="Center"/>
                     <TextBlock Style="{StaticResource MicrocopyText}" TextAlignment="Center" Margin="0,6,0,0"
                                Text="Connect a USB-debugging phone or pair over Wi-Fi, then refresh to choose packages for migration."/>
-                    <Button Content="Refresh packages" Style="{StaticResource FlatButton}" Command="{Binding RefreshCommand}" HorizontalAlignment="Center" Margin="0,12,0,0"/>
+                    <Button Content="Refresh packages" Style="{StaticResource FlatButton}" Command="{Binding RefreshCommand}" HorizontalAlignment="Center" Margin="0,12,0,0" AutomationProperties.Name="Refresh packages from phone"/>
                 </StackPanel>
                 <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="460"
                             Visibility="{Binding IsPackageFilterEmpty, Converter={x:Static views:BoolToVisibilityConverter.Instance}}">
@@ -127,9 +129,16 @@
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-                                <CheckBox IsChecked="{Binding IsSelected}" Content="{Binding Package}"/>
-                                <Border Grid.Column="1" Style="{StaticResource StatusPill}" Margin="8,0,0,0"
+                                <CheckBox IsChecked="{Binding IsSelected}" Content="{Binding Package}" AutomationProperties.Name="{Binding Package}"/>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="8,0,0,0">
+                                    <CheckBox IsChecked="{Binding MigrateApk}" Content="APK" FontSize="11" Margin="0,0,6,0" AutomationProperties.Name="Migrate APK"/>
+                                    <CheckBox IsChecked="{Binding MigrateInternal}" Content="Int" FontSize="11" Margin="0,0,6,0" AutomationProperties.Name="Migrate internal data" ToolTip="Internal data (/data/data)"/>
+                                    <CheckBox IsChecked="{Binding MigrateExternal}" Content="Ext" FontSize="11" Margin="0,0,6,0" AutomationProperties.Name="Migrate external data" ToolTip="External data (/sdcard/Android/data)"/>
+                                    <CheckBox IsChecked="{Binding MigrateObb}" Content="OBB" FontSize="11" AutomationProperties.Name="Migrate OBB data" ToolTip="OBB game data"/>
+                                </StackPanel>
+                                <Border Grid.Column="2" Style="{StaticResource StatusPill}" Margin="8,0,0,0"
                                         Background="{DynamicResource YellowBrush}"
                                         Visibility="{Binding AllowBackup, Converter={x:Static views:NotBoolToVisibilityConverter.Instance}}"
                                         ToolTip="android:allowBackup=&quot;false&quot;; restored data is usually rejected by the app">
@@ -154,19 +163,24 @@
                 <StackPanel Grid.Column="0" Orientation="Horizontal">
                     <Button Content="Dry run" Style="{StaticResource FlatButton}" Command="{Binding DryRunCommand}"
                             IsEnabled="{Binding IsBusy, Converter={x:Static views:NotBoolConverter.Instance}}"
-                            ToolTip="Estimate transfer size, check root status, and validate feasibility without moving any data."/>
+                            ToolTip="Estimate transfer size, check root status, and validate feasibility without moving any data."
+                            AutomationProperties.Name="Dry run migration"/>
                     <Button Content="Start Migration" Style="{StaticResource PrimaryButton}" Margin="8,0,0,0"
                             Command="{Binding MigrateCommand}"
-                            IsEnabled="{Binding IsBusy, Converter={x:Static views:NotBoolConverter.Instance}}"/>
+                            IsEnabled="{Binding IsBusy, Converter={x:Static views:NotBoolConverter.Instance}}"
+                            AutomationProperties.Name="Start migration"/>
                     <Button Content="Cancel" Style="{StaticResource DangerButton}" Margin="8,0,0,0"
                             Command="{Binding CancelCommand}"
-                            Visibility="{Binding IsBusy, Converter={x:Static views:BoolToVisibilityConverter.Instance}}"/>
+                            Visibility="{Binding IsBusy, Converter={x:Static views:BoolToVisibilityConverter.Instance}}"
+                            AutomationProperties.Name="Cancel migration"/>
                     <Button Content="Retry failed" Style="{StaticResource FlatButton}" Margin="8,0,0,0"
                             Command="{Binding RetryFailedCommand}"
-                            Visibility="{Binding HasFailedReceipt, Converter={x:Static views:BoolToVisibilityConverter.Instance}}"/>
+                            Visibility="{Binding HasFailedReceipt, Converter={x:Static views:BoolToVisibilityConverter.Instance}}"
+                            AutomationProperties.Name="Retry failed packages"/>
                 </StackPanel>
                 <ProgressBar Grid.Column="1" Margin="14,0" VerticalAlignment="Center"
-                             Value="{Binding ProgressFraction}" Minimum="0" Maximum="1"/>
+                             Value="{Binding ProgressFraction}" Minimum="0" Maximum="1"
+                             AutomationProperties.Name="Migration progress"/>
                 <TextBlock Grid.Column="2" Text="{Binding StepText}" Foreground="{DynamicResource OverlayBrush}" VerticalAlignment="Center"
                            MaxWidth="280" TextTrimming="CharacterEllipsis"/>
             </Grid>
@@ -185,12 +199,12 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Style="{StaticResource SectionHeader}" Text="On-disk cache"/>
-                        <Button Grid.Column="1" Content="Recalculate" Style="{StaticResource FlatButton}" Command="{Binding RefreshCacheCommand}" Padding="10,4" MinHeight="0"/>
+                        <Button Grid.Column="1" Content="Recalculate" Style="{StaticResource FlatButton}" Command="{Binding RefreshCacheCommand}" Padding="10,4" MinHeight="0" AutomationProperties.Name="Recalculate cache size"/>
                     </Grid>
                     <TextBlock Text="{Binding CacheSummary}" Foreground="{DynamicResource SubtextBrush}"/>
                     <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                        <Button Content="Clear migration cache" Style="{StaticResource FlatButton}" Command="{Binding ClearTransferCacheCommand}"/>
-                        <Button Content="Clear root cache" Style="{StaticResource FlatButton}" Command="{Binding ClearRootCacheCommand}" Margin="8,0,0,0"/>
+                        <Button Content="Clear migration cache" Style="{StaticResource FlatButton}" Command="{Binding ClearTransferCacheCommand}" AutomationProperties.Name="Clear migration cache"/>
+                        <Button Content="Clear root cache" Style="{StaticResource FlatButton}" Command="{Binding ClearRootCacheCommand}" Margin="8,0,0,0" AutomationProperties.Name="Clear root cache"/>
                     </StackPanel>
                     <TextBlock Foreground="{DynamicResource OverlayBrush}" FontSize="11" Margin="0,8,0,0" TextWrapping="Wrap">
                         Migration cache holds the temporary tarballs and split-APK extracts in <Run FontFamily="Cascadia Mono">%LOCALAPPDATA%\AndroidEmulatorPlus\transfer\</Run>.

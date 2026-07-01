@@ -320,7 +320,7 @@ public sealed partial class MigrateViewModel : ObservableObject
                 var legs = new List<MigrationLegReceipt>();
                 bool pkgOk = true;
 
-                if (DoApk)
+                if (DoApk && p.MigrateApk)
                 {
                     var r = await _mig.TransferApkAsync(phoneSerial, emuSerial, p.Package, ct);
                     legs.Add(new MigrationLegReceipt { Leg = "apk", Success = r.Success, SizeBytes = r.SizeBytes, Detail = r.Detail });
@@ -328,7 +328,7 @@ public sealed partial class MigrateViewModel : ObservableObject
                     else { _log.Warning($"APK fail {p.Package}: {r.Detail}"); fail++; pkgOk = false; }
                 }
 
-                if (pkgOk && DoInternal)
+                if (pkgOk && DoInternal && p.MigrateInternal)
                 {
                     if (p.AllowBackup && !ForceDataForNoBackup)
                         p.AllowBackup = await _mig.AllowsBackupAsync(phoneSerial, p.Package, ct);
@@ -348,14 +348,14 @@ public sealed partial class MigrateViewModel : ObservableObject
                     }
                 }
 
-                if (DoExternal)
+                if (DoExternal && p.MigrateExternal)
                 {
                     var r = await _mig.TransferExternalDataAsync(phoneSerial, emuSerial, p.Package, ct);
                     totalBytes += r.SizeBytes;
                     legs.Add(new MigrationLegReceipt { Leg = "external", Success = r.Success, SizeBytes = r.SizeBytes, Detail = r.Detail });
                     if (r.Success && r.SizeBytes > 0) _log.Info($"ext ok {p.Package} ({r.SizeBytes / 1024 / 1024} MB)");
                 }
-                if (DoObb)
+                if (DoObb && p.MigrateObb)
                 {
                     var r = await _mig.TransferObbAsync(phoneSerial, emuSerial, p.Package, ct);
                     totalBytes += r.SizeBytes;

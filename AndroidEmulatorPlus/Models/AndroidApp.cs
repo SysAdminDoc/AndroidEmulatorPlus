@@ -15,6 +15,10 @@ public sealed partial class AndroidApp : ObservableObject
     [ObservableProperty] private bool _isSelected;
     /// <summary>C-05: false = AndroidManifest declared allowBackup="false" on the source.</summary>
     [ObservableProperty] private bool _allowBackup = true;
+    [ObservableProperty] private bool _migrateApk = true;
+    [ObservableProperty] private bool _migrateInternal = true;
+    [ObservableProperty] private bool _migrateExternal = true;
+    [ObservableProperty] private bool _migrateObb;
 
     public string Display => string.IsNullOrEmpty(Label) ? Package : $"{Label} ({Package})";
 
