@@ -141,6 +141,7 @@ public sealed partial class RootViewModel : ObservableObject
     [RelayCommand]
     private async Task RootAsync()
     {
+        if (IsBusy) return;
         if (SelectedAvd is null) { _log.Warning("Pick an AVD first."); return; }
         var progress = new Progress<string>(s => { Step = s; _log.Info(s); });
         IsBusy = true;
@@ -203,6 +204,7 @@ public sealed partial class RootViewModel : ObservableObject
     [RelayCommand]
     private async Task InstallCaCertAsync()
     {
+        if (IsBusy) return;
         var emu = CurrentOnlineEmulator();
         if (emu is null) { _log.Warning("CA cert install: no emulator attached."); return; }
 
@@ -245,6 +247,7 @@ public sealed partial class RootViewModel : ObservableObject
     [RelayCommand]
     private async Task DeployFridaAsync()
     {
+        if (IsBusy) return;
         var emu = CurrentOnlineEmulator();
         if (emu is null) { _log.Warning("Frida deploy: no emulator attached."); return; }
 

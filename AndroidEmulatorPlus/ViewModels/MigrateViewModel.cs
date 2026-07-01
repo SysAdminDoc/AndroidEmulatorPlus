@@ -109,7 +109,8 @@ public sealed partial class MigrateViewModel : ObservableObject
         }
 
         var generation = Interlocked.Increment(ref _refreshGeneration);
-        _refreshCts?.Cancel();
+        try { _refreshCts?.Cancel(); } catch { }
+        _refreshCts?.Dispose();
         _refreshCts = new CancellationTokenSource();
         var ct = _refreshCts.Token;
 
@@ -221,6 +222,7 @@ public sealed partial class MigrateViewModel : ObservableObject
     [RelayCommand]
     private async Task ValidateRestoredAsync()
     {
+        if (IsBusy) return;
         var receipt = MigrationService.ReadLatestReceipt();
         if (receipt is null)
         {
@@ -265,6 +267,7 @@ public sealed partial class MigrateViewModel : ObservableObject
     [RelayCommand]
     private async Task DryRunAsync()
     {
+        if (IsBusy) return;
         var phone = _monitor.Current.FirstOrDefault(d => !d.IsEmulator);
         var emu = _monitor.Current.FirstOrDefault(d => d.IsEmulator);
         if (phone is null || emu is null) { _log.Warning("Need both a phone and an emulator connected."); return; }
@@ -302,6 +305,7 @@ public sealed partial class MigrateViewModel : ObservableObject
     [RelayCommand]
     private async Task MigrateAsync()
     {
+        if (IsBusy) return;
         var phone = _monitor.Current.FirstOrDefault(d => !d.IsEmulator);
         var emu = _monitor.Current.FirstOrDefault(d => d.IsEmulator);
         if (phone is null || emu is null) { _log.Warning("Need both a phone and an emulator connected."); return; }
@@ -315,6 +319,7 @@ public sealed partial class MigrateViewModel : ObservableObject
     [RelayCommand]
     private async Task RetryFailedAsync()
     {
+        if (IsBusy) return;
         var receipt = MigrationService.ReadLatestReceipt();
         if (receipt is null || receipt.FailedPackages.Count == 0)
         {

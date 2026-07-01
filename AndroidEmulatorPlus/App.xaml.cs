@@ -91,6 +91,7 @@ public partial class App : Application
     {
         try { Services.GetService<LogcatService>()?.Dispose(); } catch { }
         try { Services.GetService<ScreenRecordService>()?.Dispose(); } catch { }
+        try { Services.GetService<DownloadService>()?.Dispose(); } catch { }
         try { Services.GetService<EmulatorService>()?.KillAll(); } catch { }
         base.OnExit(e);
     }

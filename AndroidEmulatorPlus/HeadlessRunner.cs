@@ -33,7 +33,7 @@ public sealed class HeadlessRunner
         sc.AddSingleton<UpdateService>();
         sc.AddSingleton<ReleasePreflightService>();
 
-        var sp = sc.BuildServiceProvider();
+        await using var sp = sc.BuildServiceProvider();
         var log = sp.GetRequiredService<LogService>();
         var sdk = sp.GetRequiredService<SdkLocator>();
 

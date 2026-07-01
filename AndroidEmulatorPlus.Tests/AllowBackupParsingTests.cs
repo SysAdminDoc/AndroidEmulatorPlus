@@ -14,9 +14,10 @@ public class AllowBackupParsingTests
     {
         foreach (var line in pmDump.Split('\n'))
         {
-            if (line.Contains("flags=", System.StringComparison.OrdinalIgnoreCase))
+            if (line.Contains("flags=", System.StringComparison.OrdinalIgnoreCase)
+                && line.Contains('[', System.StringComparison.Ordinal))
             {
-                if (line.Contains("ALLOW_BACKUP", System.StringComparison.Ordinal)) return true;
+                return line.Contains("ALLOW_BACKUP", System.StringComparison.Ordinal);
             }
         }
         var m = Regex.Match(pmDump, @"allowBackup\s*=\s*(true|false)", RegexOptions.IgnoreCase);
@@ -44,6 +45,17 @@ Packages:
   Package [com.example.banking] (1234):
     flags=[ HAS_CODE ]
     allowBackup=false
+";
+        Assert.False(Parse(dump));
+    }
+
+    [Fact]
+    public void Flags_line_without_ALLOW_BACKUP_returns_false_standalone()
+    {
+        var dump = @"
+Packages:
+  Package [com.example.banking] (1234):
+    flags=[ HAS_CODE ALLOW_CLEAR_USER_DATA ]
 ";
         Assert.False(Parse(dump));
     }

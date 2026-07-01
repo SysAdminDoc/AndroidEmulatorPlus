@@ -77,12 +77,10 @@ public sealed class MigrationService
             // mentioning "flags=" to avoid matching unrelated docstrings.
             foreach (var line in hay.Split('\n'))
             {
-                if (line.Contains("flags=", StringComparison.OrdinalIgnoreCase))
+                if (line.Contains("flags=", StringComparison.OrdinalIgnoreCase)
+                    && line.Contains('[', StringComparison.Ordinal))
                 {
-                    if (line.Contains("ALLOW_BACKUP", StringComparison.Ordinal)) return true;
-                    // Some AOSP variants render this as 'flags=[ … ]' on a different
-                    // line and the next line carries the actual tokens; we conservatively
-                    // assume "yes" if no flags line is parseable.
+                    return line.Contains("ALLOW_BACKUP", StringComparison.Ordinal);
                 }
             }
             // Newer AOSP printouts use 'flag.ALLOW_BACKUP=true|false' style; fall back.
@@ -100,7 +98,7 @@ public sealed class MigrationService
 
     // A-29: cache the phone's tar flavor per serial so we don't re-detect on every package.
     // The boolean tracks whether `tar --exclude=` is supported (toybox 0.7+, GNU tar).
-    private readonly Dictionary<string, bool> _phoneTarSupportsExclude = new(StringComparer.Ordinal);
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, bool> _phoneTarSupportsExclude = new(StringComparer.Ordinal);
 
     private async Task<bool> PhoneTarSupportsExcludeAsync(string serial, CancellationToken ct)
     {

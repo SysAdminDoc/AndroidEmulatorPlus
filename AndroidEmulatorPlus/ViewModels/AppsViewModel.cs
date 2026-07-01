@@ -124,6 +124,7 @@ public sealed partial class AppsViewModel : ObservableObject
     [RelayCommand]
     private async Task UninstallSelectedAsync()
     {
+        if (IsBusy) return;
         var emu = _monitor.Current.FirstOrDefault(d => d.IsEmulator);
         if (emu is null) return;
         var sel = Apps.Where(a => a.IsSelected).ToList();
@@ -150,6 +151,7 @@ public sealed partial class AppsViewModel : ObservableObject
     [RelayCommand]
     private async Task ReinstallSelectedAsync()
     {
+        if (IsBusy) return;
         var emu = _monitor.Current.FirstOrDefault(d => d.IsEmulator);
         if (emu is null) return;
         var sel = Apps.Where(a => a.IsSelected).ToList();

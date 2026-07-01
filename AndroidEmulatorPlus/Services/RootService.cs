@@ -139,7 +139,8 @@ public sealed class RootService
             ["MSYS2_ARG_CONV_EXCL"] = "*",
             ["ANDROID_SERIAL"] = "emulator-5554",
         };
-        env["PATH"] = Path.GetDirectoryName(_sdk.AdbExe!) + ";" + (Environment.GetEnvironmentVariable("PATH") ?? "");
+        var adbDir = _sdk.AdbExe is not null ? Path.GetDirectoryName(_sdk.AdbExe) : null;
+        env["PATH"] = (adbDir ?? "") + ";" + (Environment.GetEnvironmentVariable("PATH") ?? "");
         return env;
     }
 

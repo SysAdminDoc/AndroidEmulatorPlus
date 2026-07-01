@@ -30,9 +30,14 @@ public sealed class DownloadService : IDisposable
         _http.DefaultRequestHeaders.UserAgent.ParseAdd("AndroidEmulatorPlus/0.2");
     }
 
-    public async Task DownloadAsync(string url, string dest,
+    public Task DownloadAsync(string url, string dest,
         IProgress<(long received, long? total)>? progress = null,
         CancellationToken ct = default)
+        => DownloadCoreAsync(url, dest, progress, ct, retryOnRangeError: true);
+
+    private async Task DownloadCoreAsync(string url, string dest,
+        IProgress<(long received, long? total)>? progress,
+        CancellationToken ct, bool retryOnRangeError)
     {
         var destPath = Path.GetFullPath(dest);
         _log.Info($"Downloading {Path.GetFileName(destPath)}…");
@@ -50,8 +55,12 @@ public sealed class DownloadService : IDisposable
         if (existingBytes > 0 && resp.StatusCode == HttpStatusCode.RequestedRangeNotSatisfiable)
         {
             try { File.Delete(tmp); } catch { }
-            await DownloadAsync(url, dest, progress, ct);
-            return;
+            if (retryOnRangeError)
+            {
+                await DownloadCoreAsync(url, dest, progress, ct, retryOnRangeError: false);
+                return;
+            }
+            throw new HttpRequestException("Server returned 416 Range Not Satisfiable after retry.");
         }
         resp.EnsureSuccessStatusCode();
 

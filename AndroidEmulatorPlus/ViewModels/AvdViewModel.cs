@@ -180,7 +180,7 @@ public sealed partial class AvdViewModel : ObservableObject
     [RelayCommand]
     private async Task DuplicateAsync(Avd? avd)
     {
-        if (avd is null) return;
+        if (IsBusy || avd is null) return;
         if (avd.IsRunning)
         {
             _log.Warning("Stop the emulator before duplicating its AVD (open files cannot be copied).");
@@ -218,7 +218,7 @@ public sealed partial class AvdViewModel : ObservableObject
     [RelayCommand]
     private async Task DeleteAsync(Avd? avd)
     {
-        if (avd is null) return;
+        if (IsBusy || avd is null) return;
         // Build the confirmation detail with folder + best-effort size of the .avd dir.
         var folder = _avds.FolderFor(avd.Name);
         var size = "";
@@ -293,7 +293,7 @@ public sealed partial class AvdViewModel : ObservableObject
     [RelayCommand]
     private async Task RenameAsync(Avd? avd)
     {
-        if (avd is null) return;
+        if (IsBusy || avd is null) return;
         if (avd.IsRunning)
         {
             _log.Warning("Stop the emulator before renaming its AVD.");
