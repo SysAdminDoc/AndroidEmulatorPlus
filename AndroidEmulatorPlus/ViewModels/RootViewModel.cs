@@ -19,6 +19,7 @@ public sealed partial class RootViewModel : ObservableObject
     private readonly MagiskService _magisk;
     private readonly CaCertService _caCert;
     private readonly FridaService _frida;
+    private readonly ToastService _toast;
 
     public ObservableCollection<Avd> Avds { get; } = new();
     [ObservableProperty] private Avd? _selectedAvd;
@@ -38,7 +39,7 @@ public sealed partial class RootViewModel : ObservableObject
 
     public RootViewModel(RootService root, AdbService adb, AvdService avds, LogService log,
         DeviceMonitor monitor, SdkLocator sdk, EmulatorService emu, MagiskService magisk,
-        CaCertService caCert, FridaService frida)
+        CaCertService caCert, FridaService frida, ToastService toast)
     {
         _root = root;
         _adb = adb;
@@ -50,6 +51,7 @@ public sealed partial class RootViewModel : ObservableObject
         _magisk = magisk;
         _caCert = caCert;
         _frida = frida;
+        _toast = toast;
         _monitor.Changed += _ => UpdateNeedsLaunch();
     }
 
@@ -171,6 +173,7 @@ public sealed partial class RootViewModel : ObservableObject
             var ok = await _root.PatchAsync(rel, progress, l => _log.Detail(l), ct);
             if (!ok) { _log.Error("rootAVD reported failure. Restore stock ramdisk via Un-Root if the emulator hangs."); return; }
             _log.Success("Ramdisk patched. Cold-boot the emulator now (Avd tab → Cold-Boot).");
+            _toast.Show("Root complete", "Ramdisk patched. Cold-boot the emulator to apply.");
             await RefreshAsync();
         }
         catch (OperationCanceledException)

@@ -13,6 +13,7 @@ public sealed partial class MigrateViewModel : ObservableObject
     private readonly DeviceMonitor _monitor;
     private readonly LogService _log;
     private readonly CacheDiagnosticsService _cache;
+    private readonly ToastService _toast;
 
     public ObservableCollection<AndroidApp> Packages { get; } = new();
     [ObservableProperty] private string _filter = "";
@@ -45,13 +46,14 @@ public sealed partial class MigrateViewModel : ObservableObject
     private CancellationTokenSource? _refreshCts;
     private int _refreshGeneration;
 
-    public MigrateViewModel(AdbService adb, MigrationService mig, DeviceMonitor monitor, LogService log, CacheDiagnosticsService cache)
+    public MigrateViewModel(AdbService adb, MigrationService mig, DeviceMonitor monitor, LogService log, CacheDiagnosticsService cache, ToastService toast)
     {
         _adb = adb;
         _mig = mig;
         _monitor = monitor;
         _log = log;
         _cache = cache;
+        _toast = toast;
         _monitor.Changed += devs => { _ = RefreshAsync(); };
         // C-11: re-measure when other tabs (Apps Export/Import) touch the cache.
         _cache.Changed += () =>
@@ -373,6 +375,7 @@ public sealed partial class MigrateViewModel : ObservableObject
             cancelled = cancelled || ct.IsCancellationRequested;
             Summary = $"{ok} ok, {fail} fail, {totalBytes / 1024 / 1024} MB data" + (cancelled ? "  (cancelled)" : "");
             _log.Success("Migration " + (cancelled ? "cancelled. " : "finished. ") + Summary);
+            _toast.Show("Migration complete", Summary);
 
             var receipt = MigrationService.BuildReceipt(phoneSerial, emuSerial, scopes, packageReceipts, cancelled);
             try { _mig.WriteReceipt(receipt); }

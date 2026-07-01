@@ -12,6 +12,7 @@ namespace AndroidEmulatorPlus.Views;
 public partial class SystemImagePickerDialog : Window
 {
     private readonly SdkmanagerService _sdkman;
+    private readonly ToastService? _toast;
     private List<string> _all = new();
 
     public string? InstalledPackage { get; private set; }
@@ -19,6 +20,7 @@ public partial class SystemImagePickerDialog : Window
     public SystemImagePickerDialog(SdkmanagerService sdkman)
     {
         _sdkman = sdkman;
+        _toast = App.Services.GetService(typeof(ToastService)) as ToastService;
         InitializeComponent();
         ImagesList.SelectionChanged += (_, _) => InstallButton.IsEnabled = ImagesList.SelectedItem is string;
         Loaded += async (_, _) => await LoadAsync();
@@ -84,6 +86,7 @@ public partial class SystemImagePickerDialog : Window
         var ok = await _sdkman.InstallWithProgressAsync(new[] { pkg }, progress);
         if (ok)
         {
+            _toast?.Show("System image installed", pkg);
             InstalledPackage = pkg;
             DialogResult = true;
             Close();
