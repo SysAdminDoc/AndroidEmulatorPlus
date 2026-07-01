@@ -149,10 +149,27 @@ public sealed partial class InstallViewModel : ObservableObject
         }
 
         IsBusy = true;
-        Step = "Updating SDK packages...";
+        Step = "Capturing pre-update inventory...";
         try
         {
+            var before = await _sdkman.ListPackageInventoryAsync();
+
+            Step = "Updating SDK packages...";
             var ok = await _sdkman.InstallAsync(packages, new Progress<string>(s => Step = s));
+
+            Step = "Capturing post-update inventory...";
+            var after = await _sdkman.ListPackageInventoryAsync();
+            var receipt = SdkmanagerService.BuildReceipt(packages, before, after);
+            try
+            {
+                var path = _sdkman.WriteReceipt(receipt);
+                _sdkman.LogReceiptSummary(receipt, path);
+            }
+            catch (Exception ex)
+            {
+                _log.Warning("Failed to write SDK update receipt: " + ex.Message);
+            }
+
             if (ok)
             {
                 _log.Success($"Updated SDK packages: {string.Join(", ", packages)}");
@@ -161,7 +178,7 @@ public sealed partial class InstallViewModel : ObservableObject
             }
             else
             {
-                _log.Error("SDK package update failed.");
+                _log.Error("SDK package update failed. Check the receipt log for rollback guidance.");
             }
         }
         finally

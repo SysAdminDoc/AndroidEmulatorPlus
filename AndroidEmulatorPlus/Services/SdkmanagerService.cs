@@ -1,3 +1,6 @@
+using System.IO;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using AndroidEmulatorPlus.Helpers;
 
 namespace AndroidEmulatorPlus.Services;
@@ -7,6 +10,29 @@ public sealed record SdkPackageUpdate(string Path, string InstalledVersion, stri
 public sealed record SdkPackageInventory(
     IReadOnlyList<SdkInstalledPackage> Installed,
     IReadOnlyList<SdkPackageUpdate> Updates);
+
+public sealed class SdkUpdateReceipt
+{
+    [JsonPropertyName("timestamp")] public string Timestamp { get; init; } = "";
+    [JsonPropertyName("requestedPackages")] public List<string> RequestedPackages { get; init; } = [];
+    [JsonPropertyName("before")] public List<SdkUpdateReceiptEntry> Before { get; init; } = [];
+    [JsonPropertyName("after")] public List<SdkUpdateReceiptEntry> After { get; init; } = [];
+    [JsonPropertyName("changed")] public List<SdkUpdateReceiptChange> Changed { get; init; } = [];
+    [JsonPropertyName("rollbackCommands")] public List<string> RollbackCommands { get; init; } = [];
+}
+
+public sealed class SdkUpdateReceiptEntry
+{
+    [JsonPropertyName("path")] public string Path { get; init; } = "";
+    [JsonPropertyName("version")] public string Version { get; init; } = "";
+}
+
+public sealed class SdkUpdateReceiptChange
+{
+    [JsonPropertyName("path")] public string Path { get; init; } = "";
+    [JsonPropertyName("from")] public string From { get; init; } = "";
+    [JsonPropertyName("to")] public string To { get; init; } = "";
+}
 
 /// <summary>
 /// Wraps <c>sdkmanager.bat</c>. License acceptance is automated by piping a stream
@@ -199,4 +225,67 @@ public sealed class SdkmanagerService
         => update.Path.Equals("emulator", StringComparison.OrdinalIgnoreCase)
            || update.Path.Equals("platform-tools", StringComparison.OrdinalIgnoreCase)
            || update.Path.StartsWith("system-images;", StringComparison.OrdinalIgnoreCase);
+
+    public static string ReceiptDirectory => Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "AndroidEmulatorPlus", "logs");
+
+    public static SdkUpdateReceipt BuildReceipt(
+        IReadOnlyList<string> requestedPackages,
+        SdkPackageInventory before,
+        SdkPackageInventory after)
+    {
+        var beforeLookup = before.Installed.ToDictionary(
+            static p => p.Path, static p => p.Version, StringComparer.OrdinalIgnoreCase);
+        var afterLookup = after.Installed.ToDictionary(
+            static p => p.Path, static p => p.Version, StringComparer.OrdinalIgnoreCase);
+
+        var changed = new List<SdkUpdateReceiptChange>();
+        foreach (var pkg in requestedPackages)
+        {
+            var had = beforeLookup.GetValueOrDefault(pkg, "not installed");
+            var now = afterLookup.GetValueOrDefault(pkg, "not installed");
+            if (!had.Equals(now, StringComparison.OrdinalIgnoreCase))
+                changed.Add(new SdkUpdateReceiptChange { Path = pkg, From = had, To = now });
+        }
+
+        var rollback = changed
+            .Where(c => !c.From.Equals("not installed", StringComparison.OrdinalIgnoreCase))
+            .Select(c => $"sdkmanager \"{c.Path}\"")
+            .ToList();
+
+        return new SdkUpdateReceipt
+        {
+            Timestamp = DateTime.UtcNow.ToString("O"),
+            RequestedPackages = requestedPackages.ToList(),
+            Before = before.Installed.Select(p => new SdkUpdateReceiptEntry { Path = p.Path, Version = p.Version }).ToList(),
+            After = after.Installed.Select(p => new SdkUpdateReceiptEntry { Path = p.Path, Version = p.Version }).ToList(),
+            Changed = changed,
+            RollbackCommands = rollback,
+        };
+    }
+
+    public string WriteReceipt(SdkUpdateReceipt receipt)
+    {
+        Directory.CreateDirectory(ReceiptDirectory);
+        var name = $"sdk-update-{DateTime.Now:yyyyMMdd-HHmmss}.json";
+        var path = Path.Combine(ReceiptDirectory, name);
+        var json = JsonSerializer.Serialize(receipt, new JsonSerializerOptions { WriteIndented = true });
+        File.WriteAllText(path, json);
+        return path;
+    }
+
+    public void LogReceiptSummary(SdkUpdateReceipt receipt, string receiptPath)
+    {
+        if (receipt.Changed.Count == 0)
+        {
+            _log.Info($"SDK update receipt written to {receiptPath} (no version changes detected).");
+            return;
+        }
+        foreach (var c in receipt.Changed)
+            _log.Info($"SDK updated: {c.Path}  {c.From} → {c.To}");
+        if (receipt.RollbackCommands.Count > 0)
+            _log.Detail($"Rollback: reinstall previous versions with: {string.Join(" && ", receipt.RollbackCommands)}");
+        _log.Info($"SDK update receipt: {receiptPath}");
+    }
 }
