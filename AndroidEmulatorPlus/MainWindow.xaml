@@ -10,6 +10,16 @@
         WindowStartupLocation="CenterScreen"
         UseLayoutRounding="True"
         SnapsToDevicePixels="True">
+    <Window.InputBindings>
+        <KeyBinding Gesture="Ctrl+1" Command="{Binding NavigateCommand}" CommandParameter="Install"/>
+        <KeyBinding Gesture="Ctrl+2" Command="{Binding NavigateCommand}" CommandParameter="Avd"/>
+        <KeyBinding Gesture="Ctrl+3" Command="{Binding NavigateCommand}" CommandParameter="Root"/>
+        <KeyBinding Gesture="Ctrl+4" Command="{Binding NavigateCommand}" CommandParameter="Migrate"/>
+        <KeyBinding Gesture="Ctrl+5" Command="{Binding NavigateCommand}" CommandParameter="Apps"/>
+        <KeyBinding Gesture="Ctrl+6" Command="{Binding NavigateCommand}" CommandParameter="Config"/>
+        <KeyBinding Gesture="Ctrl+7" Command="{Binding NavigateCommand}" CommandParameter="Logcat"/>
+        <KeyBinding Gesture="Ctrl+8" Command="{Binding NavigateCommand}" CommandParameter="Console"/>
+    </Window.InputBindings>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
