@@ -30,8 +30,10 @@ public sealed class HeadlessRunner
         sc.AddSingleton<NetworkProfileService>();
         sc.AddSingleton<PresetService>();
         sc.AddSingleton<SnapshotService>();
+        sc.AddSingleton<ConsoleService>();
         sc.AddSingleton<UpdateService>();
         sc.AddSingleton<ReleasePreflightService>();
+        sc.AddSingleton<RecipeService>();
 
         await using var sp = sc.BuildServiceProvider();
         var log = sp.GetRequiredService<LogService>();

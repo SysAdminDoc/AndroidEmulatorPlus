@@ -57,12 +57,15 @@ public sealed class SdkLocator
 
             // apksigner.bat lives under build-tools/<version>/; pick the highest-versioned
             // entry that actually has the script. build-tools are SemVer-ish so a simple
-            // string-descending sort works.
             var buildToolsRoot = Path.Combine(SdkRoot, "build-tools");
             if (Directory.Exists(buildToolsRoot))
             {
                 var versionDirs = Directory.EnumerateDirectories(buildToolsRoot)
-                    .OrderByDescending(d => Path.GetFileName(d), StringComparer.OrdinalIgnoreCase)
+                    .OrderByDescending(d =>
+                    {
+                        var name = Path.GetFileName(d);
+                        return Version.TryParse(name, out var v) ? v : new Version(0, 0);
+                    })
                     .ToList();
                 ApkSignerBat = versionDirs
                     .Select(d => Path.Combine(d, "apksigner.bat"))

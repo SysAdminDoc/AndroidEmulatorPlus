@@ -24,6 +24,7 @@ public sealed class DeviceMonitor
     public void Start()
     {
         _cts?.Cancel();
+        _cts?.Dispose();
         _cts = new CancellationTokenSource();
         _ = Task.Run(() => LoopAsync(_cts.Token));
     }
@@ -31,6 +32,8 @@ public sealed class DeviceMonitor
     public void Stop()
     {
         _cts?.Cancel();
+        _cts?.Dispose();
+        _cts = null;
     }
 
     private async Task LoopAsync(CancellationToken ct)
@@ -55,7 +58,8 @@ public sealed class DeviceMonitor
                         Changed?.Invoke(Current);
                 }
             }
-            catch { }
+            catch (OperationCanceledException) { }
+            catch (Exception ex) { _log.Detail($"Device poll: {ex.Message}"); }
             try { await Task.Delay(3000, ct); } catch { }
         }
     }
