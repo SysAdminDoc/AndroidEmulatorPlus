@@ -105,12 +105,9 @@ public sealed partial class ConfigViewModel : ObservableObject
         if (s is null) return null;
         s = s.Trim();
         if (s.EndsWith("G", StringComparison.OrdinalIgnoreCase) && int.TryParse(s[..^1], out var g)) return g;
-        if (s.EndsWith("M", StringComparison.OrdinalIgnoreCase) && int.TryParse(s[..^1], out var m)) return m / 1024;
-        if (s.EndsWith("K", StringComparison.OrdinalIgnoreCase) && long.TryParse(s[..^1], out var k)) return (int)(k / 1024 / 1024);
-        // Some AVDs persist this as raw bytes (e.g. "8589934592"). Without this branch
-        // the slider would snap back to the default 16 GB and the next "Save config"
-        // would silently shrink the partition.
-        if (long.TryParse(s, out var bytes) && bytes > 0) return (int)(bytes / 1024 / 1024 / 1024);
+        if (s.EndsWith("M", StringComparison.OrdinalIgnoreCase) && int.TryParse(s[..^1], out var m)) return Math.Max(1, m / 1024);
+        if (s.EndsWith("K", StringComparison.OrdinalIgnoreCase) && long.TryParse(s[..^1], out var k)) return Math.Max(1, (int)(k / 1024 / 1024));
+        if (long.TryParse(s, out var bytes) && bytes > 0) return Math.Max(1, (int)(bytes / 1024 / 1024 / 1024));
         return null;
     }
 

@@ -8,7 +8,9 @@ namespace AndroidEmulatorPlus.Services;
 public sealed record Snapshot(string Name, string Folder, long SizeBytes, DateTime Modified)
 {
     public bool IsDefaultBoot => Name.Equals("default_boot", StringComparison.OrdinalIgnoreCase);
-    public string Display => $"{Name}  ({(SizeBytes / 1024 / 1024)} MB · {Modified:yyyy-MM-dd HH:mm})";
+    public string Display => SizeBytes < 1024L * 1024
+        ? $"{Name}  ({SizeBytes / 1024} KB · {Modified:yyyy-MM-dd HH:mm})"
+        : $"{Name}  ({SizeBytes / 1024 / 1024} MB · {Modified:yyyy-MM-dd HH:mm})";
 }
 
 /// <summary>

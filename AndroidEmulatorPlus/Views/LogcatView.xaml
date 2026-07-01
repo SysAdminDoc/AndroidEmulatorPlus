@@ -81,10 +81,9 @@
                     </DataTemplate>
                 </ListBox.ItemTemplate>
                 <ListBox.ItemContainerStyle>
-                    <Style TargetType="ListBoxItem">
+                    <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
                         <Setter Property="Padding" Value="4,2"/>
-                        <Setter Property="BorderThickness" Value="0"/>
-                        <Setter Property="Background" Value="Transparent"/>
+                        <Setter Property="Margin" Value="0"/>
                     </Style>
                 </ListBox.ItemContainerStyle>
                 </ListBox>
