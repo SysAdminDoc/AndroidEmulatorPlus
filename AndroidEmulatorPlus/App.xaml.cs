@@ -92,6 +92,7 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
+        try { Services.GetService<DeviceMonitor>()?.Stop(); } catch { }
         try { Services.GetService<LogcatService>()?.Dispose(); } catch { }
         try { Services.GetService<ScreenRecordService>()?.Dispose(); } catch { }
         try { Services.GetService<DownloadService>()?.Dispose(); } catch { }

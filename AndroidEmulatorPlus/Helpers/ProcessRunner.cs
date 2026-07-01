@@ -41,17 +41,18 @@ public static class ProcessRunner
         using var proc = new Process { StartInfo = psi, EnableRaisingEvents = true };
         var stdout = new StringBuilder();
         var stderr = new StringBuilder();
+        var outputLock = new object();
 
         proc.OutputDataReceived += (_, e) =>
         {
             if (e.Data == null) return;
-            stdout.AppendLine(e.Data);
+            lock (outputLock) stdout.AppendLine(e.Data);
             onStdOut?.Invoke(e.Data);
         };
         proc.ErrorDataReceived += (_, e) =>
         {
             if (e.Data == null) return;
-            stderr.AppendLine(e.Data);
+            lock (outputLock) stderr.AppendLine(e.Data);
             onStdErr?.Invoke(e.Data);
         };
 

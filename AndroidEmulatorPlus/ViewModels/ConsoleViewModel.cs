@@ -180,6 +180,7 @@ public sealed partial class ConsoleViewModel : ObservableObject
         if (ClipboardSyncEnabled)
         {
             _clipSyncCts?.Cancel();
+            _clipSyncCts?.Dispose();
             _clipSyncCts = null;
             ClipboardSyncEnabled = false;
             ClipboardSyncStatus = "Off";

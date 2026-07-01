@@ -397,7 +397,7 @@ public sealed partial class MigrateViewModel : ObservableObject
                         totalBytes += r.SizeBytes;
                         legs.Add(new MigrationLegReceipt { Leg = "internal", Success = r.Success, SizeBytes = r.SizeBytes, Detail = r.Detail });
                         if (r.Success) _log.Info($"data ok {p.Package} ({r.SizeBytes / 1024 / 1024} MB, {r.Detail})");
-                        else { _log.Warning($"data fail {p.Package}: {r.Detail}"); pkgOk = false; }
+                        else { _log.Warning($"data fail {p.Package}: {r.Detail}"); fail++; pkgOk = false; }
                     }
                 }
 

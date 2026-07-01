@@ -87,6 +87,7 @@ public sealed class ScreenRecordService : IDisposable
         // screenrecord on the device side will close the file on its own when the
         // pipe breaks.
         try { _proc.Kill(entireProcessTree: true); } catch { }
+        try { _proc.Dispose(); } catch { }
         _proc = null;
 
         try

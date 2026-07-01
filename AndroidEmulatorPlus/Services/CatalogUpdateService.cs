@@ -103,7 +103,9 @@ public sealed class CatalogUpdateService
                 var downloadHash = HashVerificationService.ComputeSha256(tmpPath);
                 if (!downloadHash.Equals(entry.Sha256, StringComparison.OrdinalIgnoreCase))
                 {
-                    log.Add($"REJECT: {entry.Name} — SHA-256 mismatch (expected {entry.Sha256[..12]}, got {downloadHash[..12]})");
+                    var expectedShort = entry.Sha256.Length > 12 ? entry.Sha256[..12] : entry.Sha256;
+                    var actualShort = downloadHash.Length > 12 ? downloadHash[..12] : downloadHash;
+                    log.Add($"REJECT: {entry.Name} — SHA-256 mismatch (expected {expectedShort}, got {actualShort})");
                     try { File.Delete(tmpPath); } catch { }
                     continue;
                 }
@@ -125,6 +127,11 @@ public sealed class CatalogUpdateService
 
     public void Rollback(string fileName)
     {
+        if (string.IsNullOrWhiteSpace(fileName) || fileName.Contains("..") || fileName.Contains('/') || fileName.Contains('\\'))
+        {
+            _log.Warning($"Invalid catalog filename rejected: {fileName}");
+            return;
+        }
         var destPath = Path.Combine(CatalogDir, fileName);
         var backups = Directory.Exists(BackupDir)
             ? Directory.EnumerateFiles(BackupDir, $"{fileName}.*.bak")

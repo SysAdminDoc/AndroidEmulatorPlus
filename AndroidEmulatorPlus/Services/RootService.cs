@@ -111,7 +111,7 @@ public sealed class RootService
 
     public string? FindRamdiskFor(string avdName)
     {
-        if (_sdk.SdkRoot is null) return null;
+        if (_sdk.SdkRoot is null || !AvdService.IsSafeAvdName(avdName)) return null;
         var avdDir = Path.Combine(_sdk.AvdHome!, avdName + ".avd");
         var cfg = Path.Combine(avdDir, "config.ini");
         if (!File.Exists(cfg)) return null;

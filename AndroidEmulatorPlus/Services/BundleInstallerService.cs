@@ -108,6 +108,11 @@ public sealed class BundleInstallerService
             var apkPaths = new List<string> { path };
             if (ext is ".apks" or ".xapk" or ".apkm")
             {
+                if (!AppService.TryValidateZipForExtraction(path, out var zipDetail))
+                {
+                    _log.Error($"Bundle rejected before extraction: {zipDetail}");
+                    return false;
+                }
                 tempDir = Path.Combine(Path.GetTempPath(), $"aep-verify-{System.Guid.NewGuid():N}");
                 Directory.CreateDirectory(tempDir);
                 System.IO.Compression.ZipFile.ExtractToDirectory(path, tempDir);

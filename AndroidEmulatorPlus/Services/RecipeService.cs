@@ -46,7 +46,7 @@ public sealed class RecipeService
     public string Save(Recipe recipe)
     {
         Directory.CreateDirectory(RecipeDirectory);
-        var safeName = recipe.Name.Replace(' ', '_').Replace('/', '-').Replace('\\', '-');
+        var safeName = AvdTemplateService.SanitizeFileName(recipe.Name);
         var path = Path.Combine(RecipeDirectory, $"{safeName}.json");
         var json = JsonSerializer.Serialize(recipe, new JsonSerializerOptions { WriteIndented = true });
         File.WriteAllText(path, json);

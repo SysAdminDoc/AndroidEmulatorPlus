@@ -193,6 +193,8 @@ public sealed class AppService
 
     public async Task<ProcessResult> UninstallAsync(string serial, string pkg, bool keepData = false, CancellationToken ct = default)
     {
+        if (!AdbService.IsSafeAndroidPackageName(pkg))
+            return new ProcessResult(-1, "", "invalid package name");
         _log.Info($"Uninstalling {pkg}{(keepData ? " (keeping data)" : "")}…");
         if (keepData)
         {

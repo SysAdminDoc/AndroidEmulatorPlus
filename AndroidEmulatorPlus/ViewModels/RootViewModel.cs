@@ -105,6 +105,7 @@ public sealed partial class RootViewModel : ObservableObject
     [RelayCommand]
     private async Task LaunchAndRootAsync()
     {
+        if (IsBusy) return;
         if (SelectedAvd is null) { _log.Warning("Pick an AVD first."); return; }
         _log.Info($"Launching '{SelectedAvd.Name}' before rooting…");
         IsBusy = true;

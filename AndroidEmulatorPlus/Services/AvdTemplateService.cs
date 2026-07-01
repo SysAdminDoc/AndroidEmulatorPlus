@@ -61,7 +61,7 @@ public sealed class AvdTemplateService
     public string SaveTemplate(AvdTemplate template)
     {
         Directory.CreateDirectory(TemplateDirectory);
-        var safeName = template.Name.Replace(' ', '_');
+        var safeName = SanitizeFileName(template.Name);
         var path = Path.Combine(TemplateDirectory, $"{safeName}.json");
         var json = JsonSerializer.Serialize(template, new JsonSerializerOptions { WriteIndented = true });
         File.WriteAllText(path, json);
@@ -84,6 +84,18 @@ public sealed class AvdTemplateService
             catch { }
         }
         return list;
+    }
+
+    public static string SanitizeFileName(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "unnamed";
+        var safe = name.Trim().Replace(' ', '_');
+        foreach (var c in Path.GetInvalidFileNameChars())
+            safe = safe.Replace(c, '_');
+        while (safe.Contains(".."))
+            safe = safe.Replace("..", "_");
+        if (string.IsNullOrWhiteSpace(safe)) return "unnamed";
+        return safe;
     }
 
     public async Task<bool> ApplyTemplateAsync(string avdName, AvdTemplate template, CancellationToken ct = default)
