@@ -19,8 +19,8 @@ disk.dataPartition.size=8G
 ");
         var dict = AvdService.ParseIni(path);
         Assert.Equal("2048", dict["hw.ramSize"]);
-        Assert.Equal("4",    dict["hw.cpu.ncore"]);
-        Assert.Equal("8G",   dict["disk.dataPartition.size"]);
+        Assert.Equal("4", dict["hw.cpu.ncore"]);
+        Assert.Equal("8G", dict["disk.dataPartition.size"]);
         File.Delete(path);
     }
 
@@ -37,9 +37,9 @@ keep.me=yes
             ["new.key"] = "added",
         });
         var dict = AvdService.ParseIni(path);
-        Assert.Equal("4096",  dict["hw.ramSize"]);
-        Assert.Equal("4",     dict["hw.cpu.ncore"]);
-        Assert.Equal("yes",   dict["keep.me"]);
+        Assert.Equal("4096", dict["hw.ramSize"]);
+        Assert.Equal("4", dict["hw.cpu.ncore"]);
+        Assert.Equal("yes", dict["keep.me"]);
         Assert.Equal("added", dict["new.key"]);
         File.Delete(path);
     }

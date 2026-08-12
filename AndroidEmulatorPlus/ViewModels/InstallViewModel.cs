@@ -207,7 +207,7 @@ public sealed partial class InstallViewModel : ObservableObject
             {
                 var lines = File.ReadAllLines(CrashLogPath);
                 sb.AppendLine($"--- crash.log ({lines.Length} lines) ---");
-                foreach (var l in lines.Reverse().Take(50)) sb.AppendLine(l);
+                foreach (var l in System.Linq.Enumerable.Reverse(lines).Take(50)) sb.AppendLine(l);
             }
             DiagnosticsText = sb.ToString();
         }
@@ -369,7 +369,8 @@ public sealed partial class InstallViewModel : ObservableObject
             try
             {
                 System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(
-                    System.IO.Path.GetDirectoryName(path)!) { UseShellExecute = true });
+                    System.IO.Path.GetDirectoryName(path)!)
+                { UseShellExecute = true });
             }
             catch { }
         }

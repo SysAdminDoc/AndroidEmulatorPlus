@@ -235,12 +235,12 @@ public sealed partial class MainViewModel : ObservableObject
     private void Navigate(string section)
     {
         ActiveSection = section;
-        if (section == "Avd")    AvdVm.RefreshCommand.Execute(null);
-        if (section == "Apps")   AppsVm.RefreshCommand.Execute(null);
+        if (section == "Avd") AvdVm.RefreshCommand.Execute(null);
+        if (section == "Apps") AppsVm.RefreshCommand.Execute(null);
         if (section == "Config") ConfigVm.RefreshCommand.Execute(null);
-        if (section == "Root")   RootVm.RefreshCommand.Execute(null);
-        if (section == "Migrate")MigrateVm.RefreshCommand.Execute(null);
-        if (section == "Install")InstallVm.RefreshCommand.Execute(null);
+        if (section == "Root") RootVm.RefreshCommand.Execute(null);
+        if (section == "Migrate") MigrateVm.RefreshCommand.Execute(null);
+        if (section == "Install") InstallVm.RefreshCommand.Execute(null);
     }
 
     [RelayCommand]
@@ -257,10 +257,10 @@ public sealed partial class MainViewModel : ObservableObject
     {
         switch (ActiveSection)
         {
-            case "Avd":     AvdVm.RefreshCommand.Execute(null); break;
-            case "Apps":    AppsVm.RefreshCommand.Execute(null); break;
-            case "Config":  ConfigVm.RefreshCommand.Execute(null); break;
-            case "Root":    RootVm.RefreshCommand.Execute(null); break;
+            case "Avd": AvdVm.RefreshCommand.Execute(null); break;
+            case "Apps": AppsVm.RefreshCommand.Execute(null); break;
+            case "Config": ConfigVm.RefreshCommand.Execute(null); break;
+            case "Root": RootVm.RefreshCommand.Execute(null); break;
             case "Migrate": MigrateVm.RefreshCommand.Execute(null); break;
             case "Install": InstallVm.RefreshCommand.Execute(null); break;
             case "Logcat":  /* logcat has start/stop, no refresh */ break;

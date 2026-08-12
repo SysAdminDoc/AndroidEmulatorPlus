@@ -115,65 +115,65 @@ public sealed class RecipeService
         switch (step.Action.ToLowerInvariant())
         {
             case "launch":
-            {
-                var avdName = step.Args.GetValueOrDefault("avd") ?? "";
-                if (string.IsNullOrWhiteSpace(avdName)) return false;
-                _emu.Launch(avdName);
-                if (step.Args.ContainsKey("waitBoot"))
-                    await _adb.WaitForBootAsync(serial, TimeSpan.FromMinutes(3), ct);
-                return true;
-            }
+                {
+                    var avdName = step.Args.GetValueOrDefault("avd") ?? "";
+                    if (string.IsNullOrWhiteSpace(avdName)) return false;
+                    _emu.Launch(avdName);
+                    if (step.Args.ContainsKey("waitBoot"))
+                        await _adb.WaitForBootAsync(serial, TimeSpan.FromMinutes(3), ct);
+                    return true;
+                }
 
             case "install":
-            {
-                var apkPath = step.Args.GetValueOrDefault("path") ?? "";
-                if (!File.Exists(apkPath)) { _log.Warning($"APK not found: {apkPath}"); return false; }
-                var r = await _adb.InstallAsync(serial, new[] { apkPath }, ct);
-                return r.Success || r.Combined.Contains("Success");
-            }
+                {
+                    var apkPath = step.Args.GetValueOrDefault("path") ?? "";
+                    if (!File.Exists(apkPath)) { _log.Warning($"APK not found: {apkPath}"); return false; }
+                    var r = await _adb.InstallAsync(serial, new[] { apkPath }, ct);
+                    return r.Success || r.Combined.Contains("Success");
+                }
 
             case "push":
-            {
-                var localPath = step.Args.GetValueOrDefault("local") ?? "";
-                var remotePath = step.Args.GetValueOrDefault("remote") ?? "/sdcard/Download/";
-                if (!File.Exists(localPath)) { _log.Warning($"File not found: {localPath}"); return false; }
-                if (remotePath.EndsWith('/'))
-                    remotePath += Path.GetFileName(localPath);
-                var r = await _adb.PushAsync(serial, localPath, remotePath, ct);
-                return r.Success;
-            }
+                {
+                    var localPath = step.Args.GetValueOrDefault("local") ?? "";
+                    var remotePath = step.Args.GetValueOrDefault("remote") ?? "/sdcard/Download/";
+                    if (!File.Exists(localPath)) { _log.Warning($"File not found: {localPath}"); return false; }
+                    if (remotePath.EndsWith('/'))
+                        remotePath += Path.GetFileName(localPath);
+                    var r = await _adb.PushAsync(serial, localPath, remotePath, ct);
+                    return r.Success;
+                }
 
             case "shell":
-            {
-                var cmd = step.Args.GetValueOrDefault("command") ?? "";
-                if (string.IsNullOrWhiteSpace(cmd)) return false;
-                var r = await _adb.ShellAsync(serial, cmd, ct);
-                return r.Success;
-            }
+                {
+                    var cmd = step.Args.GetValueOrDefault("command") ?? "";
+                    if (string.IsNullOrWhiteSpace(cmd)) return false;
+                    var r = await _adb.ShellAsync(serial, cmd, ct);
+                    return r.Success;
+                }
 
             case "console":
-            {
-                var cmd = step.Args.GetValueOrDefault("command") ?? "";
-                if (string.IsNullOrWhiteSpace(cmd)) return false;
-                var args = ConsoleService.ParseEmuArgs(cmd);
-                var r = await _console.SendAsync(serial, args, ct);
-                return r.Success;
-            }
+                {
+                    var cmd = step.Args.GetValueOrDefault("command") ?? "";
+                    if (string.IsNullOrWhiteSpace(cmd)) return false;
+                    var args = ConsoleService.ParseEmuArgs(cmd);
+                    var r = await _console.SendAsync(serial, args, ct);
+                    return r.Success;
+                }
 
             case "uninstall":
-            {
-                var pkg = step.Args.GetValueOrDefault("package") ?? "";
-                if (!AdbService.IsSafeAndroidPackageName(pkg)) return false;
-                var r = await _adb.UninstallAsync(serial, pkg, ct);
-                return r.Success || r.Combined.Contains("Success");
-            }
+                {
+                    var pkg = step.Args.GetValueOrDefault("package") ?? "";
+                    if (!AdbService.IsSafeAndroidPackageName(pkg)) return false;
+                    var r = await _adb.UninstallAsync(serial, pkg, ct);
+                    return r.Success || r.Combined.Contains("Success");
+                }
 
             case "wait":
-            {
-                var seconds = int.TryParse(step.Args.GetValueOrDefault("seconds"), out var s) ? s : 5;
-                await Task.Delay(TimeSpan.FromSeconds(Math.Clamp(seconds, 1, 300)), ct);
-                return true;
-            }
+                {
+                    var seconds = int.TryParse(step.Args.GetValueOrDefault("seconds"), out var s) ? s : 5;
+                    await Task.Delay(TimeSpan.FromSeconds(Math.Clamp(seconds, 1, 300)), ct);
+                    return true;
+                }
 
             default:
                 _log.Warning($"Unknown recipe action: {step.Action}");

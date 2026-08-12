@@ -92,9 +92,9 @@ public sealed class AvdService
         if (!Directory.Exists(sysImgRoot)) return list;
 
         foreach (var api in Directory.GetDirectories(sysImgRoot))
-        foreach (var variant in Directory.GetDirectories(api))
-        foreach (var abi in Directory.GetDirectories(variant))
-            list.Add($"system-images;{Path.GetFileName(api)};{Path.GetFileName(variant)};{Path.GetFileName(abi)}");
+            foreach (var variant in Directory.GetDirectories(api))
+                foreach (var abi in Directory.GetDirectories(variant))
+                    list.Add($"system-images;{Path.GetFileName(api)};{Path.GetFileName(variant)};{Path.GetFileName(abi)}");
         await Task.CompletedTask;
         return list;
     }

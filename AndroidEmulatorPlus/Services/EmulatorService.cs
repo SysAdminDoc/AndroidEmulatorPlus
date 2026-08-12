@@ -53,8 +53,8 @@ public sealed class EmulatorService
         if (!string.IsNullOrWhiteSpace(opt.HttpProxy)) { args.Add("-http-proxy"); args.Add(opt.HttpProxy!); }
         if (!string.IsNullOrWhiteSpace(opt.DnsServer)) { args.Add("-dns-server"); args.Add(opt.DnsServer!); }
         if (!string.IsNullOrWhiteSpace(opt.FrontCamera)) { args.Add("-camera-front"); args.Add(opt.FrontCamera!); }
-        if (!string.IsNullOrWhiteSpace(opt.BackCamera))  { args.Add("-camera-back");  args.Add(opt.BackCamera!); }
-        if (!string.IsNullOrWhiteSpace(opt.GpuMode))     { args.Add("-gpu");          args.Add(opt.GpuMode!); }
+        if (!string.IsNullOrWhiteSpace(opt.BackCamera)) { args.Add("-camera-back"); args.Add(opt.BackCamera!); }
+        if (!string.IsNullOrWhiteSpace(opt.GpuMode)) { args.Add("-gpu"); args.Add(opt.GpuMode!); }
 
         var flagSummary = string.Join(" ", args.Skip(2));
         _log.Info($"Launching emulator '{avdName}' {flagSummary}".TrimEnd());

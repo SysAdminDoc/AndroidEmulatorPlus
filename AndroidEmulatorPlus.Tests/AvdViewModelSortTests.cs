@@ -23,7 +23,7 @@ public class AvdViewModelSortTests
     [Fact]
     public void Api_36_sorts_after_Api_9()
     {
-        var k9  = SortKey("system-images;android-9;google_apis;x86_64");
+        var k9 = SortKey("system-images;android-9;google_apis;x86_64");
         var k36 = SortKey("system-images;android-36;google_apis_playstore;x86_64");
         Assert.True(k36.Api > k9.Api);
     }

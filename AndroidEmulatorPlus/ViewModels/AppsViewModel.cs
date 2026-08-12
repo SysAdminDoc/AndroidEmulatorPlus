@@ -116,7 +116,7 @@ public sealed partial class AppsViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void SelectAll()  { foreach (var a in FilteredApps) a.IsSelected = true; }
+    private void SelectAll() { foreach (var a in FilteredApps) a.IsSelected = true; }
 
     [RelayCommand]
     private void SelectNone() { foreach (var a in Apps) a.IsSelected = false; }
