@@ -1,5 +1,5 @@
-using System.Diagnostics;
 using System.IO;
+using AndroidEmulatorPlus.Helpers;
 
 namespace AndroidEmulatorPlus.Services;
 
@@ -18,11 +18,11 @@ public sealed class ScreenRecordService : IDisposable
     private readonly LogService _log;
     private readonly AdbService _adb;
 
-    private Process? _proc;
+    private ProcessRunner.RunningProcess? _proc;
     private string? _remotePath;
     private string? _serial;
 
-    public bool IsRecording => _proc is { HasExited: false };
+    public bool IsRecording => _proc?.IsRunning == true;
 
     public ScreenRecordService(SdkLocator sdk, LogService log, AdbService adb)
     {
@@ -38,23 +38,18 @@ public sealed class ScreenRecordService : IDisposable
         if (_sdk.AdbExe is null) { _log.Error("adb.exe not found."); return null; }
 
         var remote = $"/sdcard/aep-rec-{DateTime.Now:yyyyMMdd-HHmmss}.mp4";
-        var psi = new ProcessStartInfo
-        {
-            FileName = _sdk.AdbExe,
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            RedirectStandardInput = true,
-        };
-        foreach (var a in new[] { "-s", serial, "shell", "screenrecord", remote }) psi.ArgumentList.Add(a);
-        psi.Environment["MSYS_NO_PATHCONV"] = "1";
-        psi.Environment["MSYS2_ARG_CONV_EXCL"] = "*";
-
         try
         {
-            _proc = Process.Start(psi);
-            if (_proc is null) return null;
+            _proc = ProcessRunner.StartStreaming(
+                _sdk.AdbExe,
+                new[] { "-s", serial, "shell", "screenrecord", remote },
+                onStdOut: line => _log.Detail("screenrecord: " + line),
+                onStdErr: line => _log.Detail("screenrecord: " + line),
+                extraEnv: new Dictionary<string, string?>
+                {
+                    ["MSYS_NO_PATHCONV"] = "1",
+                    ["MSYS2_ARG_CONV_EXCL"] = "*",
+                });
             _remotePath = remote;
             _serial = serial;
             _log.Info($"Screen recording started → {remote}");
@@ -83,12 +78,16 @@ public sealed class ScreenRecordService : IDisposable
         var serial = _serial;
 
         // adb shell screenrecord traps SIGINT to flush. Sending Ctrl+C on Windows is
-        // unreliable; the safest stop is killing the adb-shell process tree.
-        // screenrecord on the device side will close the file on its own when the
-        // pipe breaks.
-        try { _proc.Kill(entireProcessTree: true); } catch { }
-        try { _proc.Dispose(); } catch { }
+        // unreliable; stopping the managed adb process tree closes the device-side
+        // stream while awaiting both output readers and process exit.
+        var process = _proc;
         _proc = null;
+        if (process is not null)
+        {
+            try { await process.StopAsync(ct).ConfigureAwait(false); }
+            catch (Exception ex) { _log.Detail("screenrecord stop: " + ex.Message); }
+            finally { await process.DisposeAsync().ConfigureAwait(false); }
+        }
 
         try
         {
@@ -125,7 +124,7 @@ public sealed class ScreenRecordService : IDisposable
 
     public void Dispose()
     {
-        try { _proc?.Kill(entireProcessTree: true); } catch { }
+        try { _proc?.Dispose(); } catch { }
         _proc = null;
     }
 }

@@ -145,60 +145,22 @@ public sealed class SdkmanagerService
 
         try
         {
-            var psi = new System.Diagnostics.ProcessStartInfo
-            {
-                FileName = "cmd.exe",
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                RedirectStandardInput = true,
-                StandardOutputEncoding = System.Text.Encoding.UTF8,
-                StandardErrorEncoding = System.Text.Encoding.UTF8,
-            };
-            psi.ArgumentList.Add("/c");
-            psi.ArgumentList.Add(_sdk.SdkManagerBat);
-            foreach (var pkg in pkgs) psi.ArgumentList.Add(pkg);
-            foreach (var kv in NoPathConv) psi.Environment[kv.Key] = kv.Value;
-
-            using var proc = new System.Diagnostics.Process { StartInfo = psi, EnableRaisingEvents = true };
-            proc.Start();
-
-            _ = Task.Run(async () =>
-            {
-                try
+            var args = new List<string> { "/c", _sdk.SdkManagerBat };
+            args.AddRange(pkgs);
+            var r = await ProcessRunner.RunWithStdinAsync(
+                "cmd.exe",
+                args,
+                Enumerable.Repeat("y", 30),
+                extraEnv: NoPathConv,
+                timeout: TimeSpan.FromMinutes(15),
+                ct: ct,
+                onStdOut: line =>
                 {
-                    for (int i = 0; i < 30; i++)
-                    {
-                        if (proc.HasExited) break;
-                        await proc.StandardInput.WriteLineAsync("y");
-                    }
-                    proc.StandardInput.Close();
-                }
-                catch { }
-            });
-
-            _ = Task.Run(async () =>
-            {
-                try { await proc.StandardError.ReadToEndAsync(ct); } catch { }
-            });
-
-            var reader = proc.StandardOutput;
-            while (!reader.EndOfStream)
-            {
-                ct.ThrowIfCancellationRequested();
-                var line = await reader.ReadLineAsync(ct);
-                if (line is null) break;
-                var parsed = ParseSdkManagerProgress(line);
-                if (parsed.HasValue)
-                    progress?.Report(parsed.Value);
-            }
-
-            using var linked = CancellationTokenSource.CreateLinkedTokenSource(ct);
-            linked.CancelAfter(TimeSpan.FromMinutes(15));
-            await proc.WaitForExitAsync(linked.Token);
-            proc.WaitForExit();
-            return proc.ExitCode == 0;
+                    var parsed = ParseSdkManagerProgress(line);
+                    if (parsed.HasValue) progress?.Report(parsed.Value);
+                },
+                onStdErr: line => _log.Detail("sdkmanager: " + line));
+            return r.Success;
         }
         catch (TimeoutException)
         {

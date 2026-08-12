@@ -126,9 +126,9 @@ public sealed partial class LogcatViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void Stop()
+    private async Task StopAsync()
     {
-        _logcat.Stop();
+        await _logcat.StopAsync();
         _flushTimer?.Stop();
         FlushPendingLines();
         IsStreaming = false;

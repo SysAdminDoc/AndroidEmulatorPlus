@@ -1,4 +1,4 @@
-using System.Diagnostics;
+using AndroidEmulatorPlus.Helpers;
 
 namespace AndroidEmulatorPlus.Services;
 
@@ -11,7 +11,7 @@ public sealed class LogcatService : IDisposable
 {
     private readonly SdkLocator _sdk;
     private readonly LogService _log;
-    private Process? _proc;
+    private ProcessRunner.RunningProcess? _proc;
     private CancellationTokenSource? _cts;
 
     public event Action<string>? LineReceived;
@@ -22,7 +22,7 @@ public sealed class LogcatService : IDisposable
         _log = log;
     }
 
-    public bool IsRunning => _proc is { HasExited: false };
+    public bool IsRunning => _proc?.IsRunning == true;
 
     /// <summary>
     /// Starts streaming logcat for the given device. <paramref name="filter"/> is
@@ -38,41 +38,28 @@ public sealed class LogcatService : IDisposable
             foreach (var tok in filter.Split(' ', StringSplitOptions.RemoveEmptyEntries))
                 args.Add(tok);
 
-        var psi = new ProcessStartInfo
-        {
-            FileName = _sdk.AdbExe,
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-        };
-        foreach (var a in args) psi.ArgumentList.Add(a);
-        psi.Environment["MSYS_NO_PATHCONV"] = "1";
-        psi.Environment["MSYS2_ARG_CONV_EXCL"] = "*";
-
         _cts = new CancellationTokenSource();
         var ct = _cts.Token;
 
-        _proc = new Process { StartInfo = psi, EnableRaisingEvents = true };
-        _proc.OutputDataReceived += (_, e) =>
-        {
-            if (!ct.IsCancellationRequested && e.Data is not null) LineReceived?.Invoke(e.Data);
-        };
-        _proc.ErrorDataReceived += (_, e) =>
-        {
-            if (!ct.IsCancellationRequested && e.Data is not null) LineReceived?.Invoke(e.Data);
-        };
-
         try
         {
-            _proc.Start();
-            _proc.BeginOutputReadLine();
-            _proc.BeginErrorReadLine();
+            _proc = ProcessRunner.StartStreaming(
+                _sdk.AdbExe,
+                args,
+                onStdOut: line => { if (!ct.IsCancellationRequested) LineReceived?.Invoke(line); },
+                onStdErr: line => { if (!ct.IsCancellationRequested) LineReceived?.Invoke(line); },
+                extraEnv: new Dictionary<string, string?>
+                {
+                    ["MSYS_NO_PATHCONV"] = "1",
+                    ["MSYS2_ARG_CONV_EXCL"] = "*",
+                });
         }
         catch (Exception ex)
         {
             _log.Error("logcat start failed: " + ex.Message);
             _proc = null;
+            _cts.Dispose();
+            _cts = null;
         }
     }
 
@@ -87,18 +74,25 @@ public sealed class LogcatService : IDisposable
         else _log.Warning("logcat -c: " + r.Combined.Trim());
     }
 
-    public void Stop()
+    public async Task StopAsync(CancellationToken ct = default)
     {
         try { _cts?.Cancel(); } catch { }
-        try
-        {
-            if (_proc is { HasExited: false }) _proc.Kill(entireProcessTree: true);
-        }
-        catch { }
-        try { _proc?.Dispose(); } catch { }
+        var process = _proc;
         _proc = null;
+        if (process is not null)
+        {
+            try { await process.StopAsync(ct).ConfigureAwait(false); }
+            catch (Exception ex) { _log.Detail("logcat stop: " + ex.Message); }
+            finally { await process.DisposeAsync().ConfigureAwait(false); }
+        }
         try { _cts?.Dispose(); } catch { }
         _cts = null;
+    }
+
+    public void Stop()
+    {
+        try { StopAsync().GetAwaiter().GetResult(); }
+        catch (Exception ex) { _log.Detail("logcat stop: " + ex.Message); }
     }
 
     public void Dispose() => Stop();

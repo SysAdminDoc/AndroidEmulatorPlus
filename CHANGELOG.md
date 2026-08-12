@@ -7,6 +7,9 @@ All notable changes to this project will be documented here. Format follows [Kee
 - Device-facing workflows now share an explicit active phone/emulator serial
   context, refuse ambiguous multi-device operations, and explain offline or
   unauthorized selections instead of silently using the first device.
+- External process execution now starts output readers before stdin writes,
+  captures duration/timeout/cancellation/cleanup metadata, and exposes awaited
+  streaming handles for sdkmanager, logcat, and screen recording.
 
 ## [0.2.8] — 2026-08-11
 
