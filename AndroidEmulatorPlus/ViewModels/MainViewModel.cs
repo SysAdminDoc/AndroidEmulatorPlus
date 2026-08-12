@@ -40,6 +40,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     private readonly SdkLocator _sdk;
     private readonly DeviceMonitor _devices;
+    private readonly ActiveDeviceContext _activeDevices;
     private readonly AdbService _adb;
     private readonly ScreenRecordService _record;
     private readonly SettingsService _settings;
@@ -49,7 +50,7 @@ public sealed partial class MainViewModel : ObservableObject
     public MainViewModel(LogService log,
         AvdViewModel avd, RootViewModel root, MigrateViewModel mig,
         AppsViewModel apps, ConfigViewModel cfg, InstallViewModel install, LogcatViewModel logcat, ConsoleViewModel console,
-        SdkLocator sdk, DeviceMonitor devices, AdbService adb, ScreenRecordService record,
+        SdkLocator sdk, DeviceMonitor devices, ActiveDeviceContext activeDevices, AdbService adb, ScreenRecordService record,
         SettingsService settings, ScrcpyService scrcpy, UpdateService updates)
     {
         Log = log;
@@ -63,6 +64,7 @@ public sealed partial class MainViewModel : ObservableObject
         ConsoleVm = console;
         _sdk = sdk;
         _devices = devices;
+        _activeDevices = activeDevices;
         _adb = adb;
         _record = record;
         _settings = settings;
@@ -74,6 +76,10 @@ public sealed partial class MainViewModel : ObservableObject
         if (!_sdk.IsReady) _activeSection = "Install";
         Log.Info("AndroidEmulatorPlus v0.2.8 ready.");
     }
+
+    partial void OnSelectedPhoneChanged(Device? value) => _activeDevices.SelectPhone(value);
+
+    partial void OnSelectedEmulatorChanged(Device? value) => _activeDevices.SelectEmulator(value);
 
     [RelayCommand]
     private void OpenSettings()
@@ -201,8 +207,8 @@ public sealed partial class MainViewModel : ObservableObject
     [RelayCommand]
     private async Task ScreenshotAsync()
     {
-        var emu = _devices.Current.FirstOrDefault(d => d.IsEmulator && d.IsOnline);
-        if (emu is null) { Log.Warning("No emulator attached."); return; }
+        var emu = _activeDevices.ResolveOnlineEmulator(_devices.Current);
+        if (emu is null) { Log.Warning(_activeDevices.ExplainEmulatorSelection(_devices.Current)); return; }
         var dir = MediaDir;
         var dest = Path.Combine(dir, $"screenshot-{DateTime.Now:yyyyMMdd-HHmmss}.png");
         Log.Info($"Taking screenshot from {emu.Serial}…");
@@ -246,8 +252,8 @@ public sealed partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void LaunchScrcpy()
     {
-        var emu = _devices.Current.FirstOrDefault(d => d.IsEmulator && d.IsOnline);
-        if (emu is null) { Log.Warning("No emulator attached."); return; }
+        var emu = _activeDevices.ResolveOnlineEmulator(_devices.Current);
+        if (emu is null) { Log.Warning(_activeDevices.ExplainEmulatorSelection(_devices.Current)); return; }
         _scrcpy.Launch(emu.Serial);
     }
 
@@ -297,8 +303,8 @@ public sealed partial class MainViewModel : ObservableObject
             }
             return;
         }
-        var emu = _devices.Current.FirstOrDefault(d => d.IsEmulator && d.IsOnline);
-        if (emu is null) { Log.Warning("No emulator attached."); return; }
+        var emu = _activeDevices.ResolveOnlineEmulator(_devices.Current);
+        if (emu is null) { Log.Warning(_activeDevices.ExplainEmulatorSelection(_devices.Current)); return; }
         var remote = _record.Start(emu.Serial);
         if (remote is null) return;
         IsRecording = true;

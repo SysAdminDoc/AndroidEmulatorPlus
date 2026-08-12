@@ -4,6 +4,10 @@ All notable changes to this project will be documented here. Format follows [Kee
 
 ## [Unreleased]
 
+- Device-facing workflows now share an explicit active phone/emulator serial
+  context, refuse ambiguous multi-device operations, and explain offline or
+  unauthorized selections instead of silently using the first device.
+
 ## [0.2.8] — 2026-08-11
 
 ### Fixed

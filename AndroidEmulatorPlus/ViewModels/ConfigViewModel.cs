@@ -12,6 +12,7 @@ public sealed partial class ConfigViewModel : ObservableObject
     private readonly ConfigService _cfg;
     private readonly AdbService _adb;
     private readonly DeviceMonitor _monitor;
+    private readonly ActiveDeviceContext _activeDevices;
     private readonly LogService _log;
 
     public ObservableCollection<Avd> Avds { get; } = new();
@@ -39,12 +40,13 @@ public sealed partial class ConfigViewModel : ObservableObject
     /// <summary>Choices for the screen preset picker (A-21).</summary>
     public IReadOnlyList<ScreenPreset> ScreenPresets { get; } = ScreenPreset.All;
 
-    public ConfigViewModel(AvdService avds, ConfigService cfg, AdbService adb, DeviceMonitor monitor, LogService log)
+    public ConfigViewModel(AvdService avds, ConfigService cfg, AdbService adb, DeviceMonitor monitor, ActiveDeviceContext activeDevices, LogService log)
     {
         _avds = avds;
         _cfg = cfg;
         _adb = adb;
         _monitor = monitor;
+        _activeDevices = activeDevices;
         _log = log;
     }
 
@@ -135,8 +137,8 @@ public sealed partial class ConfigViewModel : ObservableObject
     [RelayCommand]
     private async Task RefreshPerfAsync()
     {
-        var emu = _monitor.Current.FirstOrDefault(d => d.IsEmulator && d.IsOnline);
-        if (emu is null) { PerfText = "No emulator attached."; HasPerfData = true; return; }
+        var emu = _activeDevices.ResolveOnlineEmulator(_monitor.Current);
+        if (emu is null) { PerfText = _activeDevices.ExplainEmulatorSelection(_monitor.Current); HasPerfData = true; return; }
         try
         {
             var memR = await _adb.ShellAsync(emu.Serial, "cat /proc/meminfo | head -3");

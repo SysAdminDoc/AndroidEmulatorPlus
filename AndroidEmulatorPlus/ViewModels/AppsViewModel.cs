@@ -12,6 +12,7 @@ public sealed partial class AppsViewModel : ObservableObject
     private readonly AppService _apps;
     private readonly AdbService _adb;
     private readonly DeviceMonitor _monitor;
+    private readonly ActiveDeviceContext _activeDevices;
     private readonly LogService _log;
     private readonly PresetService _presets;
     private readonly CacheDiagnosticsService _cache;
@@ -25,16 +26,18 @@ public sealed partial class AppsViewModel : ObservableObject
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private string _uninstallMode = "user"; // "user" (adb uninstall), "user0" (pm uninstall --user 0)
 
-    public AppsViewModel(AppService apps, AdbService adb, DeviceMonitor monitor, LogService log, PresetService presets, CacheDiagnosticsService cache, BundleInstallerService bundleInstaller)
+    public AppsViewModel(AppService apps, AdbService adb, DeviceMonitor monitor, ActiveDeviceContext activeDevices, LogService log, PresetService presets, CacheDiagnosticsService cache, BundleInstallerService bundleInstaller)
     {
         _apps = apps;
         _adb = adb;
         _monitor = monitor;
+        _activeDevices = activeDevices;
         _log = log;
         _presets = presets;
         _cache = cache;
         _bundleInstaller = bundleInstaller;
         foreach (var p in _presets.Presets) BloatPresets.Add(p);
+        _activeDevices.Changed += () => _ = RefreshAsync();
     }
 
     [ObservableProperty] private bool _verifySignaturesBeforeInstall = true;
@@ -54,12 +57,12 @@ public sealed partial class AppsViewModel : ObservableObject
     [RelayCommand]
     private async Task RefreshAsync()
     {
-        var emu = _monitor.Current.FirstOrDefault(d => d.IsEmulator);
+        var emu = _activeDevices.ResolveOnlineEmulator(_monitor.Current);
         if (emu is null)
         {
             Apps.Clear();
             NotifyListStateChanged();
-            _log.Warning("No emulator running.");
+            _log.Warning(_activeDevices.ExplainEmulatorSelection(_monitor.Current));
             return;
         }
         var generation = Interlocked.Increment(ref _refreshGeneration);
@@ -125,8 +128,8 @@ public sealed partial class AppsViewModel : ObservableObject
     private async Task UninstallSelectedAsync()
     {
         if (IsBusy) return;
-        var emu = _monitor.Current.FirstOrDefault(d => d.IsEmulator);
-        if (emu is null) return;
+        var emu = _activeDevices.ResolveOnlineEmulator(_monitor.Current);
+        if (emu is null) { _log.Warning(_activeDevices.ExplainEmulatorSelection(_monitor.Current)); return; }
         var sel = Apps.Where(a => a.IsSelected).ToList();
         if (sel.Count == 0) { _log.Warning("Select at least one app."); return; }
         var user0 = UninstallMode == "user0";
@@ -152,8 +155,8 @@ public sealed partial class AppsViewModel : ObservableObject
     private async Task ReinstallSelectedAsync()
     {
         if (IsBusy) return;
-        var emu = _monitor.Current.FirstOrDefault(d => d.IsEmulator);
-        if (emu is null) return;
+        var emu = _activeDevices.ResolveOnlineEmulator(_monitor.Current);
+        if (emu is null) { _log.Warning(_activeDevices.ExplainEmulatorSelection(_monitor.Current)); return; }
         var sel = Apps.Where(a => a.IsSelected).ToList();
         if (sel.Count == 0) { _log.Warning("Select at least one app."); return; }
         IsBusy = true;
@@ -179,8 +182,8 @@ public sealed partial class AppsViewModel : ObservableObject
     [RelayCommand]
     private async Task ComputeSizesAsync()
     {
-        var emu = _monitor.Current.FirstOrDefault(d => d.IsEmulator);
-        if (emu is null) { _log.Warning("No emulator running."); return; }
+        var emu = _activeDevices.ResolveOnlineEmulator(_monitor.Current);
+        if (emu is null) { _log.Warning(_activeDevices.ExplainEmulatorSelection(_monitor.Current)); return; }
         if (!await _adb.IsRootedAsync(emu.Serial))
         {
             _log.Warning("Computing per-app data size requires root on the emulator.");
@@ -217,8 +220,8 @@ public sealed partial class AppsViewModel : ObservableObject
     public async Task InstallApkFilesAsync(IReadOnlyList<string> files)
     {
         if (files.Count == 0) return;
-        var emu = _monitor.Current.FirstOrDefault(d => d.IsEmulator);
-        if (emu is null) { _log.Warning("No emulator running."); return; }
+        var emu = _activeDevices.ResolveOnlineEmulator(_monitor.Current);
+        if (emu is null) { _log.Warning(_activeDevices.ExplainEmulatorSelection(_monitor.Current)); return; }
         IsBusy = true;
         int ok = 0, fail = 0;
         try
@@ -258,8 +261,8 @@ public sealed partial class AppsViewModel : ObservableObject
     [RelayCommand]
     private async Task ExportSelectedAsync()
     {
-        var emu = _monitor.Current.FirstOrDefault(d => d.IsEmulator);
-        if (emu is null) { _log.Warning("No emulator running."); return; }
+        var emu = _activeDevices.ResolveOnlineEmulator(_monitor.Current);
+        if (emu is null) { _log.Warning(_activeDevices.ExplainEmulatorSelection(_monitor.Current)); return; }
         var sel = Apps.Where(a => a.IsSelected).ToList();
         if (sel.Count == 0) { _log.Warning("Select at least one app."); return; }
         if (!await _adb.IsRootedAsync(emu.Serial)) { _log.Warning("Export requires root on the emulator."); return; }
@@ -294,8 +297,8 @@ public sealed partial class AppsViewModel : ObservableObject
     [RelayCommand]
     private async Task ImportZipAsync()
     {
-        var emu = _monitor.Current.FirstOrDefault(d => d.IsEmulator);
-        if (emu is null) { _log.Warning("No emulator running."); return; }
+        var emu = _activeDevices.ResolveOnlineEmulator(_monitor.Current);
+        if (emu is null) { _log.Warning(_activeDevices.ExplainEmulatorSelection(_monitor.Current)); return; }
         if (!await _adb.IsRootedAsync(emu.Serial)) { _log.Warning("Import requires root on the emulator."); return; }
 
         var dlg = new Microsoft.Win32.OpenFileDialog
@@ -318,8 +321,8 @@ public sealed partial class AppsViewModel : ObservableObject
     private async Task PushFilesAsync()
     {
         if (IsBusy) return;
-        var emu = _monitor.Current.FirstOrDefault(d => d.IsEmulator);
-        if (emu is null) { _log.Warning("No emulator running."); return; }
+        var emu = _activeDevices.ResolveOnlineEmulator(_monitor.Current);
+        if (emu is null) { _log.Warning(_activeDevices.ExplainEmulatorSelection(_monitor.Current)); return; }
 
         var dlg = new OpenFileDialog { Title = "Push files to emulator", Multiselect = true };
         if (dlg.ShowDialog() != true) return;
@@ -346,8 +349,8 @@ public sealed partial class AppsViewModel : ObservableObject
     private async Task PullFileAsync()
     {
         if (IsBusy) return;
-        var emu = _monitor.Current.FirstOrDefault(d => d.IsEmulator);
-        if (emu is null) { _log.Warning("No emulator running."); return; }
+        var emu = _activeDevices.ResolveOnlineEmulator(_monitor.Current);
+        if (emu is null) { _log.Warning(_activeDevices.ExplainEmulatorSelection(_monitor.Current)); return; }
 
         var remotePath = Views.PromptDialog.Show(
             owner: null,

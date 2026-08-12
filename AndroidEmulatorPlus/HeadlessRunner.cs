@@ -81,14 +81,12 @@ public sealed class HeadlessRunner
             emuSvc.Launch(targetAvd, coldBoot: true);
 
             log.Info("Waiting for emulator boot...");
-            var devs = await adb.ListDevicesAsync();
-            var emu = devs.FirstOrDefault(d => d.IsEmulator);
+            var emu = await FindTargetEmulatorAsync(adb, targetAvd);
             var deadline = DateTime.UtcNow.AddMinutes(3);
             while (emu is null && DateTime.UtcNow < deadline)
             {
                 await Task.Delay(3000);
-                devs = await adb.ListDevicesAsync();
-                emu = devs.FirstOrDefault(d => d.IsEmulator);
+                emu = await FindTargetEmulatorAsync(adb, targetAvd);
             }
             if (emu is null)
             {
@@ -152,6 +150,22 @@ public sealed class HeadlessRunner
 
         log.Success("Headless run complete.");
         return 0;
+    }
+
+    private static async Task<Models.Device?> FindTargetEmulatorAsync(AdbService adb, string avdName)
+    {
+        var emulators = (await adb.ListDevicesAsync())
+            .Where(static d => d.IsEmulator && d.IsOnline)
+            .ToList();
+        if (emulators.Count == 1) return emulators[0];
+        if (emulators.Count == 0) return null;
+
+        foreach (var emulator in emulators)
+        {
+            if (string.Equals(await adb.AvdNameForSerialAsync(emulator.Serial), avdName, StringComparison.OrdinalIgnoreCase))
+                return emulator;
+        }
+        return null;
     }
 
     private static void PrintUsage()

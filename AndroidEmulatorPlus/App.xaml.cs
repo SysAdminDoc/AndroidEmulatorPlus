@@ -64,6 +64,7 @@ public partial class App : Application
         sc.AddSingleton<CatalogUpdateService>();
         sc.AddSingleton<SupportBundleService>();
         sc.AddSingleton<ToastService>();
+        sc.AddSingleton<ActiveDeviceContext>();
         sc.AddSingleton<DeviceMonitor>();
 
         sc.AddSingleton<MainViewModel>();

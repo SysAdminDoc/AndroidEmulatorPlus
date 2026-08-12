@@ -13,6 +13,7 @@ public sealed partial class LogcatViewModel : ObservableObject
 {
     private readonly LogcatService _logcat;
     private readonly DeviceMonitor _monitor;
+    private readonly ActiveDeviceContext _activeDevices;
     private readonly LogService _log;
     private readonly object _pendingLock = new();
     private readonly List<string> _pendingLines = new();
@@ -28,10 +29,11 @@ public sealed partial class LogcatViewModel : ObservableObject
 
     private const int MaxBufferLines = 5000;
 
-    public LogcatViewModel(LogcatService logcat, DeviceMonitor monitor, LogService log)
+    public LogcatViewModel(LogcatService logcat, DeviceMonitor monitor, ActiveDeviceContext activeDevices, LogService log)
     {
         _logcat = logcat;
         _monitor = monitor;
+        _activeDevices = activeDevices;
         _log = log;
         _logcat.LineReceived += OnLine;
         if (Application.Current?.Dispatcher is { } dispatcher)
@@ -97,8 +99,8 @@ public sealed partial class LogcatViewModel : ObservableObject
     [RelayCommand]
     private void Start()
     {
-        var emu = _monitor.Current.FirstOrDefault(d => d.IsEmulator && d.IsOnline);
-        if (emu is null) { _log.Warning("No emulator attached."); return; }
+        var emu = _activeDevices.ResolveOnlineEmulator(_monitor.Current);
+        if (emu is null) { _log.Warning(_activeDevices.ExplainEmulatorSelection(_monitor.Current)); return; }
         Lines.Clear();
         ClearPendingLines();
         _flushTimer?.Start();
@@ -136,8 +138,8 @@ public sealed partial class LogcatViewModel : ObservableObject
     [RelayCommand]
     private async Task ClearBufferAsync()
     {
-        var emu = _monitor.Current.FirstOrDefault(d => d.IsEmulator && d.IsOnline);
-        if (emu is null) { _log.Warning("No emulator attached."); return; }
+        var emu = _activeDevices.ResolveOnlineEmulator(_monitor.Current);
+        if (emu is null) { _log.Warning(_activeDevices.ExplainEmulatorSelection(_monitor.Current)); return; }
         await _logcat.ClearBufferAsync(emu.Serial);
         ClearPendingLines();
         Lines.Clear();

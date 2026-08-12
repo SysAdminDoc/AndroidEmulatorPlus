@@ -14,6 +14,7 @@ public sealed partial class RootViewModel : ObservableObject
     private readonly AvdService _avds;
     private readonly LogService _log;
     private readonly DeviceMonitor _monitor;
+    private readonly ActiveDeviceContext _activeDevices;
     private readonly SdkLocator _sdk;
     private readonly EmulatorService _emu;
     private readonly MagiskService _magisk;
@@ -38,7 +39,7 @@ public sealed partial class RootViewModel : ObservableObject
     private CancellationTokenSource? _cts;
 
     public RootViewModel(RootService root, AdbService adb, AvdService avds, LogService log,
-        DeviceMonitor monitor, SdkLocator sdk, EmulatorService emu, MagiskService magisk,
+        DeviceMonitor monitor, ActiveDeviceContext activeDevices, SdkLocator sdk, EmulatorService emu, MagiskService magisk,
         CaCertService caCert, FridaService frida, ToastService toast)
     {
         _root = root;
@@ -46,6 +47,7 @@ public sealed partial class RootViewModel : ObservableObject
         _avds = avds;
         _log = log;
         _monitor = monitor;
+        _activeDevices = activeDevices;
         _sdk = sdk;
         _emu = emu;
         _magisk = magisk;
@@ -53,14 +55,15 @@ public sealed partial class RootViewModel : ObservableObject
         _frida = frida;
         _toast = toast;
         _monitor.Changed += _ => UpdateNeedsLaunch();
+        _activeDevices.Changed += () => _ = RefreshAsync();
     }
 
     /// <summary>C-07 / R-03: opens the Magisk module manager against the running emulator.</summary>
     [RelayCommand]
     private void OpenModules()
     {
-        var emu = _monitor.Current.FirstOrDefault(d => d.IsEmulator && d.IsOnline);
-        if (emu is null) { _log.Warning("Modules: no emulator attached."); return; }
+        var emu = _activeDevices.ResolveOnlineEmulator(_monitor.Current);
+        if (emu is null) { _log.Warning("Modules: " + _activeDevices.ExplainEmulatorSelection(_monitor.Current)); return; }
         var dlg = new Views.MagiskModulesDialog(_magisk, emu.Serial)
         {
             Owner = System.Windows.Application.Current?.MainWindow,
@@ -82,7 +85,7 @@ public sealed partial class RootViewModel : ObservableObject
         Avds.Clear();
         foreach (var a in _avds.List()) Avds.Add(a);
         SelectedAvd ??= Avds.FirstOrDefault();
-        var emu = _monitor.Current.FirstOrDefault(d => d.IsEmulator);
+        var emu = _activeDevices.ResolveOnlineEmulator(_monitor.Current);
         if (emu is not null)
         {
             var rooted = await _adb.IsRootedAsync(emu.Serial);
@@ -118,7 +121,7 @@ public sealed partial class RootViewModel : ObservableObject
             Models.Device? emu = null;
             while (DateTime.UtcNow < deadline)
             {
-                emu = _monitor.Current.FirstOrDefault(d => d.IsEmulator);
+                emu = _activeDevices.ResolveOnlineEmulator(_monitor.Current);
                 if (emu is not null) break;
                 await Task.Delay(2000);
             }
@@ -165,7 +168,7 @@ public sealed partial class RootViewModel : ObservableObject
             if (!System.IO.File.Exists(orig)) System.IO.File.Copy(ramdisk, orig);
 
             // The patch step must run with a booted emulator visible via adb.
-            var emu = _monitor.Current.FirstOrDefault(d => d.IsEmulator);
+            var emu = _activeDevices.ResolveOnlineEmulator(_monitor.Current);
             if (emu is null)
             {
                 _log.Warning("Launch the AVD first so rootAVD can patch its ramdisk via adb. Aborting.");
@@ -207,7 +210,7 @@ public sealed partial class RootViewModel : ObservableObject
     {
         if (IsBusy) return;
         var emu = CurrentOnlineEmulator();
-        if (emu is null) { _log.Warning("CA cert install: no emulator attached."); return; }
+        if (emu is null) { _log.Warning("CA cert install: " + _activeDevices.ExplainEmulatorSelection(_monitor.Current)); return; }
 
         var dlg = new OpenFileDialog
         {
@@ -250,7 +253,7 @@ public sealed partial class RootViewModel : ObservableObject
     {
         if (IsBusy) return;
         var emu = CurrentOnlineEmulator();
-        if (emu is null) { _log.Warning("Frida deploy: no emulator attached."); return; }
+        if (emu is null) { _log.Warning("Frida deploy: " + _activeDevices.ExplainEmulatorSelection(_monitor.Current)); return; }
 
         IsBusy = true;
         ResetDownloadProgress();
@@ -287,7 +290,7 @@ public sealed partial class RootViewModel : ObservableObject
     private async Task StopFridaAsync()
     {
         var emu = CurrentOnlineEmulator();
-        if (emu is null) { _log.Warning("Frida stop: no emulator attached."); return; }
+        if (emu is null) { _log.Warning("Frida stop: " + _activeDevices.ExplainEmulatorSelection(_monitor.Current)); return; }
         IsBusy = true;
         try
         {
@@ -337,8 +340,8 @@ public sealed partial class RootViewModel : ObservableObject
     private async Task VerifyAsync()
     {
         if (IsBusy) return;
-        var emu = _monitor.Current.FirstOrDefault(d => d.IsEmulator);
-        if (emu is null) { _log.Warning("No emulator running."); return; }
+        var emu = _activeDevices.ResolveOnlineEmulator(_monitor.Current);
+        if (emu is null) { _log.Warning(_activeDevices.ExplainEmulatorSelection(_monitor.Current)); return; }
         IsBusy = true;
         try
         {
@@ -358,7 +361,7 @@ public sealed partial class RootViewModel : ObservableObject
     }
 
     private Device? CurrentOnlineEmulator()
-        => _monitor.Current.FirstOrDefault(d => d.IsEmulator && d.IsOnline);
+        => _activeDevices.ResolveOnlineEmulator(_monitor.Current);
 
     private async Task RefreshFridaStateAsync(string serial)
     {

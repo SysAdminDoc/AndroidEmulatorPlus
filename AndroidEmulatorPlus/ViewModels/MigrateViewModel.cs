@@ -11,6 +11,7 @@ public sealed partial class MigrateViewModel : ObservableObject
     private readonly AdbService _adb;
     private readonly MigrationService _mig;
     private readonly DeviceMonitor _monitor;
+    private readonly ActiveDeviceContext _activeDevices;
     private readonly LogService _log;
     private readonly CacheDiagnosticsService _cache;
     private readonly ToastService _toast;
@@ -51,11 +52,12 @@ public sealed partial class MigrateViewModel : ObservableObject
     private int _refreshGeneration;
     private DateTime _lastDeviceRefresh;
 
-    public MigrateViewModel(AdbService adb, MigrationService mig, DeviceMonitor monitor, LogService log, CacheDiagnosticsService cache, ToastService toast)
+    public MigrateViewModel(AdbService adb, MigrationService mig, DeviceMonitor monitor, ActiveDeviceContext activeDevices, LogService log, CacheDiagnosticsService cache, ToastService toast)
     {
         _adb = adb;
         _mig = mig;
         _monitor = monitor;
+        _activeDevices = activeDevices;
         _log = log;
         _cache = cache;
         _toast = toast;
@@ -66,6 +68,7 @@ public sealed partial class MigrateViewModel : ObservableObject
             _lastDeviceRefresh = now;
             _ = RefreshAsync();
         };
+        _activeDevices.Changed += () => _ = RefreshAsync();
         // C-11: re-measure when other tabs (Apps Export/Import) touch the cache.
         _cache.Changed += () =>
         {
@@ -74,6 +77,14 @@ public sealed partial class MigrateViewModel : ObservableObject
             else RefreshCache();
         };
         RefreshCache();
+    }
+
+    private string ExplainMigrationSelection(Device? phone, Device? emulator)
+    {
+        var messages = new List<string>();
+        if (phone is null) messages.Add(_activeDevices.ExplainPhoneSelection(_monitor.Current));
+        if (emulator is null) messages.Add(_activeDevices.ExplainEmulatorSelection(_monitor.Current));
+        return string.Join(" ", messages);
     }
 
     [RelayCommand]
@@ -123,8 +134,8 @@ public sealed partial class MigrateViewModel : ObservableObject
         _refreshCts = new CancellationTokenSource();
         var ct = _refreshCts.Token;
 
-        var phone = _monitor.Current.FirstOrDefault(d => !d.IsEmulator);
-        var emu = _monitor.Current.FirstOrDefault(d => d.IsEmulator);
+        var phone = _activeDevices.ResolveOnlinePhone(_monitor.Current);
+        var emu = _activeDevices.ResolveOnlineEmulator(_monitor.Current);
 
         try
         {
@@ -238,8 +249,8 @@ public sealed partial class MigrateViewModel : ObservableObject
             _log.Warning("No migration receipt found. Run a migration first.");
             return;
         }
-        var emu = _monitor.Current.FirstOrDefault(d => d.IsEmulator);
-        if (emu is null) { _log.Warning("No emulator running."); return; }
+        var emu = _activeDevices.ResolveOnlineEmulator(_monitor.Current);
+        if (emu is null) { _log.Warning(_activeDevices.ExplainEmulatorSelection(_monitor.Current)); return; }
 
         var packages = receipt.Packages.Where(p => p.Success).Select(p => p.Package).ToList();
         if (packages.Count == 0) { _log.Info("No successful packages in last receipt to validate."); return; }
@@ -277,9 +288,9 @@ public sealed partial class MigrateViewModel : ObservableObject
     private async Task DryRunAsync()
     {
         if (IsBusy) return;
-        var phone = _monitor.Current.FirstOrDefault(d => !d.IsEmulator);
-        var emu = _monitor.Current.FirstOrDefault(d => d.IsEmulator);
-        if (phone is null || emu is null) { _log.Warning("Need both a phone and an emulator connected."); return; }
+        var phone = _activeDevices.ResolveOnlinePhone(_monitor.Current);
+        var emu = _activeDevices.ResolveOnlineEmulator(_monitor.Current);
+        if (phone is null || emu is null) { _log.Warning(ExplainMigrationSelection(phone, emu)); return; }
         var sel = Packages.Where(p => p.IsSelected).Select(p => p.Package).ToList();
         if (sel.Count == 0) { _log.Warning("Select at least one package."); return; }
 
@@ -315,9 +326,9 @@ public sealed partial class MigrateViewModel : ObservableObject
     private async Task MigrateAsync()
     {
         if (IsBusy) return;
-        var phone = _monitor.Current.FirstOrDefault(d => !d.IsEmulator);
-        var emu = _monitor.Current.FirstOrDefault(d => d.IsEmulator);
-        if (phone is null || emu is null) { _log.Warning("Need both a phone and an emulator connected."); return; }
+        var phone = _activeDevices.ResolveOnlinePhone(_monitor.Current);
+        var emu = _activeDevices.ResolveOnlineEmulator(_monitor.Current);
+        if (phone is null || emu is null) { _log.Warning(ExplainMigrationSelection(phone, emu)); return; }
 
         var sel = Packages.Where(p => p.IsSelected).ToList();
         if (sel.Count == 0) { _log.Warning("Select at least one package."); return; }
@@ -336,9 +347,9 @@ public sealed partial class MigrateViewModel : ObservableObject
             return;
         }
 
-        var phone = _monitor.Current.FirstOrDefault(d => !d.IsEmulator);
-        var emu = _monitor.Current.FirstOrDefault(d => d.IsEmulator);
-        if (phone is null || emu is null) { _log.Warning("Need both a phone and an emulator connected."); return; }
+        var phone = _activeDevices.ResolveOnlinePhone(_monitor.Current);
+        var emu = _activeDevices.ResolveOnlineEmulator(_monitor.Current);
+        if (phone is null || emu is null) { _log.Warning(ExplainMigrationSelection(phone, emu)); return; }
 
         var failedSet = new HashSet<string>(receipt.FailedPackages, StringComparer.Ordinal);
         var toRetry = Packages.Where(p => failedSet.Contains(p.Package)).ToList();

@@ -13,6 +13,7 @@ public sealed partial class ConsoleViewModel : ObservableObject
     private readonly ConsoleService _console;
     private readonly AdbService _adb;
     private readonly DeviceMonitor _monitor;
+    private readonly ActiveDeviceContext _activeDevices;
     private readonly NetworkProfileService _networkProfiles;
     private readonly LogService _log;
 
@@ -48,12 +49,13 @@ public sealed partial class ConsoleViewModel : ObservableObject
     public IReadOnlyList<string> Delays { get; } = new[] { "none", "gprs", "edge", "umts" };
     public IReadOnlyList<NetworkProfile> NetworkProfiles => _networkProfiles.Profiles;
 
-    public ConsoleViewModel(ConsoleService console, AdbService adb, DeviceMonitor monitor,
+    public ConsoleViewModel(ConsoleService console, AdbService adb, DeviceMonitor monitor, ActiveDeviceContext activeDevices,
         NetworkProfileService networkProfiles, LogService log)
     {
         _console = console;
         _adb = adb;
         _monitor = monitor;
+        _activeDevices = activeDevices;
         _networkProfiles = networkProfiles;
         _log = log;
     }
@@ -65,12 +67,12 @@ public sealed partial class ConsoleViewModel : ObservableObject
         NetworkDelay = value.Delay;
     }
 
-    private string? ActiveSerial() => _monitor.Current.FirstOrDefault(d => d.IsEmulator && d.IsOnline)?.Serial;
+    private string? ActiveSerial() => _activeDevices.ResolveOnlineEmulator(_monitor.Current)?.Serial;
 
     [RelayCommand]
     private async Task SetGeoAsync()
     {
-        if (ActiveSerial() is not { } s) { _log.Warning("No emulator attached."); return; }
+        if (ActiveSerial() is not { } s) { _log.Warning(_activeDevices.ExplainEmulatorSelection(_monitor.Current)); return; }
         var r = await _console.GeoFixAsync(s, GpsLongitude, GpsLatitude);
         LastResult = r.Combined.Trim();
         if (r.Success) _log.Info($"geo fix {GpsLongitude},{GpsLatitude}");
@@ -79,7 +81,7 @@ public sealed partial class ConsoleViewModel : ObservableObject
     [RelayCommand]
     private async Task SetBatteryAsync()
     {
-        if (ActiveSerial() is not { } s) { _log.Warning("No emulator attached."); return; }
+        if (ActiveSerial() is not { } s) { _log.Warning(_activeDevices.ExplainEmulatorSelection(_monitor.Current)); return; }
         var r1 = await _console.PowerCapacityAsync(s, BatteryPercent);
         var r2 = await _console.PowerStatusAsync(s, PowerStatus);
         LastResult = (r1.Combined + "\n" + r2.Combined).Trim();
@@ -89,7 +91,7 @@ public sealed partial class ConsoleViewModel : ObservableObject
     [RelayCommand]
     private async Task RingAsync()
     {
-        if (ActiveSerial() is not { } s) { _log.Warning("No emulator attached."); return; }
+        if (ActiveSerial() is not { } s) { _log.Warning(_activeDevices.ExplainEmulatorSelection(_monitor.Current)); return; }
         var r = await _console.GsmCallAsync(s, GsmNumber);
         LastResult = r.Combined.Trim();
         if (r.Success) _log.Info($"gsm call {GsmNumber}");
@@ -98,7 +100,7 @@ public sealed partial class ConsoleViewModel : ObservableObject
     [RelayCommand]
     private async Task SendSmsAsync()
     {
-        if (ActiveSerial() is not { } s) { _log.Warning("No emulator attached."); return; }
+        if (ActiveSerial() is not { } s) { _log.Warning(_activeDevices.ExplainEmulatorSelection(_monitor.Current)); return; }
         var r = await _console.SmsSendAsync(s, SmsNumber, SmsBody);
         LastResult = r.Combined.Trim();
         if (r.Success) _log.Info($"sms send {SmsNumber}");
@@ -107,7 +109,7 @@ public sealed partial class ConsoleViewModel : ObservableObject
     [RelayCommand]
     private async Task SetNetworkAsync()
     {
-        if (ActiveSerial() is not { } s) { _log.Warning("No emulator attached."); return; }
+        if (ActiveSerial() is not { } s) { _log.Warning(_activeDevices.ExplainEmulatorSelection(_monitor.Current)); return; }
         var r1 = await _console.NetworkSpeedAsync(s, NetworkSpeed);
         var r2 = await _console.NetworkDelayAsync(s, NetworkDelay);
         LastResult = (r1.Combined + "\n" + r2.Combined).Trim();
@@ -117,7 +119,7 @@ public sealed partial class ConsoleViewModel : ObservableObject
     [RelayCommand]
     private async Task SetAccelerometerAsync()
     {
-        if (ActiveSerial() is not { } s) { _log.Warning("No emulator attached."); return; }
+        if (ActiveSerial() is not { } s) { _log.Warning(_activeDevices.ExplainEmulatorSelection(_monitor.Current)); return; }
         var r = await _console.SendAsync(s, new[] { "sensor", "set", "acceleration",
             $"{AccelX:F2}:{AccelY:F2}:{AccelZ:F2}" });
         LastResult = r.Combined.Trim();
@@ -127,7 +129,7 @@ public sealed partial class ConsoleViewModel : ObservableObject
     [RelayCommand]
     private async Task SetGyroscopeAsync()
     {
-        if (ActiveSerial() is not { } s) { _log.Warning("No emulator attached."); return; }
+        if (ActiveSerial() is not { } s) { _log.Warning(_activeDevices.ExplainEmulatorSelection(_monitor.Current)); return; }
         var r = await _console.SendAsync(s, new[] { "sensor", "set", "gyroscope",
             $"{GyroX:F2}:{GyroY:F2}:{GyroZ:F2}" });
         LastResult = r.Combined.Trim();
@@ -137,7 +139,7 @@ public sealed partial class ConsoleViewModel : ObservableObject
     [RelayCommand]
     private async Task ShowNetworkInfoAsync()
     {
-        if (ActiveSerial() is not { } s) { _log.Warning("No emulator attached."); return; }
+        if (ActiveSerial() is not { } s) { _log.Warning(_activeDevices.ExplainEmulatorSelection(_monitor.Current)); return; }
         var r = await _adb.ShellAsync(s, "ip -4 addr show | grep inet");
         var lines = new List<string>();
         lines.Add($"Serial: {s}");
@@ -165,7 +167,7 @@ public sealed partial class ConsoleViewModel : ObservableObject
     [RelayCommand]
     private async Task SendFreeFormAsync()
     {
-        if (ActiveSerial() is not { } s) { _log.Warning("No emulator attached."); return; }
+        if (ActiveSerial() is not { } s) { _log.Warning(_activeDevices.ExplainEmulatorSelection(_monitor.Current)); return; }
         if (string.IsNullOrWhiteSpace(FreeFormArgs)) return;
         IReadOnlyList<string> args;
         try { args = ConsoleService.ParseEmuArgs(FreeFormArgs); }
@@ -248,7 +250,7 @@ public sealed partial class ConsoleViewModel : ObservableObject
     [RelayCommand]
     private async Task PullClipboardAsync()
     {
-        if (ActiveSerial() is not { } s) { _log.Warning("No emulator attached."); return; }
+        if (ActiveSerial() is not { } s) { _log.Warning(_activeDevices.ExplainEmulatorSelection(_monitor.Current)); return; }
         var r = await _console.ClipboardGetAsync(_adb, s);
         if (r.Success)
         {
@@ -263,7 +265,7 @@ public sealed partial class ConsoleViewModel : ObservableObject
     [RelayCommand]
     private async Task PushClipboardAsync()
     {
-        if (ActiveSerial() is not { } s) { _log.Warning("No emulator attached."); return; }
+        if (ActiveSerial() is not { } s) { _log.Warning(_activeDevices.ExplainEmulatorSelection(_monitor.Current)); return; }
         string text = "";
         try { text = System.Windows.Clipboard.GetText(); } catch { }
         if (string.IsNullOrEmpty(text)) { LastResult = "Host clipboard is empty."; return; }

@@ -14,6 +14,7 @@ public sealed partial class AvdViewModel : ObservableObject
     private readonly EmulatorService _emu;
     private readonly AdbService _adb;
     private readonly DeviceMonitor _monitor;
+    private readonly ActiveDeviceContext _activeDevices;
     private readonly LogService _log;
     private readonly SdkLocator _sdk;
     private readonly SdkmanagerService _sdkman;
@@ -54,12 +55,13 @@ public sealed partial class AvdViewModel : ObservableObject
     };
 
     public AvdViewModel(AvdService avds, EmulatorService emu, AdbService adb,
-        DeviceMonitor monitor, LogService log, SdkLocator sdk, SdkmanagerService sdkman, SnapshotService snapshots, AvdTemplateService templates, HandoffExportService handoff, RecipeService recipes)
+        DeviceMonitor monitor, ActiveDeviceContext activeDevices, LogService log, SdkLocator sdk, SdkmanagerService sdkman, SnapshotService snapshots, AvdTemplateService templates, HandoffExportService handoff, RecipeService recipes)
     {
         _avds = avds;
         _emu = emu;
         _adb = adb;
         _monitor = monitor;
+        _activeDevices = activeDevices;
         _log = log;
         _sdk = sdk;
         _sdkman = sdkman;
@@ -452,8 +454,8 @@ public sealed partial class AvdViewModel : ObservableObject
         var recipes = _recipes.List();
         if (recipes.Count == 0) { _log.Warning("No saved recipes. Save one from Settings or create a JSON in %LOCALAPPDATA%\\AndroidEmulatorPlus\\recipes\\."); return; }
 
-        var emu = _monitor.Current.FirstOrDefault(d => d.IsEmulator && d.IsOnline);
-        if (emu is null) { _log.Warning("No emulator running. Launch one first."); return; }
+        var emu = _activeDevices.ResolveOnlineEmulator(_monitor.Current);
+        if (emu is null) { _log.Warning(_activeDevices.ExplainEmulatorSelection(_monitor.Current)); return; }
 
         var names = recipes.Select(r => r.Name).ToList();
         var pick = Views.PromptDialog.Show(
