@@ -4,6 +4,8 @@ All notable changes to this project will be documented here. Format follows [Kee
 
 ## [Unreleased]
 
+## [0.2.8] — 2026-08-11
+
 ### Fixed
 
 - Repository builds now roll forward to the next major installed .NET SDK when

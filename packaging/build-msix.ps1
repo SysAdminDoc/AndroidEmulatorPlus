@@ -6,7 +6,7 @@ param(
     [string]$CertPath,
     [string]$CertPassword,
     [string]$Configuration = "Release",
-    [string]$Version = "0.2.7.0"
+    [string]$Version = "0.2.8.0"
 )
 
 $ErrorActionPreference = "Stop"

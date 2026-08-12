@@ -1,6 +1,6 @@
 # AndroidEmulatorPlus
 
-[![Version](https://img.shields.io/badge/version-0.2.7-blue.svg)](https://github.com/SysAdminDoc/AndroidEmulatorPlus/releases)
+[![Version](https://img.shields.io/badge/version-0.2.8-blue.svg)](https://github.com/SysAdminDoc/AndroidEmulatorPlus/releases)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-lightgrey.svg)](#)
 [![.NET](https://img.shields.io/badge/.NET-9.0-blueviolet.svg)](#)
@@ -23,7 +23,7 @@ pills:
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────┐
-│ AndroidEmulatorPlus v0.2.7  SDK ✓ … 📱 phone …  💻 emu … 📷 🎥 🖥 ⚙       │
+│ AndroidEmulatorPlus v0.2.8  SDK ✓ … 📱 phone …  💻 emu … 📷 🎥 🖥 ⚙       │
 ├────────────┬─────────────────────────────────────────────────────────────────┤
 │ ① Install  │                                                                 │
 │ ② AVDs     │                                                                 │
@@ -111,7 +111,7 @@ duplicate file-tree contract, debloat-preset merge, `allowBackup`
 parsing, known-hashes manifest schema, CA certificate hashing, Frida release
 asset selection and digest verification, ADB trust diagnostics, SDK package update parsing, HTTP Range download resume, safe ZIP extraction preflight, and
 remote migration/import staging cleanup failure paths. The current suite has
-122 tests.
+243 tests.
 
 ## Project planning
 
