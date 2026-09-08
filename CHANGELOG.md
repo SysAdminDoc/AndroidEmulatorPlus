@@ -517,10 +517,10 @@ Tag legend:
 
 - Local .NET SDK gap is resolved for this VM. .NET SDK `9.0.314` is installed
   machine-wide via winget, with a matching user-local SDK also present in
-  `C:\Users\Xray\.dotnet`.
+  `%USERPROFILE%\.dotnet`.
 - Java gap is resolved for Android SDK tooling. Microsoft OpenJDK 21 is installed
   at `C:\Program Files\Microsoft\jdk-21.0.11.10-hotspot`.
-- Android SDK tooling is present in `C:\Users\Xray\.cache\android-sdk`; emulator
+- Android SDK tooling is present in `%USERPROFILE%\.cache\android-sdk`; emulator
   `36.5.11`, API 35 Google Play x86_64, and API 36 Google Play x86_64 images are
   installed.
 - `global.json` pins repository builds to .NET 9 with feature-band roll-forward.
